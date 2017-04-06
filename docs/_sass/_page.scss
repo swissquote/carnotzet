@@ -1,0 +1,110 @@
+/* ==========================================================================
+   SINGLE PAGE/POST
+   ========================================================================== */
+
+.page {
+    margin-bottom: 2rem;
+}
+
+.page__title {
+    margin-top: 0;
+    line-height: 3rem;
+
+    & + .page__meta {
+        margin-top: -0.5em;
+    }
+}
+
+.page__content {
+
+    h2 {
+        padding-bottom: 0.5em;
+        border-bottom: 1px solid $border-color;
+    }
+
+    p, li, dl {
+        font-size: 1em;
+    }
+
+    /* paragraph indents */
+    p {
+        margin: 0 0 $indent-var;
+
+        /* sibling indentation*/
+        @if $paragraph-indent == true {
+            & + p {
+                text-indent: $indent-var;
+                margin-top: -($indent-var);
+            }
+        }
+    }
+
+    a {
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+
+            img {
+                box-shadow: 0 0 10px rgba(#000, 0.25);
+            }
+        }
+    }
+
+    dt {
+        margin-top: 1em;
+        font-weight: bold;
+    }
+
+    dd {
+        margin-left: 1em;
+        font-size: $type-size-6;
+    }
+
+    .small {
+        font-size: $type-size-6;
+    }
+
+    /* blockquote citations */
+    blockquote + .small {
+        margin-top: -1.5em;
+        padding-left: 1.25rem;
+    }
+}
+
+/*
+   Page meta
+   ========================================================================== */
+
+.page__meta {
+    margin-top: 2em;
+    color: mix(#fff, $gray, 25%);
+    font-size: $type-size-6;
+
+    p {
+        margin: 0;
+    }
+
+    a {
+        color: inherit;
+    }
+}
+
+.page__meta-title {
+    margin-bottom: 10px;
+    font-size: $type-size-6;
+    text-transform: uppercase;
+}
+
+/*
+   Comments
+   ========================================================================== */
+
+.page__comments-title {
+    margin-top: 2rem;
+    margin-bottom: 10px;
+    padding-top: 2rem;
+    font-size: $type-size-6;
+    border-top: 1px solid $border-color;
+    text-transform: uppercase;
+}

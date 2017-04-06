@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "uglify-js": "^2.6.1"
+  },
+  "scripts": {
+    "uglify": "uglifyjs assets/js/_main.js -c -m -o assets/js/main.min.js",
+    "add-banner": "node banner.js",
+    "build": "npm run uglify && npm run add-banner"
+  }
+}

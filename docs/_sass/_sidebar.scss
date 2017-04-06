@@ -1,0 +1,78 @@
+/* ==========================================================================
+   SIDEBAR
+   ========================================================================== */
+
+/*
+   Default
+   ========================================================================== */
+
+.site-title {
+    display: block;
+    font-size: $type-size-2;
+    line-height: 3rem;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    text-decoration: none;
+    text-align: center;
+    font-weight: bold;
+
+    background: #fff;
+    border-bottom: 1px solid $light-gray;
+}
+
+.sidebar {
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+
+    @include clearfix();
+    margin-bottom: 1em;
+
+    @media (min-width: $large) {
+        background-color: $lighter-gray;
+        border-right: 1px solid $light-gray;
+
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 1;
+        overflow-y: auto;
+        width: 300px;
+
+        margin: 0;
+    }
+
+    font-size: $type-size-6;
+}
+
+li.separator {
+    height: 1px;
+    border-top: 1px solid $light-gray;
+}
+
+.body {
+    padding: 0 1rem;
+
+    @media (min-width: $large) {
+        padding: 0 2rem;
+
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 300px;
+        bottom: 0;
+        overflow-y: auto;
+    }
+}
+
+.copyright {
+    padding: 10px 15px;
+    font-size: $type-size-6;
+
+    a {
+        display: inline !important;
+        padding: 0 !important;
+    }
+}

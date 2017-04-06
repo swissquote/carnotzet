@@ -1,0 +1,46 @@
+/* ==========================================================================
+   UTILITY CLASSES
+   ========================================================================== */
+
+/*
+   Icons
+   ========================================================================== */
+
+.icon {
+    display: inline-block;
+    fill: currentColor;
+    width: 1em;
+    height: 1.1em;
+    line-height: 1;
+    position: relative;
+    top: -0.1em;
+    vertical-align: middle;
+}
+
+/*
+   Footnotes
+   ========================================================================== */
+
+.footnote {
+    color: mix(#fff, $gray, 25%);
+    text-decoration: none;
+}
+
+.footnotes {
+    color: mix(#fff, $gray, 25%);
+
+    ol, li, p {
+        margin-bottom: 0;
+        font-size: $type-size-6;
+    }
+}
+
+a.reversefootnote {
+    color: $gray;
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+

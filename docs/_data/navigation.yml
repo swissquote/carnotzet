@@ -6,7 +6,7 @@ docs:
     url: /prerequisites
 
   - title: "Building your own Carnotzet"
-    url: /user-guide/building-your-carnotzet
+    url: /creating-your-own/
     children:
       - title: "Sandboxing your application"
         url: /creating-your-own/sandboxing-your-application
@@ -45,6 +45,7 @@ docs:
         url: /developer-guide/building-images-manually
 
   - title: "Third party modules"
+    url: /third-party-modules/
     children:
       - title: "ActiveMQ"
         url: /third-party-modules/activemq

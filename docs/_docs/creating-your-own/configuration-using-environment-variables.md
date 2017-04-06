@@ -61,7 +61,7 @@ You can find more informations about the usage of environment variables in docke
 #### Read the docs
 The list of environment variables that are supported is defined by each container or Carnotzet module, so please check the documentation of the dependency to figure out what configuration option is supported.
 
-For most of the SQ base images and basic services, you can find the documentation in the [Docker base](/docker-base-images) images and [Configurable third party modules](/third-party-modules/) pages.
+For most of the SQ base images and basic services, you can find the documentation in the [Docker base]({{ site.baseurl }}{% link _docs/base-images/index.md %}) images and [Configurable third party modules]({{ site.baseurl }}{% link _docs/third-party-modules/index.md %}) pages.
 
 #### What to do if there is no doc…
 

@@ -39,7 +39,7 @@ Note that this only works if Carnotzet stores the logs in memory for analysis an
 
 ## Getting the IP address of a service
 
-The Carnotzet rule can give you the IP address of any service running in the Carnotzet environment to communicate with it (this is an alternative to [User Guide - Network communication with containers](/user-guide/network-communication-with-containers))
+The Carnotzet rule can give you the IP address of any service running in the Carnotzet environment to communicate with it (this is an alternative to [User Guide - Network communication with containers]({{ site.baseurl }}{% link _docs/user-guide/network-communication-with-containers.md %}))
 
 ```java
 new URL("http://" + sandbox.getIpOfService("sq-my-service")+ "/sq-my-service/toto").openConnection()

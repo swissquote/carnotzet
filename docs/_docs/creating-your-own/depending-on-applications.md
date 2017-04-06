@@ -134,5 +134,5 @@ curl -s localhost:80 > /dev/null 2>&1
 grep "rmi started" /logs/SQT/foobar.log > /dev/null 2>&1
 ``` 
 
-- If you need to add some environment variables to applications read [here](/creating-your-own/configuration-using-environment-variables)
-- For adding some files to dependent modules read [here](/creating-your-own/configuration-using-config-files)
+- If you need to add some environment variables to applications read [here]({{ site.baseurl }}{% link _docs/creating-your-own/configuration-using-environment-variables.md %})
+- For adding some files to dependent modules read [here]({{ site.baseurl }}{% link _docs/creating-your-own/configuration-using-config-files.md %})

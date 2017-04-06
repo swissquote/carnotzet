@@ -113,7 +113,7 @@ TODO :: check right structure for open source …
    ADD PROJECT_ARTIFACT_ID.war /softwares/tomcat/webapps/PROJECT_ARTIFACT_ID.war
    ```
 
-4. Add environment variables with [this documentation](/creating-your-own/configuration-using-environment-variables).
+4. Add environment variables with [this documentation]({{ site.baseurl }}{% link _docs/creating-your-own/configuration-using-environment-variables.md %}).
 5. After configuration run terminal from `sandbox` folder:
    ```bash
    mvn clean install
@@ -128,4 +128,4 @@ TODO :: check right structure for open source …
    it will up the container.
    
 
-For configuration dependent applications look [here](/creating-your-own/configuration-using-config-files).
+For configuration dependent applications look [here]({{ site.baseurl }}{% link _docs/creating-your-own/configuration-using-config-files.md %}).

@@ -6,8 +6,8 @@ permalink: /prerequisites
 1. Make sure you are using java >= 8 and maven  >= 3.3.X
 1. Make sure you have docker installed : [https://docs.docker.com/engine/installation/](https://docs.docker.com/engine/installation/).
 1. Make sure you have docker-compose installed : [https://docs.docker.com/compose/install/](https://docs.docker.com/compose/install/)
-1. Make sure you have DNSDock installed : [](Docker - DNS Dock)
-1. Make sure your maven settings allow usage of docker : [](Docker - Maven plugin)
+1. Make sure you have DNSDock installed : [Docker - DNS Dock]()
+1. Make sure your maven settings allow usage of docker : [Docker - Maven plugin]()
 1. Make sure all private internet addresses as well as the .docker domain are not proxied by your cntlm config (/etc/cntlm.conf), something like this :
 
 1. Make sure your CNTLM proxy is listening on the docker0 interface :

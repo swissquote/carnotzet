@@ -27,7 +27,7 @@ Modularity is a key concept in Carnotzet as you can create an environment from m
 
 ## Overview
 
-![Overview diagram](/carnotzet_architecture.png)
+![Overview diagram]({{ site.baseurl }}{% link _docs/carnotzet_architecture.png %})
 
 ## Why not just use docker-compose directly ?
 
@@ -43,9 +43,9 @@ Carnotzet is a layer on top of docker-compose that provides the following featur
 If you don't need any of those features, please remember that re-usability and the DB crawler configuration may actually help other teams to integrate with your applications in their development environment.
 Getting started
 
-* Make sure you have all the [Prerequisites](/prerequisites) on your machine
+* Make sure you have all the [Prerequisites]({{ site.baseurl }}{% link _docs/prerequisites.md %}) on your machine
 * Checkout the repository and look in `/examples`
-* Create a Carnotzet module for your project : [User Guide - Sandboxing your application](/creating-your-own/sandboxing-your-application)
+* Create a Carnotzet module for your project : [User Guide - Sandboxing your application]({{ site.baseurl }}{% link _docs/creating-your-own/sandboxing-your-application.md %})
 
 
 ## Commands / help

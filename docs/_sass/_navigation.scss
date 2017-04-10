@@ -1,0 +1,174 @@
+/* ==========================================================================
+   NAVIGATION
+   ========================================================================== */
+
+/*
+   Navigation list
+   ========================================================================== */
+
+.nav__list {
+    margin-bottom: 1.5em;
+
+    input[type="checkbox"],
+    label {
+        display: none;
+    }
+
+    @media (max-width: ($large - 1px)) {
+        margin-bottom: 0;
+
+        input[type="checkbox"] {
+            display: block;
+            width: 40px;
+            height: 32px;
+            position: absolute;
+            top: calc(1.5rem - 18px);
+            left: 13px;
+
+            cursor: pointer;
+
+            opacity: 0; /* hide this */
+            z-index: 2; /* and place it over the hamburger */
+
+            -webkit-touch-callout: none;
+        }
+
+        /*
+         * Just a quick hamburger
+         */
+        label {
+            &, &:before, &:after {
+                display: block;
+                width: 33px;
+                height: 4px;
+                position: absolute;
+                top: calc(1.5rem - 2px);
+                left: 15px;
+
+                font-size: 0;
+                content: "";
+
+                background: #cdcdcd;
+                border-radius: 2px;
+
+                z-index: 1;
+
+                transform-origin: 4px 0px;
+
+                transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0),
+                background 0.3s cubic-bezier(0.77, 0.2, 0.05, 1.0) 0.2s,
+                opacity 0.55s ease;
+            }
+
+            &:before {
+                left: 0;
+                top: -10px;
+                transform-origin: 0% 0%;
+            }
+
+            &:after {
+                left: 0;
+                top: auto;
+                bottom: -10px;
+                transform-origin: 0% 100%;
+            }
+        }
+
+        input:checked {
+            ~ label {
+                background: transparent;
+                transition: background 0.2s cubic-bezier(0.77, 0.2, 0.05, 1.0);
+            }
+
+            ~ label:before {
+                background: #232323;
+                transform: rotate(45deg) translate(4px, -5px);
+            }
+
+            ~ label:after {
+                background: #232323;
+                transform: rotate(-45deg) translate(4px, 6px);
+            }
+        }
+
+        ul {
+            margin-bottom: 1em;
+        }
+
+        a {
+            display: block;
+            padding: 0.25em 0;
+
+            @media (min-width: $large) {
+                padding-top: 0.125em;
+                padding-bottom: 0.125em;
+            }
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+}
+
+.nav__list .nav__items {
+    margin: 0;
+
+    ul {
+        padding-left: 20px;
+    }
+
+    .nav__sub-title.nolink,
+    a {
+        color: inherit;
+
+        display: block;
+        padding: .4rem .3rem .4rem 1rem;
+        border-bottom: none;
+        color: #364149;
+        background: 0 0;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        position: relative;
+    }
+
+    a:hover,
+    .active {
+        color: $link-color;
+    }
+
+    @media (max-width: ($large - 1px)) {
+        position: relative;
+        max-height: 0;
+        opacity: 0%;
+        overflow: hidden;
+        z-index: 10;
+        -webkit-transition: 0.3s ease-in-out;
+        transition: 0.3s ease-in-out;
+        -webkit-transform: translate(0, 10%);
+        -ms-transform: translate(0, 10%);
+        transform: translate(0, 10%);
+    }
+}
+
+@media (max-width: ($large - 1px)) {
+    .nav__list input:checked ~ .nav__items {
+        -webkit-transition: 0.5s ease-in-out;
+        transition: 0.5s ease-in-out;
+        max-height: 9999px; /* exaggerate max-height to accommodate tall lists*/
+        overflow: visible;
+        opacity: 1;
+        margin-top: 1em;
+        -webkit-transform: translate(0, 0);
+        -ms-transform: translate(0, 0);
+        transform: translate(0, 0);
+    }
+}
+
+.nav__sub-title {
+
+}
+
+
+

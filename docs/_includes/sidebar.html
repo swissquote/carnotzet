@@ -1,0 +1,52 @@
+<div class="sidebar">
+  <a class="site-title" href="{{ '/' | absolute_url }}">{{ site.title }}</a>
+
+  <nav class="nav__list">
+    <input id="ac-toc" name="accordion-toc" type="checkbox" title="Toggle Menu" />
+    <label for="ac-toc">Toggle Menu</label>
+
+    <ul class="nav__items">
+      {% for nav in site.data.navigation.docs %}
+      <li>
+        {% if nav.url %}
+          {% if child.url contains "://" %} {% assign domain = '' %} {% else %} {% assign domain = site.url | append: site.baseurl %} {% endif %}
+          {% if nav.url == page.url %} {% assign active = "active" %} {% else %} {% assign active = "" %} {% endif %}
+
+          <a href="{{ domain }}{{ nav.url }}"><span class="nav__sub-title {{ active }}">{{ nav.title }}</span></a>
+        {% else %}
+          <span class="nav__sub-title nolink">{{ nav.title }}</span>
+        {% endif %}
+
+        {% if nav.children != null %}
+        <ul>
+          {% for child in nav.children %}
+            {% if child.url contains "://" %} {% assign domain = '' %} {% else %} {% assign domain = site.url | append: site.baseurl %} {% endif %}
+            {% if child.url == page.url %} {% assign active = "active" %} {% else %} {% assign active = "" %} {% endif %}
+
+          <li class="nav__link">
+            <a href="{{ domain }}{{ child.url }}" class="{{ active }}">{{ child.title }}</a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </li>
+      {% endfor %}
+
+      <li class="separator"></li>
+      <li>
+        <span class="nav__sub-title nolink">Links</span>
+        <ul>
+          {% for link in site.data.navigation.main %}
+            {% if link.url contains 'http' %} {% assign domain = '' %} {% else %} {% assign domain = site.url | append: site.baseurl %} {% endif %}
+            <li><a href="{{ domain }}{{ link.url }}">{{ link.title }}</a></li>
+          {% endfor %}
+          <li><a href="http://github.com/{{ site.repository }}"> {% include icons/github.html %} GitHub</a></li>
+        </ul>
+      </li>
+      <li class="separator"></li>
+      <li class="copyright">&copy; {{ site.time | date: '%Y' }} {{ site.name | default: site.title }}. Powered by <a href="http://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</li>
+    </ul>
+  </nav>
+</div>
+
+

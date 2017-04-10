@@ -26,10 +26,8 @@
     <modules>
         <module>core</module>
         <module>examples</module>
-        <module>extensions</module>
         <module>maven-plugin</module>
-		<module>docker-compose</module>
-        <module>kubernetes</module>
+        <module>docker-compose</module>
         <module>e2e-tests-carnotzet</module>
         <module>e2e-tests</module>
     </modules>

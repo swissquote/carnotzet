@@ -1,0 +1,36 @@
+---
+---
+
+/*!
+ * Swissquote Documentation theme
+ * Based on work by Michael Rose - mademistakes.com
+ * Copyright 2017 Swissquote Bank
+ */
+
+/*
+   Variables
+   ========================================================================== */
+
+@import "variables";
+
+/*
+   Base
+   ========================================================================== */
+
+@import "mixins";
+@import "reset";
+@import "base";
+@import "utilities";
+@import "tables";
+@import "navigation";
+@import "toc";
+@import "syntax";
+
+
+/*
+   Layout specific
+   ========================================================================== */
+
+@import "page";
+@import "sidebar";
+@import "print";

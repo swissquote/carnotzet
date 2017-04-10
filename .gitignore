@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Eclipse
 .classpath
 .project
@@ -7,6 +8,10 @@
 .idea/
 *.iml
 *.iws
+
+# Sublime
+*.sublime-project
+*.sublime-workspace
 
 # Mac
 .DS_Store
@@ -18,3 +23,21 @@ pom.xml.versionsBackup
 
 # Other
 .orig
+.DS_Store
+
+# Ruby
+*.gem
+.bundle
+Gemfile.lock
+
+# Jekyll
+.jekyll-metadata
+.sass-cache
+_asset_bundler_cache
+_site
+Gemfile.lock
+node_modules
+npm-debug.log*
+
+
+

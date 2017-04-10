@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.github.swissquote</groupId>
+        <artifactId>carnotzet</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <groupId>com.github.swissquote.examples</groupId>
+    <artifactId>carnotzet-examples</artifactId>
+    <packaging>pom</packaging>
+    <description>Example distributed application : https://github.com/docker/example-voting-app packaged as carnotzet modules</description>
+
+    <modules>
+        <module>redis</module>
+        <module>postgres</module>
+        <module>selenium-chrome</module>
+        <module>voting-result</module>
+        <module>voting-vote</module>
+        <module>voting-worker</module>
+        <module>voting-all</module>
+    </modules>
+
+</project>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.github.swissquote.examples</groupId>
+		<artifactId>carnotzet-examples</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>voting-all-carnotzet</artifactId>
+	<description>Example carnotzet module for the result app of https://github.com/docker/example-voting-app</description>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.github.swissquote.examples</groupId>
+			<artifactId>voting-vote-carnotzet</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.swissquote.examples</groupId>
+			<artifactId>voting-result-carnotzet</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.swissquote.examples</groupId>
+			<artifactId>voting-worker-carnotzet</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>com.github.swissquote</groupId>
+				<artifactId>zet-maven-plugin</artifactId>
+				<version>${project.version}</version>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

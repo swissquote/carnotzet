@@ -115,7 +115,7 @@ import lombok.extern.slf4j.Slf4j;
 	}
 
 	/* package */ void registerLogListener(LogListener listener, Collection<Container> containers) {
-		log.info("registering log listener [{}]", listener);
+		log.debug("registering log listener [{}]", listener);
 		logListeners.add(listener);
 		containers.forEach(container -> ensureCapturingContainerLogs(container, null, listener));
 	}

@@ -17,7 +17,6 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
-import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
 
 import com.github.swissquote.carnotzet.core.Carnotzet;
@@ -27,10 +26,7 @@ import com.github.swissquote.carnotzet.core.runtime.api.ContainerOrchestrationRu
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
 import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
 import com.github.swissquote.carnotzet.runtime.docker.compose.DockerComposeRuntime;
-import com.github.swissquote.carnotzet.runtime.kubernetes.KubernetesRuntime;
 
-import io.fabric8.kubernetes.client.Config;
-import io.fabric8.kubernetes.client.ConfigBuilder;
 import lombok.Getter;
 
 public abstract class AbstractZetMojo extends AbstractMojo {
@@ -52,22 +48,6 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 
 	@Parameter(property = "follow")
 	protected boolean follow;
-
-	@Parameter(property = "k8sApiServer", readonly = true)
-	private String k8sUrl;
-
-	@Parameter(readonly = true, defaultValue = "k8s-carnotzet")
-	private String k8sServer;
-
-	/**
-	 * the base domain for kubernetes ingresses, example : carnotzet.my.company.com
-	 * services will be exposed as {service}.{instanceId}.{ingressDomain}
-	 * for example : redis.foo.carnotzet.my.company.com
-	 * You can use a wildcard DNS (dnsmasq or corporate dns server for example)
-	 * for this domain resolving to your ingress controller
-	 */
-	@Parameter(property = "ingressDomain", readonly = true)
-	private String k8sIngressDomain;
 
 	@Parameter(property = "instanceId", readonly = true)
 	private String k8sInstanceId;
@@ -105,29 +85,11 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 				getLog().info("Using docker-compose runtime");
 				chosenRuntime = new DockerComposeRuntime(carnotzet);
 				break;
-			case "k8s":
-				getLog().info("Using kubernetes runtime");
-				if (k8sInstanceId == null) {
-					chosenRuntime = new KubernetesRuntime(buildKubernetesConfig(), carnotzet, k8sIngressDomain);
-				} else {
-					chosenRuntime = new KubernetesRuntime(buildKubernetesConfig(), carnotzet, k8sInstanceId, k8sIngressDomain);
-				}
-				break;
 			default:
 				throw new RuntimeException("Unknown container runtime [" + runtime + "]");
 		}
 
 		return chosenRuntime;
-	}
-
-	private Config buildKubernetesConfig() {
-		Server server = settings.getServer(k8sServer);
-		if (server == null) {
-			throw new RuntimeException("No server named [" + k8sServer + "] found in settings.xml");
-		}
-		return new ConfigBuilder().withMasterUrl(k8sUrl)
-				.withUsername(server.getUsername())
-				.withPassword(server.getPassword()).build();
 	}
 
 	/**

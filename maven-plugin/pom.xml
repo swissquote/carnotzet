@@ -20,11 +20,6 @@
 		</dependency>
 		<dependency>
 			<groupId>com.github.swissquote</groupId>
-			<artifactId>carnotzet-orchestrator-kubernetes</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.github.swissquote</groupId>
 			<artifactId>carnotzet-orchestrator-docker-compose</artifactId>
 			<version>${project.version}</version>
 		</dependency>

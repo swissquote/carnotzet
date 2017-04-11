@@ -2,7 +2,7 @@
 Carnotzet allows you to use maven dependencies to easily share, version and re-use large modular development and testing environments.
 
 # Features and architecture
-Carnotzet is a layer of integration between maven and container orchestrators (docker compose / kubernetes) that adds the following features : 
+Carnotzet is a layer of integration between maven and container orchestrators (such as docker compose) that adds the following features : 
 
 - Dependency management : an easy way to re-use application configuration and abstract it's transitive dependencies. 
 By default you don't need to understand how each dependency in your environment has to be configured and run.

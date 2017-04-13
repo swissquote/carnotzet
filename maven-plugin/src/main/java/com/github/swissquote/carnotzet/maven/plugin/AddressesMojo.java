@@ -17,7 +17,7 @@ import com.github.swissquote.carnotzet.core.runtime.api.Container;
 public class AddressesMojo extends AbstractZetMojo {
 
 	@Override
-	public void executeGoal() throws MojoExecutionException, MojoFailureException {
+	public void execute() throws MojoExecutionException, MojoFailureException {
 
 		List<Container> containers = getRuntime().getContainers();
 		if (containers.isEmpty()) {

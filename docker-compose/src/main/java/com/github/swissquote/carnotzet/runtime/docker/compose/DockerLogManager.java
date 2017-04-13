@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -16,6 +17,7 @@ import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
@@ -56,6 +58,7 @@ import lombok.extern.slf4j.Slf4j;
 	/**
 	 * Ensures that a listener is listening to the logs of a container, from a given time
 	 **/
+	@SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
 	private void ensureCapturingContainerLogs(Container container, Instant since, LogListener listener) {
 
 		ContainerListener key = new ContainerListener(container, listener);
@@ -85,9 +88,9 @@ import lombok.extern.slf4j.Slf4j;
 
 	private Flowable<String> flowableInputStreamScanner(InputStream inputStream) {
 		return Flowable.create(subscriber -> {
-			try (java.util.Scanner s = new java.util.Scanner(inputStream)) {
-				while (s.hasNext()) {
-					subscriber.onNext(s.nextLine());
+			try (Scanner scanner = new Scanner(inputStream, "UTF-8")) {
+				while (scanner.hasNext()) {
+					subscriber.onNext(scanner.nextLine());
 				}
 			}
 			subscriber.onComplete();

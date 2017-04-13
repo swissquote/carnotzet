@@ -20,6 +20,7 @@ import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.settings.Settings;
 
 import com.github.swissquote.carnotzet.core.Carnotzet;
+import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
 import com.github.swissquote.carnotzet.core.maven.CarnotzetModuleCoordinates;
 import com.github.swissquote.carnotzet.core.runtime.api.ContainerOrchestrationRuntime;
@@ -28,6 +29,7 @@ import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
 import com.github.swissquote.carnotzet.runtime.docker.compose.DockerComposeRuntime;
 
 import lombok.Getter;
+import lombok.NonNull;
 
 public abstract class AbstractZetMojo extends AbstractMojo {
 
@@ -53,26 +55,21 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	private String k8sInstanceId;
 
 	@Getter
-	protected Carnotzet carnotzet;
+	protected final Carnotzet carnotzet;
 
 	private ContainerOrchestrationRuntime chosenRuntime;
 
 	@Component
 	private ProjectBuilder projectBuilder;
 
-	abstract public void executeGoal() throws MojoExecutionException, MojoFailureException;
-
-	@Override
-	public final void execute() throws MojoExecutionException, MojoFailureException {
+	public AbstractZetMojo() {
 		MavenProject project = getCarnotzetProject();
 		CarnotzetModuleCoordinates topLevelArtifact =
 				new CarnotzetModuleCoordinates(project.getGroupId(), project.getArtifactId(), project.getVersion());
 		Path resourcesRoot = Paths.get(project.getBuild().getDirectory(), "carnotzet");
-
 		carnotzet = new Carnotzet(topLevelArtifact, resourcesRoot, Collections.emptyList(),
 				project.getBasedir().toPath().resolve("src/main/resources"));
 
-		executeGoal();
 	}
 
 	public ContainerOrchestrationRuntime getRuntime() {
@@ -95,7 +92,7 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	/**
 	 * @return the currently built project if it's a carnotzet, or a child/sibling otherwise
 	 */
-	protected MavenProject getCarnotzetProject() throws MojoExecutionException {
+	private MavenProject getCarnotzetProject() {
 		if (!project.getArtifactId().endsWith("-carnotzet")) {
 			getLog().info("Current project is not a valid carnotzet project. ArtifactId must end with '-carnotzet'");
 
@@ -116,10 +113,9 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 					return newProject;
 				}
 				catch (ProjectBuildingException e) {
-					throw new MojoExecutionException(e, "", "");
+					throw new CarnotzetDefinitionException(e);
 				}
 			}
-			//			session.getProjectBuildingRequest()
 		}
 		return project;
 	}

@@ -2,6 +2,7 @@ package com.github.swissquote.carnotzet.runtime.docker.compose;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,7 +82,9 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		DockerCompose compose = DockerCompose.builder().version("2").services(services).networks(networks).build();
 		DockerComposeGenerator generator = new DockerComposeGenerator(compose);
 		try {
-			Files.write(generator.generateDockerComposeFile().getBytes(), carnotzet.getResourcesFolder().resolve("docker-compose.yml").toFile());
+			Files.write(generator.generateDockerComposeFile(),
+					carnotzet.getResourcesFolder().resolve("docker-compose.yml").toFile(),
+					StandardCharsets.UTF_8);
 		}
 		catch (IOException e) {
 			throw new UncheckedIOException("Failed to write docker-compose.yml", e);

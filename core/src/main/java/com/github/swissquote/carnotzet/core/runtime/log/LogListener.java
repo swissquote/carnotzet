@@ -7,12 +7,6 @@ public interface LogListener {
 	void accept(LogEvent event);
 
 	/**
-	 * Allows listeners to react when an environment is cleaned and re-created, usually the previous logs should be discarded
-	 */
-	default void onClean() {
-	}
-
-	/**
 	 * null -> receive all previous log entries
 	 * 0 -> receive none of the log entries
 	 * N -> receive only N lines from each service

@@ -18,7 +18,7 @@ import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
 public class StopMojo extends AbstractZetMojo {
 
 	@Override
-	public void executeGoal() throws MojoExecutionException, MojoFailureException {
+	public void execute() throws MojoExecutionException, MojoFailureException {
 
 		if (follow) {
 			LogListener printer = new StdOutLogPrinter(getServiceNames(), 0, true);

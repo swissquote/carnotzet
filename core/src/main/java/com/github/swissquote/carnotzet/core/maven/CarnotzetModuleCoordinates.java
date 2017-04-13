@@ -6,13 +6,14 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
+
 import org.jboss.shrinkwrap.resolver.api.maven.PackagingType;
 import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenCoordinate;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -49,7 +50,7 @@ public class CarnotzetModuleCoordinates implements MavenCoordinate {
 	public static CarnotzetModuleCoordinates fromPom(Path pom) {
 		Model result;
 		try {
-			BufferedReader in = new BufferedReader(new FileReader(pom.toFile()));
+			BufferedReader in = new BufferedReader(Files.newBufferedReader(pom, StandardCharsets.UTF_8));
 			MavenXpp3Reader reader = new MavenXpp3Reader();
 			result = reader.read(in);
 		}

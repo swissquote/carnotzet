@@ -5,6 +5,7 @@ import static java.nio.file.Files.exists;
 import static java.nio.file.Files.find;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -15,8 +16,9 @@ import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 
 import org.apache.commons.io.FileUtils;
-import com.github.swissquote.carnotzet.core.config.FileMerger;
 import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenCoordinate;
+
+import com.github.swissquote.carnotzet.core.config.FileMerger;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +50,9 @@ public class ResourcesManager {
 		try {
 			log.debug("Resolving carnotzet resources into [{}]", resourcesRoot);
 			FileUtils.deleteDirectory(resourcesRoot.toFile());
-			resourcesRoot.toFile().mkdirs();
+			if (!resourcesRoot.toFile().mkdirs()) {
+				throw new CarnotzetDefinitionException("Could not create directory [" + resourcesRoot + "]");
+			}
 			String topLevelModuleName = modules.get(0).getTopLevelModuleName();
 			List<CarnotzetModule> processedModules = new ArrayList<>();
 
@@ -65,8 +69,8 @@ public class ResourcesManager {
 				processedModules.add(module);
 			}
 		}
-		catch (Exception ex) {
-			throw new CarnotzetDefinitionException("Failed to copy module resources " + ex, ex);
+		catch (IOException ex) {
+			throw new UncheckedIOException("Failed to copy module resources " + ex, ex);
 		}
 	}
 

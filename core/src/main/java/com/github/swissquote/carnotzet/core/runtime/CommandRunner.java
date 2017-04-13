@@ -1,6 +1,8 @@
 package com.github.swissquote.carnotzet.core.runtime;
 
 import com.google.common.base.Joiner;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -11,6 +13,7 @@ import java.io.UncheckedIOException;
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 
 @Slf4j
+@SuppressFBWarnings("DMI_HARDCODED_ABSOLUTE_FILENAME")
 public final class CommandRunner {
 
 	private CommandRunner() {
@@ -74,14 +77,10 @@ public final class CommandRunner {
 	}
 
 	private static String getInputAsString(InputStream is) {
-		try (java.util.Scanner s = new java.util.Scanner(is)) {
+		try (java.util.Scanner s = new java.util.Scanner(is, "UTF-8")) {
 			return s.useDelimiter("\\A").hasNext() ? s.next() : "";
 		}
 	}
 
-	public static Process runCommandIncontainersBackground(String... command) throws IOException {
-		ProcessBuilder pb = new ProcessBuilder(command);
-		return pb.start();
-	}
 
 }

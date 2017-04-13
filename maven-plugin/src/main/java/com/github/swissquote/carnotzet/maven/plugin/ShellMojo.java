@@ -25,7 +25,7 @@ public class ShellMojo extends AbstractZetMojo {
 	private Prompter prompter;
 
 	@Override
-	public void executeGoal() throws MojoExecutionException, MojoFailureException {
+	public void execute() throws MojoExecutionException, MojoFailureException {
 		List<Container> containers = getRuntime().getContainers();
 		if (containers.isEmpty()) {
 			getLog().info("There doesn't seem to be any containers created yet for this carnotzet, please make sure the carnotzet is started");

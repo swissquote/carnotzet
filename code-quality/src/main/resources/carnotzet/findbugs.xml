@@ -1,0 +1,15 @@
+<FindBugsFilter>
+	<Match>
+		<Not>
+			<Bug pattern="
+			NP_PARAMETER_MUST_BE_NONNULL_BUT_MARKED_AS_NULLABLE,
+			DM_CONVERT_CASE,
+			SIC_INNER_SHOULD_BE_STATIC_ANON"
+			/>
+		</Not>
+		<Not>
+			<Class name="com.github.swissquote.carnotzet.maven.plugin.HelpMojo"/>
+			<Bug pattern="UI_INHERITANCE_UNSAFE_GETRESOURCE"/>
+		</Not>
+	</Match>
+</FindBugsFilter>

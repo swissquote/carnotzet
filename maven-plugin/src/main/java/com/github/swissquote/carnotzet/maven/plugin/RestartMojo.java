@@ -16,7 +16,7 @@ import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
 public class RestartMojo extends AbstractZetMojo {
 
 	@Override
-	public void executeGoal() throws MojoExecutionException, MojoFailureException {
+	public void execute() throws MojoExecutionException, MojoFailureException {
 		wrapWithLogFollowIfNeeded(command).run();
 	}
 

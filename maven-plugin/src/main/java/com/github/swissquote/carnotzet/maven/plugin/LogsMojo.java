@@ -20,7 +20,7 @@ public class LogsMojo extends AbstractZetMojo {
 	private volatile long lastLogEventTime = System.currentTimeMillis();
 
 	@Override
-	public void executeGoal() throws MojoExecutionException, MojoFailureException {
+	public void execute() throws MojoExecutionException, MojoFailureException {
 		// defaults
 		boolean follow = true;
 		Integer tail = 200;

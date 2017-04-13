@@ -13,7 +13,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 public class CleanMojo extends AbstractZetMojo {
 
 	@Override
-	public void executeGoal() throws MojoExecutionException, MojoFailureException {
+	public void execute() throws MojoExecutionException, MojoFailureException {
 		getRuntime().clean();
 	}
 

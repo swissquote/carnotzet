@@ -1,7 +1,9 @@
 package com.github.swissquote.carnotzet.core.maven;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
@@ -132,8 +134,8 @@ public class MavenDependencyResolver {
 			return new HashMap<>();
 
 		}
-		catch (Exception ex) {
-			throw new CarnotzetDefinitionException("Cannot read carnotzet.properties", ex);
+		catch (IOException ex) {
+			throw new UncheckedIOException("Exception when reading carnotzet.properties", ex);
 		}
 	}
 
@@ -168,7 +170,7 @@ public class MavenDependencyResolver {
 	}
 
 	@Data
-	private class DockerImageName {
+	private static class DockerImageName {
 		String registry;
 		String group;
 		String image;

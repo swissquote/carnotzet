@@ -10,6 +10,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
+import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.github.swissquote.carnotzet.core.runtime.api.Container;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -22,7 +23,7 @@ import com.google.common.io.Resources;
 public class WelcomeMojo extends AbstractZetMojo {
 
 	@Override
-	public void executeGoal() throws MojoExecutionException, MojoFailureException {
+	public void execute() throws MojoExecutionException, MojoFailureException {
 		try {
 			buildWelcomeHtmlFile();
 
@@ -40,14 +41,21 @@ public class WelcomeMojo extends AbstractZetMojo {
 
 	private void buildWelcomeHtmlFile() throws IOException, MojoExecutionException {
 		StringBuilder welcomePage = new StringBuilder();
-		welcomePage
-				.append(Resources.toString(Thread.currentThread().getContextClassLoader().getResource("welcome/before.html"), Charsets.UTF_8));
+		welcomePage.append(
+				Resources.toString(Thread.currentThread().getContextClassLoader().getResource("welcome/before.html"), Charsets.UTF_8));
 
-		for (File child : carnotzet.getResourcesFolder().toFile().listFiles()) {
+		File[] children = getCarnotzet().getResourcesFolder().toFile().listFiles();
+		if (children == null) {
+			throw new CarnotzetDefinitionException(
+					"Resources folder does not exist or is not a directory : [" + getCarnotzet().getResourcesFolder() + "]");
+		}
+
+		for (File child : children) {
 			appendWelcomeFrom(child, welcomePage);
 		}
 
-		welcomePage.append(Resources.toString(Thread.currentThread().getContextClassLoader().getResource("welcome/after.html"), Charsets.UTF_8));
+		welcomePage.append(
+				Resources.toString(Thread.currentThread().getContextClassLoader().getResource("welcome/after.html"), Charsets.UTF_8));
 
 		String welcomePageStr = replaceIpPlaceholders(welcomePage.toString());
 
@@ -73,7 +81,7 @@ public class WelcomeMojo extends AbstractZetMojo {
 	}
 
 	private String getWelcomePagePath() {
-		return carnotzet.getResourcesFolder() + "/welcome.html";
+		return getCarnotzet().getResourcesFolder() + "/welcome.html";
 	}
 
 }

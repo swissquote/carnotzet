@@ -1,10 +1,10 @@
 package com.github.swissquote.carnotzet.core.runtime.log;
 
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * This class captures and stores log events for analysis
@@ -39,11 +39,6 @@ public class LogEvents extends LogListenerBase {
 		}
 	}
 
-	@Override
-	public void onClean() {
-		clear();
-	}
-
 	/**
 	 * Discards captured events
 	 */
@@ -59,7 +54,7 @@ public class LogEvents extends LogListenerBase {
 	}
 
 	public void waitForEntry(String service, String content, long timeoutMillis, int checkIntervalMillis) {
-		System.out.println("Waiting at most [" + timeoutMillis + "ms] until [" + content + "] appears in the logs of [" + service+ "]");
+		System.out.println("Waiting at most [" + timeoutMillis + "ms] until [" + content + "] appears in the logs of [" + service + "]");
 		long startTime = System.currentTimeMillis();
 		while (System.currentTimeMillis() < timeoutMillis + startTime) {
 			if (hasEntry(service, content)) {

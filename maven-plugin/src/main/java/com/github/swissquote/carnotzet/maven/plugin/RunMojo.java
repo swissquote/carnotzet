@@ -14,7 +14,7 @@ import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
 public class RunMojo extends AbstractZetMojo {
 
 	@Override
-	public void executeGoal() throws MojoExecutionException, MojoFailureException {
+	public void execute() throws MojoExecutionException, MojoFailureException {
 		if (service == null) {
 			getRuntime().start();
 		} else {

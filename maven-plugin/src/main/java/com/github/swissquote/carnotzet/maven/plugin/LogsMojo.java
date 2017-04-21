@@ -42,8 +42,8 @@ public class LogsMojo extends AbstractZetMojo {
 			}
 		};
 
-		if (service != null) {
-			printer.setEventFilter((event) -> service.equals(event.getService()));
+		if (getService() != null) {
+			printer.setEventFilter((event) -> getService().equals(event.getService()));
 		}
 
 		getRuntime().registerLogListener(printer);

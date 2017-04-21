@@ -19,9 +19,9 @@ public class Service {
 	@JsonProperty
 	private final Set<String> volumes;
 	@JsonProperty
+	//CHECKSTYLE:OFF
 	private final Set<String> env_file;
-//	@JsonProperty
-//	private final String container_name;
+	//CHECKSTYLE:ON
 	@JsonProperty
 	private final String entrypoint;
 	@JsonProperty

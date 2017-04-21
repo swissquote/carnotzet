@@ -21,7 +21,7 @@ import lombok.Setter;
  */
 public class StdOutLogPrinter extends LogListenerBase {
 
-	private final static List<Ansi.Color> unicornRainbowMagic = new ArrayList<>();
+	private final static List<Ansi.Color> UNICORN_RAINBOW_MAGIC = new ArrayList<>();
 
 	private Map<String, Ansi.Color> serviceColors = new HashMap<>();
 
@@ -32,12 +32,12 @@ public class StdOutLogPrinter extends LogListenerBase {
 
 	static {
 		AnsiConsole.systemInstall();
-		unicornRainbowMagic.add(Ansi.Color.CYAN);
-		unicornRainbowMagic.add(Ansi.Color.GREEN);
-		unicornRainbowMagic.add(Ansi.Color.YELLOW);
-		unicornRainbowMagic.add(Ansi.Color.MAGENTA);
-		unicornRainbowMagic.add(Ansi.Color.RED);
-		unicornRainbowMagic.add(Ansi.Color.BLUE);
+		UNICORN_RAINBOW_MAGIC.add(Ansi.Color.CYAN);
+		UNICORN_RAINBOW_MAGIC.add(Ansi.Color.GREEN);
+		UNICORN_RAINBOW_MAGIC.add(Ansi.Color.YELLOW);
+		UNICORN_RAINBOW_MAGIC.add(Ansi.Color.MAGENTA);
+		UNICORN_RAINBOW_MAGIC.add(Ansi.Color.RED);
+		UNICORN_RAINBOW_MAGIC.add(Ansi.Color.BLUE);
 	}
 
 	/**
@@ -70,8 +70,8 @@ public class StdOutLogPrinter extends LogListenerBase {
 		super(tail, follow);
 		this.longestServiceName = services.stream().mapToInt(String::length).max().orElse(0);
 		for (int i = 0; i < services.size(); i++) {
-			int colorIndex = i % unicornRainbowMagic.size();
-			serviceColors.put(services.get(i), unicornRainbowMagic.get(colorIndex));
+			int colorIndex = i % UNICORN_RAINBOW_MAGIC.size();
+			serviceColors.put(services.get(i), UNICORN_RAINBOW_MAGIC.get(colorIndex));
 		}
 	}
 
@@ -81,8 +81,8 @@ public class StdOutLogPrinter extends LogListenerBase {
 			if (service.length() > this.longestServiceName) {
 				longestServiceName = service.length();
 			}
-			int colorIndex = serviceColors.size() % unicornRainbowMagic.size();
-			return unicornRainbowMagic.get(colorIndex);
+			int colorIndex = serviceColors.size() % UNICORN_RAINBOW_MAGIC.size();
+			return UNICORN_RAINBOW_MAGIC.get(colorIndex);
 		});
 		System.out.println(ansi().
 				fg(color)

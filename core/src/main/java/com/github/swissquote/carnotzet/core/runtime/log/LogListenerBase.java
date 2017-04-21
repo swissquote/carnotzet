@@ -8,6 +8,8 @@ import java.util.function.Function;
 @Slf4j
 public abstract class LogListenerBase implements LogListener {
 
+	public static final int DEFAULT_TAIL = 1000;
+
 	/**
 	 * Indicates how many lines of logs to get at max
 	 */
@@ -22,7 +24,7 @@ public abstract class LogListenerBase implements LogListener {
 	private Function<LogEvent, Boolean> eventFilter;
 
 	public LogListenerBase() {
-		this.tail = 1000;
+		this.tail = DEFAULT_TAIL;
 		this.follow = true;
 	}
 

@@ -1,16 +1,15 @@
 package com.github.swissquote.carnotzet.core.runtime;
 
-import com.google.common.base.Joiner;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
+import com.google.common.base.Joiner;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SuppressFBWarnings("DMI_HARDCODED_ABSOLUTE_FILENAME")
@@ -50,7 +49,8 @@ public final class CommandRunner {
 		catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			throw new CarnotzetDefinitionException(e);
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
@@ -81,6 +81,5 @@ public final class CommandRunner {
 			return s.useDelimiter("\\A").hasNext() ? s.next() : "";
 		}
 	}
-
 
 }

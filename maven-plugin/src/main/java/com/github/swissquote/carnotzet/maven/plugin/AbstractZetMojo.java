@@ -10,8 +10,6 @@ import java.util.List;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
@@ -29,15 +27,14 @@ import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
 import com.github.swissquote.carnotzet.runtime.docker.compose.DockerComposeRuntime;
 
 import lombok.Getter;
-import lombok.NonNull;
 
 public abstract class AbstractZetMojo extends AbstractMojo {
 
 	@Parameter(defaultValue = "${project}", readonly = true)
-	protected MavenProject project;
+	private MavenProject project;
 
 	@Parameter(defaultValue = "${settings}", readonly = true)
-	protected Settings settings;
+	private Settings settings;
 
 	@Parameter(defaultValue = "${session}", readonly = true)
 	private MavenSession session;
@@ -46,16 +43,18 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	private String runtime;
 
 	@Parameter(property = "service")
-	protected String service;
+	@Getter
+	private String service;
 
 	@Parameter(property = "follow")
-	protected boolean follow;
+	@Getter
+	private boolean follow;
 
 	@Parameter(property = "instanceId", readonly = true)
 	private String k8sInstanceId;
 
 	@Getter
-	protected final Carnotzet carnotzet;
+	private final Carnotzet carnotzet;
 
 	private ContainerOrchestrationRuntime chosenRuntime;
 
@@ -120,11 +119,11 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 		return project;
 	}
 
-	protected List<String> getServiceNames() {
+	/* package */ List<String> getServiceNames() {
 		return getCarnotzet().getModules().stream().map(CarnotzetModule::getName).sorted().collect(toList());
 	}
 
-	protected void waitForUserInterrupt() {
+	/* package */ void waitForUserInterrupt() {
 		try {
 			Thread.sleep(Long.MAX_VALUE);
 		}
@@ -133,8 +132,8 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 		}
 	}
 
-	protected Runnable wrapWithLogFollowIfNeeded(Runnable block) {
-		if (follow){
+	/* package */ Runnable wrapWithLogFollowIfNeeded(Runnable block) {
+		if (follow) {
 			return () -> {
 				LogListener printer = new StdOutLogPrinter(getServiceNames(), 0, true);
 				getRuntime().registerLogListener(printer);

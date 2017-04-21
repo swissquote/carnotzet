@@ -6,7 +6,6 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
-import com.github.swissquote.carnotzet.core.runtime.CommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
 import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
 
@@ -15,15 +14,15 @@ public class RunMojo extends AbstractZetMojo {
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
-		if (service == null) {
+		if (getService() == null) {
 			getRuntime().start();
 		} else {
-			getRuntime().start(service);
+			getRuntime().start(getService());
 		}
 		Runtime.getRuntime().addShutdownHook(stopOnShutdownHook);
 		LogListener printer = new StdOutLogPrinter(getServiceNames(), null, true);
-		if (service != null) {
-			printer.setEventFilter(event -> event.getService().equals(service));
+		if (getService() != null) {
+			printer.setEventFilter(event -> event.getService().equals(getService()));
 		}
 		getRuntime().registerLogListener(printer);
 		waitForUserInterrupt();

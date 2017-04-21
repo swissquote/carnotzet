@@ -28,6 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ResourcesManager {
 
+	private static final int FIND_MAX_DEPTH = 200;
+
 	@Getter
 	private final Path resourcesRoot;
 	private final Path topLevelModuleResourcesPath;
@@ -78,7 +80,7 @@ public class ResourcesManager {
 	 * Merge the content of files in processed modules and a given module
 	 */
 	private void mergeFiles(List<CarnotzetModule> processedModules, CarnotzetModule module) throws IOException {
-		find(getModuleResourcesPath(module), 200, getPotentialMergeFileFilter()).forEach(mergeFile -> {
+		find(getModuleResourcesPath(module), FIND_MAX_DEPTH, getPotentialMergeFileFilter()).forEach(mergeFile -> {
 			String mergeFileModuleName = getModuleResourcesPath(module).relativize(mergeFile).getName(0).toString();
 
 			CarnotzetModule processedModule = processedModules.stream()
@@ -136,7 +138,7 @@ public class ResourcesManager {
 	private void overrideFiles(List<CarnotzetModule> processedModules, CarnotzetModule module) throws IOException {
 
 		//going through all the files of the module in target/carnotzet folder
-		find(getModuleResourcesPath(module), 200, getPotentialOverridingFileFilter()).forEach(overridingFilePath -> {
+		find(getModuleResourcesPath(module), FIND_MAX_DEPTH, getPotentialOverridingFileFilter()).forEach(overridingFilePath -> {
 			for (CarnotzetModule processedModule : processedModules) {
 				Path relativePath = getModuleResourcesPath(module).relativize(overridingFilePath);
 				Path toOverrideFile = getModuleResourcesPath(processedModule).resolve(relativePath);

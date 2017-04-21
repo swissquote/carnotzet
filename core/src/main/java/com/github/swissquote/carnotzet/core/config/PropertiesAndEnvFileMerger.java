@@ -34,8 +34,8 @@ public class PropertiesAndEnvFileMerger implements FileMerger {
 
 	@Override
 	public boolean knowsHowToMerge(Path path) {
-		return path.toString().endsWith(".properties") ||
-				path.toAbsolutePath().toString().contains("/env/");
+		return path.toString().endsWith(".properties")
+				|| path.toAbsolutePath().toString().contains("/env/");
 	}
 
 }

@@ -53,21 +53,21 @@ public class Carnotzet {
 	/**
 	 * @param topLevelModuleResourcesPath Optional : path the the top level module resources path.<br>
 	 *                                    Use this if you want to use files in src/main/resources of the top module instead of the jar.
-	 * @param resourcesFolder             Optional : working directory managed by carnotzet, used to resolve hierarchical configuration copy
-	 *                                    <br>
-	 *                                    resources files for mounting inside containers.
+	 * @param resources                   Optional : working directory managed by carnotzet, used to resolve hierarchical configuration copy
+	 *                                    <br> resources files for mounting inside containers.
 	 */
-	public Carnotzet(MavenCoordinate topLevelModuleId, Path resourcesFolder, List<CarnotzetExtension> extensions,
+	public Carnotzet(MavenCoordinate topLevelModuleId, Path resources, List<CarnotzetExtension> extensions,
 			Path topLevelModuleResourcesPath) {
-		log.debug("Creating new carnotzet for [{}] in path [{}]", topLevelModuleId, resourcesFolder);
+		log.debug("Creating new carnotzet for [{}] in path [{}]", topLevelModuleId, resources);
 		this.topLevelModuleId = topLevelModuleId;
 		this.topLevelModuleName = resolver.getModuleName(topLevelModuleId);
 		this.extensions = extensions;
-		if (resourcesFolder == null) {
-			resourcesFolder = Paths.get("/tmp/carnotzet_" + System.nanoTime());
+		Path resourcesPath = resources;
+		if (resourcesPath == null) {
+			resourcesPath = Paths.get("/tmp/carnotzet_" + System.nanoTime());
 		}
-		resourcesFolder = resourcesFolder.resolve(topLevelModuleName);
-		this.resourceManager = new ResourcesManager(resourcesFolder, topLevelModuleResourcesPath);
+		resourcesPath = resourcesPath.resolve(topLevelModuleName);
+		this.resourceManager = new ResourcesManager(resourcesPath, topLevelModuleResourcesPath);
 	}
 
 	public List<CarnotzetModule> getModules() {
@@ -143,7 +143,8 @@ public class Carnotzet {
 			try {
 				Files.walk(toMount).forEach((p) -> {
 					if (p.toFile().isFile()) {
-						result.put(p.toString(), new File(p.toString().substring(p.toString().indexOf("/files/") + 6)).getAbsolutePath());
+						result.put(p.toString(),
+								new File(p.toString().substring(p.toString().indexOf("/files/") + "files/".length())).getAbsolutePath());
 					}
 				});
 			}

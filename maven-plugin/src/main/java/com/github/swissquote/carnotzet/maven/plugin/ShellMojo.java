@@ -31,7 +31,7 @@ public class ShellMojo extends AbstractZetMojo {
 			getLog().info("There doesn't seem to be any containers created yet for this carnotzet, please make sure the carnotzet is started");
 			return;
 		}
-		Container container = containers.stream().filter(c -> c.getServiceName().equals(service)).findFirst().orElse(null);
+		Container container = containers.stream().filter(c -> c.getServiceName().equals(getService())).findFirst().orElse(null);
 		if (container == null) {
 			container = promptForContainer(containers);
 		}

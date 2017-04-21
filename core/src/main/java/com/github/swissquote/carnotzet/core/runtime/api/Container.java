@@ -7,8 +7,8 @@ import lombok.Value;
  */
 @Value
 public class Container {
-	String id;
-	String serviceName;
-	boolean running;
-	String ip;
+	private final String id;
+	private final String serviceName;
+	private final boolean running;
+	private final String ip;
 }

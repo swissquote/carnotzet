@@ -20,15 +20,15 @@ public class StopMojo extends AbstractZetMojo {
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 
-		if (follow) {
+		if (isFollow()) {
 			LogListener printer = new StdOutLogPrinter(getServiceNames(), 0, true);
 			getRuntime().registerLogListener(printer);
 		}
 
-		if (service == null) {
+		if (getService() == null) {
 			getRuntime().stop();
 		} else {
-			getRuntime().stop(service);
+			getRuntime().stop(getService());
 		}
 
 	}

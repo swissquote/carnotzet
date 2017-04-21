@@ -6,9 +6,6 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
-import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
-import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
-
 /**
  * restart all services for this carnotzet
  */
@@ -21,15 +18,13 @@ public class RestartMojo extends AbstractZetMojo {
 	}
 
 	private Runnable command = () -> {
-		if (service == null) {
+		if (getService() == null) {
 			getRuntime().stop();
 			getRuntime().start();
 		} else {
-			getRuntime().stop(service);
-			getRuntime().start(service);
+			getRuntime().stop(getService());
+			getRuntime().start(getService());
 		}
 	};
-
-
 
 }

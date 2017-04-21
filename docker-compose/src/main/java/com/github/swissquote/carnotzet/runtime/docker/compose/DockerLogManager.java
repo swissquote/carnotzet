@@ -14,6 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import com.github.swissquote.carnotzet.core.runtime.api.Container;
 import com.github.swissquote.carnotzet.core.runtime.log.LogEvent;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
+import com.github.swissquote.carnotzet.core.runtime.log.LogListenerBase;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
@@ -104,7 +105,7 @@ import lombok.extern.slf4j.Slf4j;
 			String sinceTimestamp = Long.toString(since.getEpochSecond());
 			command.add("--since");
 			command.add(sinceTimestamp);
-			tail = 2000;
+			tail = LogListenerBase.DEFAULT_TAIL;
 		}
 		if (listener.getFollow()) {
 			command.add("--follow");

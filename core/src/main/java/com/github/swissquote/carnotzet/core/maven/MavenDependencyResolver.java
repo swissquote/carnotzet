@@ -171,10 +171,10 @@ public class MavenDependencyResolver {
 
 	@Data
 	private static class DockerImageName {
-		String registry;
-		String group;
-		String image;
-		String version;
+		private String registry;
+		private String group;
+		private String image;
+		private String version;
 
 		DockerImageName(String s) {
 			String[] parts = s.split("/");

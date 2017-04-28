@@ -26,18 +26,6 @@ public class CarnotzetModule {
 	private final String dockerEntrypoint;
 	private final Set<String> dockerEnvFiles;
 
-	public Boolean isDataModule() {
-		return "true".equals(properties.get("data"));
-	}
-
-	public String getDataModuleType() {
-		return properties.get("data.type");
-	}
-
-	public String getContainerName() {
-		return topLevelModuleName + "_" + name;
-	}
-
 	public String getShortImageName() {
 		String withoutHost = imageName.replaceFirst(".*/", "");
 		return withoutHost.replaceFirst(":.*", "");

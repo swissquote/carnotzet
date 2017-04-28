@@ -1,15 +1,12 @@
 package com.github.swissquote.carnotzet.maven.plugin;
 
-import static java.util.stream.Collectors.toList;
-
 import java.io.File;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
@@ -18,31 +15,38 @@ import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.settings.Settings;
 
 import com.github.swissquote.carnotzet.core.Carnotzet;
+import com.github.swissquote.carnotzet.core.CarnotzetConfig;
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
-import com.github.swissquote.carnotzet.core.CarnotzetModule;
 import com.github.swissquote.carnotzet.core.maven.CarnotzetModuleCoordinates;
 import com.github.swissquote.carnotzet.core.runtime.api.ContainerOrchestrationRuntime;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
 import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
+import com.github.swissquote.carnotzet.maven.plugin.impl.Utils;
 import com.github.swissquote.carnotzet.runtime.docker.compose.DockerComposeRuntime;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 
+@SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Maven fails to inject params when using a constructor")
 public abstract class AbstractZetMojo extends AbstractMojo {
 
-	@Parameter(defaultValue = "${project}", readonly = true)
+	@Parameter(defaultValue = "${project}", readonly = true, required = true)
+	@Getter
 	private MavenProject project;
 
 	@Parameter(defaultValue = "${settings}", readonly = true)
+	@Getter
 	private Settings settings;
 
 	@Parameter(defaultValue = "${session}", readonly = true)
+	@Getter
 	private MavenSession session;
 
-	@Parameter(property = "runtime", defaultValue = "compose", readonly = true)
-	private String runtime;
+	@Parameter(property = "instanceId", readonly = true)
+	@Getter
+	private String instanceId;
 
-	@Parameter(property = "service")
+	@Parameter(property = "service", readonly = true)
 	@Getter
 	private String service;
 
@@ -50,43 +54,29 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	@Getter
 	private boolean follow;
 
-	@Parameter(property = "instanceId", readonly = true)
-	private String k8sInstanceId;
+	@Getter
+	private Carnotzet carnotzet;
 
 	@Getter
-	private final Carnotzet carnotzet;
-
-	private ContainerOrchestrationRuntime chosenRuntime;
+	private ContainerOrchestrationRuntime runtime;
 
 	@Component
 	private ProjectBuilder projectBuilder;
 
-	public AbstractZetMojo() {
+	@Override
+	public final void execute() throws MojoFailureException, MojoExecutionException {
 		MavenProject project = getCarnotzetProject();
-		CarnotzetModuleCoordinates topLevelArtifact =
-				new CarnotzetModuleCoordinates(project.getGroupId(), project.getArtifactId(), project.getVersion());
-		Path resourcesRoot = Paths.get(project.getBuild().getDirectory(), "carnotzet");
-		carnotzet = new Carnotzet(topLevelArtifact, resourcesRoot, Collections.emptyList(),
-				project.getBasedir().toPath().resolve("src/main/resources"));
-
+		CarnotzetConfig config = CarnotzetConfig.builder()
+				.topLevelModuleId(new CarnotzetModuleCoordinates(project.getGroupId(), project.getArtifactId(), project.getVersion()))
+				.resourcesPath(Paths.get(project.getBuild().getDirectory(), "carnotzet"))
+				.topLevelModuleResourcesPath(project.getBasedir().toPath().resolve("src/main/resources"))
+				.build();
+		carnotzet = new Carnotzet(config);
+		runtime = new DockerComposeRuntime(carnotzet);
+		executeInternal();
 	}
 
-	public ContainerOrchestrationRuntime getRuntime() {
-		if (chosenRuntime != null) {
-			return chosenRuntime;
-		}
-
-		switch (runtime.toLowerCase()) {
-			case "compose":
-				getLog().info("Using docker-compose runtime");
-				chosenRuntime = new DockerComposeRuntime(carnotzet);
-				break;
-			default:
-				throw new RuntimeException("Unknown container runtime [" + runtime + "]");
-		}
-
-		return chosenRuntime;
-	}
+	public abstract void executeInternal() throws MojoExecutionException, MojoFailureException;
 
 	/**
 	 * @return the currently built project if it's a carnotzet, or a child/sibling otherwise
@@ -119,26 +109,13 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 		return project;
 	}
 
-	/* package */ List<String> getServiceNames() {
-		return getCarnotzet().getModules().stream().map(CarnotzetModule::getName).sorted().collect(toList());
-	}
-
-	/* package */ void waitForUserInterrupt() {
-		try {
-			Thread.sleep(Long.MAX_VALUE);
-		}
-		catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		}
-	}
-
-	/* package */ Runnable wrapWithLogFollowIfNeeded(Runnable block) {
+	public Runnable wrapWithLogFollowIfNeeded(Runnable block) {
 		if (follow) {
 			return () -> {
-				LogListener printer = new StdOutLogPrinter(getServiceNames(), 0, true);
-				getRuntime().registerLogListener(printer);
+				LogListener printer = new StdOutLogPrinter(Utils.getServiceNames(carnotzet), 0, true);
+				runtime.registerLogListener(printer);
 				block.run();
-				waitForUserInterrupt();
+				Utils.waitForUserInterrupt();
 			};
 		}
 		return block;

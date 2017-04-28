@@ -8,6 +8,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
 import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
+import com.github.swissquote.carnotzet.maven.plugin.impl.Utils;
 
 /**
  * this goal builds the image and starts a container with some volumes and ports bound.
@@ -18,10 +19,10 @@ import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
 public class StopMojo extends AbstractZetMojo {
 
 	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
+	public void executeInternal() throws MojoExecutionException, MojoFailureException {
 
 		if (isFollow()) {
-			LogListener printer = new StdOutLogPrinter(getServiceNames(), 0, true);
+			LogListener printer = new StdOutLogPrinter(Utils.getServiceNames(getCarnotzet()), 0, true);
 			getRuntime().registerLogListener(printer);
 		}
 

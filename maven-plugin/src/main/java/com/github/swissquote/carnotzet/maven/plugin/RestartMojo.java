@@ -13,7 +13,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 public class RestartMojo extends AbstractZetMojo {
 
 	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
+	public void executeInternal() throws MojoExecutionException, MojoFailureException {
 		wrapWithLogFollowIfNeeded(command).run();
 	}
 

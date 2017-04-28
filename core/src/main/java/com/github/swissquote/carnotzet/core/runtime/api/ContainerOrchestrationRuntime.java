@@ -78,6 +78,4 @@ public interface ContainerOrchestrationRuntime {
 	 */
 	void registerLogListener(LogListener listener);
 
-
-
 }

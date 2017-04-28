@@ -31,12 +31,18 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	private final Carnotzet carnotzet;
 
+	private final String instanceId;
+
 	private final DockerLogManager logManager;
 
 	public DockerComposeRuntime(Carnotzet carnotzet) {
-		this.carnotzet = carnotzet;
-		this.logManager = new DockerLogManager();
+		this(carnotzet, carnotzet.getTopLevelModuleName());
+	}
 
+	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId) {
+		this.carnotzet = carnotzet;
+		this.instanceId = instanceId;
+		this.logManager = new DockerLogManager();
 	}
 
 	private void computeDockerComposeFile() {
@@ -97,7 +103,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		log.debug("Forcing update of docker-compose.yml before start");
 		computeDockerComposeFile();
 		Instant start = Instant.now();
-		runCommand("docker-compose", "up", "-d");
+		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d");
 		ensureNetworkCommunicationIsPossible();
 		logManager.ensureCapturingLogs(start, getContainers());
 	}
@@ -107,7 +113,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		log.debug("Forcing update of docker-compose.yml before start");
 		computeDockerComposeFile();
 		Instant start = Instant.now();
-		runCommand("docker-compose", "up", "-d", service);
+		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d", service);
 		ensureNetworkCommunicationIsPossible();
 		logManager.ensureCapturingLogs(start, Collections.singletonList(getContainer(service)));
 	}
@@ -138,7 +144,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	private String getDockerComposeProjectName() {
-		return normalizeDockerComposeProjectName(carnotzet.getTopLevelModuleName());
+		return normalizeDockerComposeProjectName(instanceId);
 	}
 
 	private String getDockerNetworkName() {
@@ -153,7 +159,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	@Override
 	public void stop() {
 		ensureDockerComposeFileIsPresent();
-		runCommand("docker-compose", "stop");
+		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "stop");
 		// networks are created on demand and it's very fast, deleting the network upon stop helps avoiding sub-network starvation
 		// when using a lot of docker networks
 		runCommandAndCaptureOutput("docker", "network", "rm", getDockerNetworkName());
@@ -162,19 +168,19 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	@Override
 	public void stop(String service) {
 		ensureDockerComposeFileIsPresent();
-		runCommand("docker-compose", "stop", service);
+		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "stop", service);
 	}
 
 	@Override
 	public void status() {
 		ensureDockerComposeFileIsPresent();
-		runCommand("docker-compose", "ps");
+		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "ps");
 	}
 
 	@Override
 	public void clean() {
 		ensureDockerComposeFileIsPresent();
-		runCommand("docker-compose", "rm", "-f");
+		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "rm", "-f");
 	}
 
 	@Override
@@ -195,18 +201,19 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	@Override
 	public void pull(String service) {
 		ensureDockerComposeFileIsPresent();
-		runCommand("docker-compose", "pull", service);
+		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "pull", service);
 	}
 
 	@Override
 	public void pull() {
 		ensureDockerComposeFileIsPresent();
-		runCommand("docker-compose", "pull");
+		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "pull");
 	}
 
 	@Override
 	public List<Container> getContainers() {
-		String commandOutput = runCommandAndCaptureOutput("docker-compose", "ps", "-q").replaceAll("\n", " ");
+		String commandOutput = runCommandAndCaptureOutput("docker-compose", "-p", getDockerComposeProjectName(),
+				"ps", "-q").replaceAll("\n", " ");
 		log.debug("docker-compose ps output : " + commandOutput);
 		if (commandOutput.trim().isEmpty()) {
 			return Collections.emptyList();
@@ -268,6 +275,6 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	public void clean(String service) {
-		runCommand("docker-compose", "rm", "-f", service);
+		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "rm", "-f", service);
 	}
 }

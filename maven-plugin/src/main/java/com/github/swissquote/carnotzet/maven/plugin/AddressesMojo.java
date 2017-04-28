@@ -15,7 +15,7 @@ import com.github.swissquote.carnotzet.maven.plugin.impl.Addresses;
 public class AddressesMojo extends AbstractZetMojo {
 
 	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
+	public void executeInternal() throws MojoExecutionException, MojoFailureException {
 		Addresses.execute(getRuntime(), getLog());
 	}
 

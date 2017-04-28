@@ -12,7 +12,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 @Mojo(name = "pull", defaultPhase = LifecyclePhase.NONE, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class PullMojo extends AbstractZetMojo {
 	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
+	public void executeInternal() throws MojoExecutionException, MojoFailureException {
 		getRuntime().pull();
 	}
 }

@@ -17,7 +17,7 @@ import com.github.swissquote.carnotzet.maven.plugin.impl.Logs;
 public class LogsMojo extends AbstractZetMojo {
 
 	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
+	public void executeInternal() throws MojoExecutionException, MojoFailureException {
 		Logs.execute(getRuntime(), getCarnotzet(), getService());
 	}
 

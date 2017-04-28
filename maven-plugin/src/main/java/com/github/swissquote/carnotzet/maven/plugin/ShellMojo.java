@@ -20,7 +20,7 @@ public class ShellMojo extends AbstractZetMojo {
 	private Prompter prompter;
 
 	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
+	public void executeInternal() throws MojoExecutionException, MojoFailureException {
 		Shell.execute(getRuntime(), prompter, getLog(), getService());
 	}
 

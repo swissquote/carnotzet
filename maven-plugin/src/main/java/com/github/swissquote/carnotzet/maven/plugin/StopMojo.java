@@ -19,7 +19,7 @@ import com.github.swissquote.carnotzet.maven.plugin.impl.Utils;
 public class StopMojo extends AbstractZetMojo {
 
 	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
+	public void executeInternal() throws MojoExecutionException, MojoFailureException {
 
 		if (isFollow()) {
 			LogListener printer = new StdOutLogPrinter(Utils.getServiceNames(getCarnotzet()), 0, true);

@@ -15,7 +15,7 @@ import com.github.swissquote.carnotzet.maven.plugin.impl.Welcome;
 public class WelcomeMojo extends AbstractZetMojo {
 
 	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
+	public void executeInternal() throws MojoExecutionException, MojoFailureException {
 		Welcome.execute(getRuntime(), getCarnotzet(), getLog());
 	}
 }

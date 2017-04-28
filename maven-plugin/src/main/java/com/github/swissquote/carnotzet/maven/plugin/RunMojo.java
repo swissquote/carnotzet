@@ -15,7 +15,7 @@ import com.github.swissquote.carnotzet.maven.plugin.impl.Run;
 public class RunMojo extends AbstractZetMojo {
 
 	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
+	public void executeInternal() throws MojoExecutionException, MojoFailureException {
 		Run.execute(getRuntime(), getCarnotzet(), getService());
 	}
 

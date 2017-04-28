@@ -13,7 +13,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 public class PsMojo extends AbstractZetMojo {
 
 	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
+	public void executeInternal() throws MojoExecutionException, MojoFailureException {
 		getRuntime().status();
 	}
 

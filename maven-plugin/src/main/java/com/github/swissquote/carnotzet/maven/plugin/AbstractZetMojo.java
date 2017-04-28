@@ -5,6 +5,8 @@ import java.nio.file.Paths;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
@@ -22,8 +24,10 @@ import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
 import com.github.swissquote.carnotzet.maven.plugin.impl.Utils;
 import com.github.swissquote.carnotzet.runtime.docker.compose.DockerComposeRuntime;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 
+@SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Maven fails to inject params when using a constructor")
 public abstract class AbstractZetMojo extends AbstractMojo {
 
 	@Parameter(defaultValue = "${project}", readonly = true, required = true)
@@ -51,7 +55,7 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	private boolean follow;
 
 	@Getter
-	private final Carnotzet carnotzet;
+	private Carnotzet carnotzet;
 
 	@Getter
 	private ContainerOrchestrationRuntime runtime;
@@ -59,7 +63,8 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	@Component
 	private ProjectBuilder projectBuilder;
 
-	public AbstractZetMojo() {
+	@Override
+	public final void execute() throws MojoFailureException, MojoExecutionException {
 		MavenProject project = getCarnotzetProject();
 		CarnotzetConfig config = CarnotzetConfig.builder()
 				.topLevelModuleId(new CarnotzetModuleCoordinates(project.getGroupId(), project.getArtifactId(), project.getVersion()))
@@ -68,13 +73,15 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 				.build();
 		carnotzet = new Carnotzet(config);
 		runtime = new DockerComposeRuntime(carnotzet);
+		executeInternal();
 	}
+
+	public abstract void executeInternal() throws MojoExecutionException, MojoFailureException;
 
 	/**
 	 * @return the currently built project if it's a carnotzet, or a child/sibling otherwise
 	 */
 	private MavenProject getCarnotzetProject() {
-		getLog().info("Project : " + project);
 		if (!project.getArtifactId().endsWith("-carnotzet")) {
 			getLog().info("Current project is not a valid carnotzet project. ArtifactId must end with '-carnotzet'");
 

@@ -46,28 +46,17 @@ public class Carnotzet {
 
 	private final ResourcesManager resourceManager;
 
-	public Carnotzet(MavenCoordinate topLevelModuleId) {
-		this(topLevelModuleId, null, null, null);
-	}
-
-	/**
-	 * @param topLevelModuleResourcesPath Optional : path the the top level module resources path.<br>
-	 *                                    Use this if you want to use files in src/main/resources of the top module instead of the jar.
-	 * @param resources                   Optional : working directory managed by carnotzet, used to resolve hierarchical configuration copy
-	 *                                    <br> resources files for mounting inside containers.
-	 */
-	public Carnotzet(MavenCoordinate topLevelModuleId, Path resources, List<CarnotzetExtension> extensions,
-			Path topLevelModuleResourcesPath) {
-		log.debug("Creating new carnotzet for [{}] in path [{}]", topLevelModuleId, resources);
-		this.topLevelModuleId = topLevelModuleId;
+	public Carnotzet(CarnotzetConfig config) {
+		log.debug("Creating new carnotzet for [{}] in path [{}]", config.getTopLevelModuleId(), config.getResourcesPath());
+		this.topLevelModuleId = config.getTopLevelModuleId();
 		this.topLevelModuleName = resolver.getModuleName(topLevelModuleId);
-		this.extensions = extensions;
-		Path resourcesPath = resources;
+		this.extensions = config.getExtensions();
+		Path resourcesPath = config.getResourcesPath();
 		if (resourcesPath == null) {
 			resourcesPath = Paths.get("/tmp/carnotzet_" + System.nanoTime());
 		}
 		resourcesPath = resourcesPath.resolve(topLevelModuleName);
-		this.resourceManager = new ResourcesManager(resourcesPath, topLevelModuleResourcesPath);
+		this.resourceManager = new ResourcesManager(resourcesPath, config.getTopLevelModuleResourcesPath());
 	}
 
 	public List<CarnotzetModule> getModules() {

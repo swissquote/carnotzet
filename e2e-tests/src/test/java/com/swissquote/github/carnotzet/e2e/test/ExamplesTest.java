@@ -30,6 +30,7 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 import com.github.swissquote.carnotzet.core.Carnotzet;
+import com.github.swissquote.carnotzet.core.CarnotzetConfig;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
 import com.github.swissquote.carnotzet.core.runtime.log.LogEvents;
 import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
@@ -44,7 +45,10 @@ public class ExamplesTest {
 
 	@BeforeClass
 	public static void setup() throws Throwable {
-		Carnotzet carnotzet = new Carnotzet(fromPom(Paths.get("../e2e-tests-carnotzet/pom.xml")));
+		CarnotzetConfig config = CarnotzetConfig.builder()
+				.topLevelModuleId(fromPom(Paths.get("../e2e-tests-carnotzet/pom.xml")))
+				.build();
+		Carnotzet carnotzet = new Carnotzet(config);
 		runtime = new DockerComposeRuntime(carnotzet);
 
 		if (runtime.isRunning()){

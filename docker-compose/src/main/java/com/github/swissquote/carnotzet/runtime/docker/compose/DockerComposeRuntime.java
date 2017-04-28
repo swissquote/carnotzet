@@ -41,7 +41,11 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId) {
 		this.carnotzet = carnotzet;
-		this.instanceId = instanceId;
+		if (instanceId != null) {
+			this.instanceId = instanceId;
+		} else {
+			this.instanceId = carnotzet.getTopLevelModuleName();
+		}
 		this.logManager = new DockerLogManager();
 	}
 
@@ -58,7 +62,6 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			Service.ServiceBuilder serviceBuilder = Service.builder();
 			String moduleName = module.getName();
 
-			//serviceBuilder.container_name(module.getContainerName());
 			serviceBuilder.image(module.getImageName());
 			serviceBuilder.volumes(module.getDockerVolumes());
 			serviceBuilder.entrypoint(module.getDockerEntrypoint());
@@ -72,8 +75,9 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 						.map(String::trim)
 						.collect(Collectors.toList()));
 			}
+			// TODO : add those aliases as a "DNSDock" extension
 			networkAliases.add(module.getShortImageName() + ".docker");
-			networkAliases.add(module.getContainerName() + "." + module.getShortImageName() + ".docker");
+			networkAliases.add(instanceId + "_" + module.getName() + "." + module.getShortImageName() + ".docker");
 			ContainerNetwork network = ContainerNetwork.builder().aliases(networkAliases).build();
 			networks.put("carnotzet", network);
 			serviceBuilder.networks(networks);

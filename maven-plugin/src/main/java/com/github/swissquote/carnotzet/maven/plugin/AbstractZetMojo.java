@@ -42,7 +42,7 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	@Getter
 	private MavenSession session;
 
-	@Parameter(property = "instanceId", readonly = true)
+	@Parameter(property = "instance", readonly = true)
 	@Getter
 	private String instanceId;
 
@@ -72,7 +72,7 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 				.topLevelModuleResourcesPath(project.getBasedir().toPath().resolve("src/main/resources"))
 				.build();
 		carnotzet = new Carnotzet(config);
-		runtime = new DockerComposeRuntime(carnotzet);
+		runtime = new DockerComposeRuntime(carnotzet, instanceId);
 		executeInternal();
 	}
 

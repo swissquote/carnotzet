@@ -26,6 +26,7 @@ import com.github.swissquote.carnotzet.runtime.docker.compose.DockerComposeRunti
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
+import lombok.Setter;
 
 @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Maven fails to inject params when using a constructor")
 public abstract class AbstractZetMojo extends AbstractMojo {
@@ -55,16 +56,18 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	private boolean follow;
 
 	@Getter
+	@Setter
 	private Carnotzet carnotzet;
 
 	@Getter
+	@Setter
 	private ContainerOrchestrationRuntime runtime;
 
 	@Component
 	private ProjectBuilder projectBuilder;
 
 	@Override
-	public final void execute() throws MojoFailureException, MojoExecutionException {
+	public void execute() throws MojoFailureException, MojoExecutionException {
 		MavenProject project = getCarnotzetProject();
 		CarnotzetConfig config = CarnotzetConfig.builder()
 				.topLevelModuleId(new CarnotzetModuleCoordinates(project.getGroupId(), project.getArtifactId(), project.getVersion()))
@@ -81,7 +84,7 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	/**
 	 * @return the currently built project if it's a carnotzet, or a child/sibling otherwise
 	 */
-	private MavenProject getCarnotzetProject() {
+	public MavenProject getCarnotzetProject() {
 		if (!project.getArtifactId().endsWith("-carnotzet")) {
 			getLog().info("Current project is not a valid carnotzet project. ArtifactId must end with '-carnotzet'");
 

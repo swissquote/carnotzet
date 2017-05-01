@@ -16,6 +16,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenCoordinate;
@@ -27,42 +29,60 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * This is the main class of this library <br>
- * It represents a full environment as a set of executable applications with their configuration.
+ * It represents an environment definition as a set of executable applications with their configuration.
  */
 @Slf4j
 public class Carnotzet {
 
 	@Getter
-	private final MavenCoordinate topLevelModuleId;
+	private final CarnotzetConfig config;
 
 	@Getter
 	private final String topLevelModuleName;
 
+	@Getter
+	private final Pattern moduleFilterPattern;
+
 	private List<CarnotzetModule> modules;
 
-	private final MavenDependencyResolver resolver = new MavenDependencyResolver();
-
-	private final List<CarnotzetExtension> extensions;
+	private final MavenDependencyResolver resolver;
 
 	private final ResourcesManager resourceManager;
 
 	public Carnotzet(CarnotzetConfig config) {
-		log.debug("Creating new carnotzet for [{}] in path [{}]", config.getTopLevelModuleId(), config.getResourcesPath());
-		this.topLevelModuleId = config.getTopLevelModuleId();
-		this.topLevelModuleName = resolver.getModuleName(topLevelModuleId);
-		this.extensions = config.getExtensions();
+		log.debug("Creating new carnotzet with config [{}]", config);
+		this.config = config;
+
+		String filterPattern = "(.*)-carnotzet";
+		if (config.getModuleFilterPattern() != null) {
+			filterPattern = config.getModuleFilterPattern();
+		}
+		moduleFilterPattern = Pattern.compile(filterPattern);
+		if (moduleFilterPattern.matcher("").groupCount() != 1) {
+			throw new CarnotzetDefinitionException("moduleFilterPattern must have exactly 1 capture group");
+		}
+
+		this.topLevelModuleName = getModuleName(config.getTopLevelModuleId());
+
 		Path resourcesPath = config.getResourcesPath();
 		if (resourcesPath == null) {
 			resourcesPath = Paths.get("/tmp/carnotzet_" + System.nanoTime());
 		}
 		resourcesPath = resourcesPath.resolve(topLevelModuleName);
 		this.resourceManager = new ResourcesManager(resourcesPath, config.getTopLevelModuleResourcesPath());
+
+		String defaultContainerRegistry = "docker.io";
+		if (config.getDefaultDockerRegistry() != null) {
+			defaultContainerRegistry = config.getDefaultDockerRegistry();
+		}
+		resolver = new MavenDependencyResolver(this::getModuleName, defaultContainerRegistry);
+
 	}
 
 	public List<CarnotzetModule> getModules() {
 		if (modules == null) {
 			log.debug("resolving module dependencies");
-			modules = resolver.resolve(topLevelModuleId);
+			modules = resolver.resolve(config.getTopLevelModuleId());
 			log.debug("resolving module resources");
 			resourceManager.resolveResources(modules, resolver::copyModuleResources);
 			log.debug("Configuring individual file volumes");
@@ -70,8 +90,8 @@ public class Carnotzet {
 			log.debug("Configuring env_file volumes");
 			modules = configureEnvFilesVolumes(modules);
 
-			if (extensions != null) {
-				for (CarnotzetExtension feature : extensions) {
+			if (config.getExtensions() != null) {
+				for (CarnotzetExtension feature : config.getExtensions()) {
 					log.debug("Extension [{}] enabled", feature.getClass().getSimpleName());
 					modules = feature.apply(this);
 				}
@@ -149,4 +169,13 @@ public class Carnotzet {
 	public Path getResourcesFolder() {
 		return resourceManager.getResourcesRoot();
 	}
+
+	public String getModuleName(MavenCoordinate module) {
+		Matcher m = moduleFilterPattern.matcher(module.getArtifactId());
+		if (m.find()) {
+			return m.group(1);
+		}
+		return null;
+	}
+
 }

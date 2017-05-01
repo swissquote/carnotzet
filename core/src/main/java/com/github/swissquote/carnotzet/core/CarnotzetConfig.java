@@ -23,4 +23,20 @@ public class CarnotzetConfig {
 
 	private final Path topLevelModuleResourcesPath;
 
+	/**
+	 * Allows to use custom suffix/prefix for carnotzet modules artifactId.<br>
+	 * and filter out some dependencies.<br>
+	 * Must have exactly one capture group.<br>
+	 * The first capture group will be the name of the module.<br>
+	 * Dependencies which do not match the pattern will be ignored.<br>
+	 * defaults to (.*)-cartnozet  */
+	private final String moduleFilterPattern;
+
+	/**
+	 * Registry used when inferring docker image name from artifact id (convention).<br>
+	 * This is not used when the image name is defined in carnotzet.properties<br>
+	 * Defaults to docker.io
+	 */
+	private final String defaultDockerRegistry;
+
 }

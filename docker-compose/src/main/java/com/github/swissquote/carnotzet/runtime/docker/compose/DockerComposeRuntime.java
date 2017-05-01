@@ -50,7 +50,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	private void computeDockerComposeFile() {
-		log.debug(String.format("Building docker-compose.yml for [%s]", carnotzet.getTopLevelModuleId()));
+		log.debug(String.format("Building docker-compose.yml for [%s]", carnotzet.getConfig().getTopLevelModuleId()));
 
 		Map<String, Service> services = new HashMap<>();
 		List<CarnotzetModule> modules = carnotzet.getModules();
@@ -99,7 +99,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		catch (IOException e) {
 			throw new UncheckedIOException("Failed to write docker-compose.yml", e);
 		}
-		log.debug(String.format("End build compose file for module %s", carnotzet.getTopLevelModuleId()));
+		log.debug(String.format("End build compose file for module %s", carnotzet.getConfig().getTopLevelModuleId()));
 	}
 
 	@Override

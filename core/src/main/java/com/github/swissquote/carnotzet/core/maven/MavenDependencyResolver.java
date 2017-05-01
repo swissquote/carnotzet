@@ -13,43 +13,51 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
-import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
-import com.github.swissquote.carnotzet.core.CarnotzetModule;
-import com.github.swissquote.carnotzet.core.runtime.CommandRunner;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
 import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenCoordinate;
 
+import com.github.swissquote.carnotzet.core.Carnotzet;
+import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
+import com.github.swissquote.carnotzet.core.CarnotzetModule;
+import com.github.swissquote.carnotzet.core.runtime.CommandRunner;
+
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 
 @Slf4j
+@RequiredArgsConstructor
 public class MavenDependencyResolver {
+
+	private final Function<MavenCoordinate, String> moduleNameProvider;
+	private final String defaultDockerRegistry;
 
 	public List<CarnotzetModule> resolve(MavenCoordinate topLevelModuleId) {
 		List<CarnotzetModule> result = new ArrayList<>();
 
-		String topLevelModuleName = getModuleName(topLevelModuleId);
+		String topLevelModuleName = moduleNameProvider.apply(topLevelModuleId);
 
 		//We trust that shrinkwrap resolver returns the order we expect
 		List<MavenResolvedArtifact> resolvedDependencies = Arrays.stream(Maven.configureResolver()//.workOffline()
 				.resolve(topLevelModuleId.getGroupId() + ":" + topLevelModuleId.getArtifactId() + ":" + topLevelModuleId.getVersion())
-				.withTransitivity().asResolvedArtifact()).filter((artifact) -> artifact.getCoordinate().getArtifactId().endsWith("-carnotzet"))
+				.withTransitivity().asResolvedArtifact()).filter((artifact) -> moduleNameProvider.apply(artifact.getCoordinate()) != null)
 				.collect(Collectors.toList());
 
 		log.debug("Resolved dependencies using shrinkwrap : " + resolvedDependencies);
 
 		for (MavenResolvedArtifact artifact : resolvedDependencies) {
-			String moduleName = getModuleName(artifact.getCoordinate());
+			String moduleName = moduleNameProvider.apply(artifact.getCoordinate());
 			Map<String, String> artifactProperties = readProperties(artifact.getCoordinate());
 
 			// Default convention
-			String imageName = "docker.bank.swissquote.ch/" + moduleName + ":" + artifact.getCoordinate().getVersion();
+			String imageName = defaultDockerRegistry + "/" + moduleName + ":" + artifact.getCoordinate().getVersion();
 
 			// Allow custom image through configuration
 			if (artifactProperties.containsKey("docker.image")) {
@@ -165,7 +173,8 @@ public class MavenDependencyResolver {
 
 	}
 
-	public String getModuleName(MavenCoordinate moduleId) {
+	public String getModuleName(Carnotzet carnotzet, MavenCoordinate moduleId) {
+
 		return moduleId.getArtifactId().replaceAll("-carnotzet", "");
 	}
 

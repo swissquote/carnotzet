@@ -13,6 +13,7 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.settings.Settings;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import com.github.swissquote.carnotzet.core.Carnotzet;
 import com.github.swissquote.carnotzet.core.CarnotzetConfig;
@@ -69,6 +70,8 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	@Override
 	public void execute() throws MojoFailureException, MojoExecutionException {
 		MavenProject project = getCarnotzetProject();
+		SLF4JBridgeHandler.install();
+
 		CarnotzetConfig config = CarnotzetConfig.builder()
 				.topLevelModuleId(new CarnotzetModuleCoordinates(project.getGroupId(), project.getArtifactId(), project.getVersion()))
 				.resourcesPath(Paths.get(project.getBuild().getDirectory(), "carnotzet"))
@@ -76,7 +79,10 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 				.build();
 		carnotzet = new Carnotzet(config);
 		runtime = new DockerComposeRuntime(carnotzet, instanceId);
+
 		executeInternal();
+
+		SLF4JBridgeHandler.uninstall();
 	}
 
 	public abstract void executeInternal() throws MojoExecutionException, MojoFailureException;

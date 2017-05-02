@@ -48,6 +48,12 @@
 			<version>1.0-alpha-6</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jul-to-slf4j</artifactId>
+			<version>1.7.25</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>

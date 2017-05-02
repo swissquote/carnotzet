@@ -21,12 +21,9 @@ import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
 import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenCoordinate;
 
-import com.github.swissquote.carnotzet.core.Carnotzet;
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
-import com.github.swissquote.carnotzet.core.runtime.CommandRunner;
 
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.core.ZipFile;
@@ -70,15 +67,6 @@ public class MavenDependencyResolver {
 				imageName = null;
 			}
 
-			if (imageName != null) {
-				imageName = useDataModuleIfPresent(imageName, artifactProperties, moduleName, topLevelModuleName);
-				if (!doesImageExistInLocalDockerHost(imageName)) {
-					if (!pullImage(imageName)) {
-						throw new CarnotzetDefinitionException("Image " + imageName + " not found locally or in remote docker registry");
-					}
-				}
-			}
-
 			CarnotzetModule module = CarnotzetModule.builder()
 					.id(artifact.getCoordinate())
 					.name(moduleName)
@@ -90,37 +78,6 @@ public class MavenDependencyResolver {
 			result.add(0, module);
 		}
 		return result;
-	}
-
-	private String useDataModuleIfPresent(String imageName, Map<String, String> artifactProperties, String moduleName,
-			String topLevelModuleName) {
-
-		if (artifactProperties == null || !"true".equals(artifactProperties.get("data"))) {
-			return imageName;
-		}
-
-		DockerImageName name = new DockerImageName(imageName);
-		if (name.getGroup() != null) {
-			throw new CarnotzetDefinitionException("Cannot use a data-image with a base name that has a group");
-		}
-
-		name.setGroup(topLevelModuleName);
-		name.setVersion(null);
-		String dataModuleImageName = name.toString();
-
-		if (!doesImageExistInLocalDockerHost(dataModuleImageName)) {
-			if (!pullImage(dataModuleImageName)) {
-				log.warn("Service [" + moduleName + "] has no data for ["
-						+ topLevelModuleName
-						+ "-carnotzet]. To use pre-provisioned data, push an image named " + dataModuleImageName + "");
-			}
-		}
-
-		if (doesImageExistInLocalDockerHost(dataModuleImageName)) {
-			return dataModuleImageName;
-		}
-
-		return imageName;
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
@@ -151,14 +108,6 @@ public class MavenDependencyResolver {
 		}
 	}
 
-	private boolean doesImageExistInLocalDockerHost(String imageName) {
-		return 0 == CommandRunner.runCommand(false, "docker", "inspect", imageName);
-	}
-
-	private boolean pullImage(String imageName) {
-		return 0 == CommandRunner.runCommand(false, "docker", "pull", imageName);
-	}
-
 	private ZipFile getJarFile(MavenCoordinate id) throws DependencyResolutionRequiredException, ZipException {
 		File jarFile = Maven.configureResolver().workOffline()
 				.resolve(id.getGroupId() + ":" + id.getArtifactId() + ":" + id.getVersion())
@@ -175,78 +124,6 @@ public class MavenDependencyResolver {
 			throw new CarnotzetDefinitionException(e);
 		}
 
-	}
-
-	public String getModuleName(Carnotzet carnotzet, MavenCoordinate moduleId) {
-
-		return moduleId.getArtifactId().replaceAll("-carnotzet", "");
-	}
-
-	@Data
-	private static class DockerImageName {
-		private String registry;
-		private String group;
-		private String image;
-		private String version;
-
-		DockerImageName(String s) {
-			String[] parts = s.split("/");
-			String imageAndVersion = "";
-
-			if (parts.length > 3) {
-				throw new CarnotzetDefinitionException("Docker image name is invalid");
-			}
-
-			if (parts.length == 3) {
-				registry = parts[0];
-				group = parts[1];
-				imageAndVersion = parts[2];
-			}
-
-			if (parts.length == 2) {
-				if (parts[0].contains(".")) {
-					registry = parts[0];
-				} else {
-					group = parts[0];
-				}
-				imageAndVersion = parts[1];
-			}
-
-			if (parts.length == 1) {
-				imageAndVersion = parts[0];
-			}
-
-			parts = imageAndVersion.split(":");
-
-			if (parts.length > 2) {
-				throw new CarnotzetDefinitionException("Docker image name is invalid");
-			}
-
-			if (parts.length == 2) {
-				image = parts[0];
-				version = parts[1];
-			}
-
-			if (parts.length == 1) {
-				image = parts[0];
-			}
-
-		}
-
-		public String toString() {
-			StringBuilder sb = new StringBuilder();
-			if (registry != null) {
-				sb.append(registry).append("/");
-			}
-			if (group != null) {
-				sb.append(group).append("/");
-			}
-			sb.append(image);
-			if (version != null) {
-				sb.append(":").append(version);
-			}
-			return sb.toString();
-		}
 	}
 
 }

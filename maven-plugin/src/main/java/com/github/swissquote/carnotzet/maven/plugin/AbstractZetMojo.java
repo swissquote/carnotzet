@@ -121,8 +121,8 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	public Runnable wrapWithLogFollowIfNeeded(Runnable block) {
 		if (follow) {
 			return () -> {
-				LogListener printer = new StdOutLogPrinter(Utils.getServiceNames(carnotzet), 0, true);
-				runtime.registerLogListener(printer);
+				LogListener printer = new StdOutLogPrinter(Utils.getServiceNames(getCarnotzet()), 0, true);
+				getRuntime().registerLogListener(printer);
 				block.run();
 				Utils.waitForUserInterrupt();
 			};

@@ -4,70 +4,98 @@ permalink: /user-guide/java-api
 ---
 {% include toc %}
 
-Introduced with version 1.1.0, the sq-modular-sandbox-core java library was extracted from the sq-modular-sandbox-maven-plugin. This allows for easy standalone usage of the sandbox in java applications and the integration of the modular sandbox with any developer tool written in Java (Tests, frameworks such as Junit4, Junit5, TestNG, IDEs such as Eclipse or IntelliJ, build tools such as Maven or Gradle.)
+The java library allows you to manage (start/stop, inspect, logs, etc...) carnotzet environments. It is a good way to integrate carnotzet with 
+other tools and libraries (testing framework, build tools, etc...) that are interoperable with Java.
 
 ```xml
 <dependency>
-    <groupId>com.swissquote.foundation</groupId>
-    <artifactId>sq-modular-sandbox-core</artifactId>
-    <version>${sq-modular-sandbox.version}</version>
-    <scope>test</scope>
+	<groupId>com.github.swissquote</groupId>
+	<artifactId>carnotzet-core</artifactId>
+	<version>${carnotzet.version}</version>
 </dependency>
 ```
+> don't forget to use test scope if you are integrating directly in test code.
 
-## Creating a Carnotzet from a POM file
+### Environment identifier
+We use maven coordinates (artifact id, group id, version) to uniquely identify an environment definition.
 
 ```java
-MavenCoordinate artifact = SandboxMavenArtifact.fromPom(new File("pom.xml"));
-Sandbox sandbox = new Sandbox(artifact, new MavenDependencyResolver());
+MavenCoordinate env1 = CarnotzetModuleCoordinates.fromPom(Paths.get("my-carnotzet/pom.xml"));
+MavenCoordinate env2 = new CarnotzetModuleCoordinates("com.example","my-artifact-id","1.3.2");
 ```
 
-## Creating a Carnotzet from Maven coordinates
-
+## Environment definition configuration
+The simplest form of configuration is the following : 
 ```java
-MavenCoordinate artifact = new SandboxMavenArtifact("com.swissquote","sq-artifact-id","1.3.2");
-Sandbox sandbox = new Sandbox(artifact, new MavenDependencyResolver());
+CarnotzetConfig config = CarnotzetConfig.builder().topLevelModuleId(env1)).build();
+Carnotzet carnotzet = new Carnotzet(config);
 ```
 
-If you want to use another packaging and dependency system (NPM for example), you'd have to implement the DependencyResolver interface and instanciate that.
-
-## Running the Carnotzet
-
+## Runtime
+At the moment there is only one runtime available : docker compose.
 ```java
-ContainerRuntime runtime = new ComposeRuntime(sandbox);
+ContainerOrchestrationRuntime runtime = new DockerComposeRuntime(carnotzet);
+// Example usages
 runtime.start();
+runtime.stop("mysql");
+runtime.getContainer("redis").getIp();
 ```
 
-If you want to use another container runtime (Kubernetes or Swarm for example) you'd have to implement the ContainerRuntime interface and instanciate that.
-## Get services log events
+## Log management
+
 
 ```java
-LogListener logEvents = new SandboxLogEvents();
+LogEvents logEvents = new LogEvents();
+runtime.registerLogListener(logEvents); // can be called before or after runtime.start()
+logEvents.waitForEntry("mysql", "Mysql is not ready !", 10000, 50);
+		
+// print logs in the test console
+runtime.registerLogListener(new StdOutLogPrinter(1000, true));
+```
+
+## Get services log events
+You can register log listeners which will be notified every time a log event occurs in one of the running applications. 
+You can register them in the runtime at any moment (before or after services are started).
+
+```java
+LogEvents logEvents = new LogEvents();
 runtime.registerLogListener(logEvents);
+runtime.registerLogListener(new StdOutLogPrinter());
 ```
  
 
-Some implementations of the Log log listeners come "out of the box" : 
+Some implementations are provided for convenience : 
 
-- `SandboxLogEvents` : Stores receives log events in memory, allows you to wait until a certain text appears in the logs or check if some text appeared in the logs of a service (useful for test assertions).
+- `LogEvents` : Stores receives log events in memory, allows you to wait until a certain text appears in the logs or check if some text appeared in the logs of a service (useful for test assertions).
 - `StdOutLogPrinter` : Outputs the logs events to the standard output stream, log entries are prefixed by the service name (in color, using ansi escape codes if the output stream supports ansi escape codes).
 - `Slf4jForwarder` : Forward log events to slf4j, the name of the logger is the name of the service.
 
 You may use the `LogListener` interface and `LogListenerBase` abstract class to write your own log manager.
 
-## Pluggable features
+## Extensions
 
-Two features have been decoupled from the Sandbox class itself and are now optional : 
-
-* Wait for it
-* Run from workspace
+Some features are pluggable and modify the environment definition to implement cross-cutting concerns.
+Extensions should implement the CarnotzetExtension interface :
 
 ```java
-List<SandboxFeature> features = new ArrayList<>();
-features.add(new WaitForItFeature());
-features.add(new DeployFromWorkspaceFeature(options, sandboxResourcesRoot, session, projectBuilder, project));
-                     
-sandbox = new Sandbox<>(id, new MavenDependencyResolver(), sandboxResourcesRoot, features, outputPath);
+/**
+ * An extension can modify the definition of a carnotzet environment
+ * You can for example :
+ *  - add/remove applications
+ *  - add/remove volumes
+ *  - replace entrypoint/cmd
+ *  - add/remove environment variables
+ */
+public interface CarnotzetExtension {
+	List<CarnotzetModule> apply(Carnotzet carnotzet);
+}
+```
+They are enabled by passing them to the environment definition configuration :
+```java
+CarnotzetConfig config = CarnotzetConfig.builder()
+	.topLevelModuleId(env1))
+	.extensions(Arrays.asList(new MyExtension()))
+	.build();
+Carnotzet carnotzet = new Carnotzet(config);
 ```
 
-To implement other similar features, which modify the volumes, environment variables, entrypoints of containers, you can implement the SandboxFeature interface.

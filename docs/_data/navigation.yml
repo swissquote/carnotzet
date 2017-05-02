@@ -38,46 +38,6 @@ docs:
       - title: "Useful commands"
         url: /user-guide/useful-commands
 
-  - title: "Developer Guide"
-    url: /developer-guide/
-    children:
-      - title: "Building all images manually"
-        url: /developer-guide/building-images-manually
-
-  - title: "Third party modules"
-    url: /third-party-modules/
-    children:
-      - title: "ActiveMQ"
-        url: /third-party-modules/activemq
-      - title: "Mercurial"
-        url: /third-party-modules/mercurial
-      - title: "OpenLDAP"
-        url: /third-party-modules/openldap
-      - title: "OpenMQ"
-        url: /third-party-modules/openmq
-      - title: "Oracle XE"
-        url: /third-party-modules/oracle-xe
-      - title: "Piwik"
-        url: /third-party-modules/piwik
-      - title: "Pure-FTPd"
-        url: /third-party-modules/pure-ftpd
-      - title: "Wiremock"
-        url: /third-party-modules/wiremock
-
-  #- title: "Docker base images"
-  #  url: /docker-base-images/
-  #  children:
-  #    - title: "Tomcat 8"
-  #      url: /docker-base-images/tomcat8
-  #    - title: "Resin 4"
-  #      url: /docker-base-images/resin4
-  #    - title: "Selenium Firefox"
-  #      url: /docker-base-images/selenium-firefox
-
-  #- title: "with Selenium"
-  #  url: /Carnotzet-and-selenium
-
-
 main:
   - title: "Technical blog"
     url: https://medium.com/swissquote-engineering

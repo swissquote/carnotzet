@@ -38,6 +38,7 @@ public class MavenDependencyResolver {
 
 	private final Function<MavenCoordinate, String> moduleNameProvider;
 	private final String defaultDockerRegistry;
+	private final List<String> propFileNames;
 
 	public List<CarnotzetModule> resolve(MavenCoordinate topLevelModuleId) {
 		List<CarnotzetModule> result = new ArrayList<>();
@@ -132,18 +133,21 @@ public class MavenDependencyResolver {
 			}
 			@SuppressWarnings("resource")
 			ClassLoader classLoader = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader().getParent());
-			try (InputStream is = classLoader.getResourceAsStream("carnotzet.properties")) {
-				if (is != null) {
-					Properties props = new Properties();
-					props.load(is);
-					return (Map) props;
+			HashMap<String, String> result = new HashMap<>();
+			for (String propFileName : propFileNames) {
+				try (InputStream is = classLoader.getResourceAsStream(propFileName)) {
+					if (is != null) {
+						Properties props = new Properties();
+						props.load(is);
+						result.putAll((Map) props);
+					}
 				}
 			}
-			return new HashMap<>();
+			return result;
 
 		}
 		catch (IOException ex) {
-			throw new UncheckedIOException("Exception when reading carnotzet.properties", ex);
+			throw new UncheckedIOException("Exception when reading module properties file", ex);
 		}
 	}
 

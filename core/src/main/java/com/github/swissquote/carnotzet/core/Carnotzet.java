@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -75,7 +76,12 @@ public class Carnotzet {
 		if (config.getDefaultDockerRegistry() != null) {
 			defaultContainerRegistry = config.getDefaultDockerRegistry();
 		}
-		resolver = new MavenDependencyResolver(this::getModuleName, defaultContainerRegistry);
+
+		List<String> propFileNames = Arrays.asList("carnotzet.properties");
+		if (config.getPropFileNames() != null) {
+			propFileNames = config.getPropFileNames();
+		}
+		resolver = new MavenDependencyResolver(this::getModuleName, defaultContainerRegistry, propFileNames);
 
 	}
 

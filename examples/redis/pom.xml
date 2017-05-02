@@ -18,7 +18,7 @@
             <plugin>
                 <groupId>com.github.swissquote</groupId>
                 <artifactId>zet-maven-plugin</artifactId>
-                <version>${parent.version}</version>
+                <version>${project.parent.version}</version>
             </plugin>
         </plugins>
     </build>

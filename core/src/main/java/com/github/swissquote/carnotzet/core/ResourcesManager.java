@@ -59,7 +59,9 @@ public class ResourcesManager {
 			List<CarnotzetModule> processedModules = new ArrayList<>();
 
 			for (CarnotzetModule module : modules) {
-				if (module.getName().equals(topLevelModuleName) && topLevelModuleResourcesPath != null) {
+				if (module.getName().equals(topLevelModuleName)
+						&& topLevelModuleResourcesPath != null
+						&& topLevelModuleResourcesPath.toFile().exists()) {
 					FileUtils.copyDirectory(topLevelModuleResourcesPath.toFile(),
 							resourcesRoot.resolve(topLevelModuleName).toFile());
 				} else {

@@ -5,7 +5,7 @@
 
 	<groupId>com.github.swissquote</groupId>
 	<artifactId>carnotzet</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>${project.groupId}:${project.artifactId}</name>

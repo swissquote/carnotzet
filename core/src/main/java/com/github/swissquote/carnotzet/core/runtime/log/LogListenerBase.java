@@ -1,9 +1,9 @@
 package com.github.swissquote.carnotzet.core.runtime.log;
 
+import java.util.function.Predicate;
+
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.function.Function;
 
 @Slf4j
 public abstract class LogListenerBase implements LogListener {
@@ -21,7 +21,7 @@ public abstract class LogListenerBase implements LogListener {
 	private boolean follow;
 
 	@Setter
-	private Function<LogEvent, Boolean> eventFilter;
+	private Predicate<LogEvent> eventFilter;
 
 	public LogListenerBase() {
 		this.tail = DEFAULT_TAIL;
@@ -45,7 +45,7 @@ public abstract class LogListenerBase implements LogListener {
 
 	@Override
 	public final void accept(LogEvent event) {
-		if (eventFilter != null && !eventFilter.apply(event)) {
+		if (eventFilter != null && !eventFilter.test(event)) {
 			return;
 		}
 		acceptInternal(event);

@@ -1,6 +1,6 @@
 package com.github.swissquote.carnotzet.core.runtime.log;
 
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 public interface LogListener {
 
@@ -28,5 +28,5 @@ public interface LogListener {
 	 * Filter the events that this listener will process
 	 * @param predicate to decide if accept() should be invoked or not for an event.
 	 */
-	void setEventFilter(Function<LogEvent, Boolean> filter);
+	void setEventFilter(Predicate<LogEvent> predicate);
 }

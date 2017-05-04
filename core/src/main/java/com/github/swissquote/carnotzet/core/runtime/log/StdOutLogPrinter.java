@@ -51,6 +51,8 @@ public class StdOutLogPrinter extends LogListenerBase {
 	/**
 	 * colors will be based on the order of received log entries and may differ from one execution to the other.
 	 * You can make the order predictable if you know all the services in advance, using the appropriate constructor
+	 * @param tail number of pre-existing log events to print
+	 * @param follow should printer wait for future log events or not.
 	 */
 	public StdOutLogPrinter(Integer tail, boolean follow) {
 		super(tail, follow);
@@ -58,13 +60,19 @@ public class StdOutLogPrinter extends LogListenerBase {
 
 	/**
 	 * Provides a reproducible color order for services in a carnotzet environment.
+	 * @param carnotzet used to get the same colors every time
+	 * @param tail number of pre-existing log events to print
+	 * @param follow should printer wait for future log events or not.
 	 */
 	public StdOutLogPrinter(Carnotzet carnotzet, Integer tail, boolean follow) {
 		this(carnotzet.getModules().stream().map(CarnotzetModule::getName).sorted().collect(toList()), tail, follow);
 	}
 
 	/**
-	 * Provides a reproducible color order for services
+	 * Provides a reproducible color order for services in a carnotzet environment.
+	 * @param services used to get the same colors every time
+	 * @param tail number of pre-existing log events to print
+	 * @param follow should printer wait for future log events or not.
 	 */
 	public StdOutLogPrinter(List<String> services, Integer tail, boolean follow) {
 		super(tail, follow);

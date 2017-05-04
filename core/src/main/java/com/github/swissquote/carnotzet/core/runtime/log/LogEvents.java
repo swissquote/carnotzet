@@ -7,7 +7,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * This class captures and stores log events for analysis
+ * capture and store log events for analysis
  */
 @Slf4j
 public class LogEvents extends LogListenerBase {
@@ -30,6 +30,7 @@ public class LogEvents extends LogListenerBase {
 
 	/**
 	 * Consumes log events received
+	 * @return all received events
 	 */
 	public List<LogEvent> consumeEvents() {
 		synchronized (events) {

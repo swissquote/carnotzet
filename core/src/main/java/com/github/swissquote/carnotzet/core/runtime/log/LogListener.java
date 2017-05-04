@@ -7,16 +7,18 @@ public interface LogListener {
 	void accept(LogEvent event);
 
 	/**
-	 * null -> receive all previous log entries
-	 * 0 -> receive none of the log entries
-	 * N -> receive only N lines from each service
+	 * @return one of :<br>
+	 * null : receive all previous log entries<br>
+	 * 0 : receive none of the log entries<br>
+	 * N : receive only N lines from each service
 	 */
 	default Integer getTail() {
 		return null;
 	}
 
 	/**
-	 * Indicates if the listener is interested only in past events (follow = false) or both past and future (follow = true)
+	 * @return true if the listener is interested in both past and future events,
+	 * false if it is only interested in past events
 	 */
 	default boolean getFollow() {
 		return false; // same default as docker
@@ -24,6 +26,7 @@ public interface LogListener {
 
 	/**
 	 * Filter the events that this listener will process
+	 * @param predicate to decide if accept() should be invoked or not for an event.
 	 */
 	void setEventFilter(Function<LogEvent, Boolean> filter);
 }

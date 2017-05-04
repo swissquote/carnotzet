@@ -1,9 +1,10 @@
-package com.github.swissquote.carnotzet.core;
+package com.github.swissquote.carnotzet.core.maven;
 
 import static java.nio.file.Files.delete;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.find;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -12,17 +13,22 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
-import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenCoordinate;
 
+import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
+import com.github.swissquote.carnotzet.core.CarnotzetModule;
 import com.github.swissquote.carnotzet.core.config.FileMerger;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -46,9 +52,10 @@ public class ResourcesManager {
 	}
 
 	/**
-	 * Extract the files of all module this one depends on, override and merge files
+	 * Extract the files of all module this one depends on, overriding and merging files
+	 * @param modules top level module for which we want to resolve dependencies and resources
 	 */
-	public void resolveResources(List<CarnotzetModule> modules, BiConsumer<MavenCoordinate, Path> copyResources) {
+	public void resolveResources(List<CarnotzetModule> modules) {
 		try {
 			log.debug("Resolving carnotzet resources into [{}]", resourcesRoot);
 			FileUtils.deleteDirectory(resourcesRoot.toFile());
@@ -65,7 +72,7 @@ public class ResourcesManager {
 					FileUtils.copyDirectory(topLevelModuleResourcesPath.toFile(),
 							resourcesRoot.resolve(topLevelModuleName).toFile());
 				} else {
-					copyResources.accept(module.getId(), getModuleResourcesPath(module));
+					copyModuleResources(module.getId(), getModuleResourcesPath(module));
 				}
 				mergeFiles(processedModules, module);
 				overrideFiles(processedModules, module);
@@ -136,6 +143,8 @@ public class ResourcesManager {
 	 * Override files in processed modules by files in a given module <br>
 	 * In effect, it deletes a file from the resources of
 	 * the processed module if it is also present in the resources of the given module
+	 * @param processedModules modules that have been processed so far
+	 * @param module new module to process
 	 */
 	private void overrideFiles(List<CarnotzetModule> processedModules, CarnotzetModule module) throws IOException {
 
@@ -187,4 +196,21 @@ public class ResourcesManager {
 		return null;
 	}
 
+	private ZipFile getJarFile(MavenCoordinate id) throws DependencyResolutionRequiredException, ZipException {
+		File jarFile = Maven.configureResolver().workOffline()
+				.resolve(id.getGroupId() + ":" + id.getArtifactId() + ":" + id.getVersion())
+				.withoutTransitivity().asSingleFile();
+		return new ZipFile(jarFile);
+	}
+
+	public void copyModuleResources(MavenCoordinate moduleId, Path moduleResourcesPath) {
+		try {
+			ZipFile f = this.getJarFile(moduleId);
+			f.extractAll(moduleResourcesPath.toAbsolutePath().toString());
+		}
+		catch (DependencyResolutionRequiredException | ZipException e) {
+			throw new CarnotzetDefinitionException(e);
+		}
+
+	}
 }

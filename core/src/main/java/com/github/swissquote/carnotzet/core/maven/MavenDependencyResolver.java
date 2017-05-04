@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,18 +15,14 @@ import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
 import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenCoordinate;
 
-import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.lingala.zip4j.core.ZipFile;
-import net.lingala.zip4j.exception.ZipException;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -106,24 +101,6 @@ public class MavenDependencyResolver {
 		catch (IOException ex) {
 			throw new UncheckedIOException("Exception when reading module properties file", ex);
 		}
-	}
-
-	private ZipFile getJarFile(MavenCoordinate id) throws DependencyResolutionRequiredException, ZipException {
-		File jarFile = Maven.configureResolver().workOffline()
-				.resolve(id.getGroupId() + ":" + id.getArtifactId() + ":" + id.getVersion())
-				.withoutTransitivity().asSingleFile();
-		return new ZipFile(jarFile);
-	}
-
-	public void copyModuleResources(MavenCoordinate moduleId, Path moduleResourcesPath) {
-		try {
-			ZipFile f = this.getJarFile(moduleId);
-			f.extractAll(moduleResourcesPath.toAbsolutePath().toString());
-		}
-		catch (DependencyResolutionRequiredException | ZipException e) {
-			throw new CarnotzetDefinitionException(e);
-		}
-
 	}
 
 }

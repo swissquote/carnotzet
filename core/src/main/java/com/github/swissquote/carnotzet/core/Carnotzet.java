@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenCoordinate;
 
 import com.github.swissquote.carnotzet.core.maven.MavenDependencyResolver;
+import com.github.swissquote.carnotzet.core.maven.ResourcesManager;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -90,7 +91,7 @@ public class Carnotzet {
 			log.debug("resolving module dependencies");
 			modules = resolver.resolve(config.getTopLevelModuleId());
 			log.debug("resolving module resources");
-			resourceManager.resolveResources(modules, resolver::copyModuleResources);
+			resourceManager.resolveResources(modules);
 			log.debug("Configuring individual file volumes");
 			modules = configureFilesVolumes(modules);
 			log.debug("Configuring env_file volumes");

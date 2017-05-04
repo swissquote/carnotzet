@@ -5,20 +5,33 @@ url: /user-guide/network-communication-with-containers
 
 {% include toc %}
 
-The following hostname pattern should be used when you want to communicate with an application running with Carnotzet :
+## Network topology
+There is a dedicated docker network per environment runtime instance. 
+All services running in the same environment can communicate with each other.
+
+## Hostname resolution
+To be able to use the same names between containers in the same environment and when using DNSDock,
+The following hostname pattern should be used :
 ```
 (container_name.)image_name.docker
 ```
 
-The container_name is optional and may be used to disambiguate situations where you have the same image running in different Carnotzet. By default in sandbox3, the container_name is `${sandbox-name}_${service-name}` (see examples below)
+The container_name is optional and may be used to disambiguate situations where you have the same image running 
+in different environments in parallel. By default the container_name is chosen by docker-compose.
 
 The image_name is the "short" name, without the registry and version
 
-Example :
+Example (addressing "redis" in the "app1" environment) :
 ```
-# To communicate with oracle running in the sq-service-a-soa Carnotzet, you may use :
-sq-oracle-xe.docker
-sq-service-a-soa_sq-oracle-xe.sq-oracle-xe.docker
+redis.docker
+# or
+app1_redis.redis.docker # Disambiguates between redis instances in other environments
+```
+
+## Using a custom network aliases
+You can define network aliases for a service in `src/main/resources/carnotzet.properties`:
+```
+network.aliases=custom-hostname
 ```
 
 ## How is it resolved under the hood ?
@@ -27,10 +40,10 @@ Depending on your environment, it may be resolved differently :
 
 ### From a developer host
 
-You should use DnsDock. it is a DNS server running on your machine that is "container aware" and supports our pattern by default.
+You may use DnsDock. it is a DNS server running on your machine that is "container aware" and supports the recommended pattern by default.
 
 For more information about how to install and configure DnsDock on your system, check this page : 
-[Docker]() and this page : [https://github.com/aacebedo/dnsdock](https://github.com/aacebedo/dnsdock)
+[https://github.com/aacebedo/dnsdock](https://github.com/aacebedo/dnsdock)
 
 ### From another docker container (ie : between 2 applications running in the same Carnotzet Environment)
 
@@ -44,6 +57,3 @@ If for some reason you want communication with another container, you need to "m
 
 The embedded DNS doesn't support our pattern by default, so we generate network aliases in the docker-compose.yaml file to add the support. 
 
-### In the build farm
-
-In the build farm, your build process is running in a container, so we use the technique presented just above.

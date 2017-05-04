@@ -11,9 +11,8 @@ import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
 import com.github.swissquote.carnotzet.maven.plugin.impl.Utils;
 
 /**
- * this goal builds the image and starts a container with some volumes and ports bound.
- *
- * @author acraciun
+ * Stop all containers<br>
+ * if -Dservice=... is passed, ony the chose service will be stopped
  */
 @Mojo(name = "stop", defaultPhase = LifecyclePhase.NONE, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class StopMojo extends AbstractZetMojo {

@@ -7,7 +7,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /**
- * Kills and removes containers
+ * Deletes stopped containers
  */
 @Mojo(name = "clean", defaultPhase = LifecyclePhase.NONE, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class CleanMojo extends AbstractZetMojo {

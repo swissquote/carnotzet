@@ -7,7 +7,8 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /**
- * Start a carnotzet (in background)
+ * Start a carnotzet (in background)<br>
+ * if -Dservice=... is passed, ony the chose service will be started
  */
 @Mojo(name = "start", defaultPhase = LifecyclePhase.NONE, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class StartMojo extends AbstractZetMojo {

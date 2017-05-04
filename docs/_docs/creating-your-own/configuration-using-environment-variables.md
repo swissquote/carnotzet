@@ -1,5 +1,5 @@
 ---
-title: "Configuration using environment variables"
+title: "Configuration of applications using environment variables"
 permalink: /creating-your-own/configuration-using-environment-variables
 ---
 
@@ -7,7 +7,7 @@ permalink: /creating-your-own/configuration-using-environment-variables
 
 ## Defining environment variables
 
-Docker supports passing an arbitrary number of environment variables to running containers. 
+Docker supports passing an arbitrary number of environment variables when creating containers. 
 These environment variables are the basic UNIX shell environment variables (eg: `JAVA_HOME`, `PATH`, etc…). 
 Your Carnotzet module is free to define and use as many environment variables as necessary.
 
@@ -53,30 +53,6 @@ You can find more informations about the usage of environment variables in docke
 
 * [Environment variables with Docker](http://serverascode.com/2014/05/29/environment-variables-with-docker.html) 
 * [Environment variables in Compose](https://docs.docker.com/compose/environment-variables/)
-
-## Overriding the configuration of dependencies
-
-### Finding out which environment variables are supported
-
-#### Read the docs
-The list of environment variables that are supported is defined by each container or Carnotzet module, so please check the documentation of the dependency to figure out what configuration option is supported.
-
-For most of the SQ base images and basic services, you can find the documentation in the [Docker base]({{ site.baseurl }}{% link _docs/base-images/index.md %}) images and [Configurable third party modules]({{ site.baseurl }}{% link _docs/third-party-modules/index.md %}) pages.
-
-#### What to do if there is no doc…
-
-Sometimes, the documentation of a dependency is missing or incomplete. You can do the following thing to have an idea of what variables can be configured.
-
-```bash
-# run your projects own Carnotzet environment, making sure that the dependency you want to inspect is started
-mvn zet:start
- 
-# Open a bash shell on the container you want to inspect
-mvn zet:shell
- 
-# In the dependency shell, print out all the environment variables
-env
-```
 
 ## Overriding environment files
 

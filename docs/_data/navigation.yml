@@ -8,35 +8,27 @@ docs:
   - title: "Building your own Carnotzet"
     url: /creating-your-own/
     children:
-      - title: "Sandboxing your application"
-        url: /creating-your-own/sandboxing-your-application
-      - title: "Depending on other applications"
-        url: /creating-your-own/depending-on-applications
+      - title: "Creating a new Carnotzet module"
+        url: /creating-your-own/creating-a-new-carnotzet
+      - title: "Dependencies"
+        url: /creating-your-own/dependencies
       - title: "Configuration using environment variables"
         url: /creating-your-own/configuration-using-environment-variables
       - title: "Configuration using config files"
         url: /creating-your-own/configuration-using-config-files
-      #- title: "Oracle database crawling"
-      #  url: /creating-your-own/oracle-database-crawling
-      #- title: "Adding extra tables and data to Oracle"
-      #  url: /creating-your-own/adding-extra-tables-and-data-to-oracle
-      #- title: "Generate Carnotzet module from SAP Archetype"
-      #  url: /creating-your-own/generate-carnotzet-module-from-sap-archetype
+      - title: "Debugging"
+        url: /creating-your-own/debugging
 
   - title: "User Guide"
     children:
-      - title: "Running an existing Carnotzet"
-        url: /user-guide/running-an-existing-carnotzet
-      #- title: "Running from workspace"
-      #  url: /user-guide/running-from-workspace
-      - title: "Network communication with containers"
-        url: /user-guide/network-communication-with-containers
-      - title: "Using Carnotzet for \"end to end\" tests"
-        url: /user-guide/end-to-end-tests
+      - title: "Maven plugin"
+        url: /user-guide/maven-plugin
       - title: "Java API"
         url: /user-guide/java-api
-      - title: "Useful commands"
-        url: /user-guide/useful-commands
+      - title: "Using Carnotzet for \"end to end\" tests"
+        url: /user-guide/end-to-end-tests
+      - title: "Network communication with containers"
+        url: /user-guide/network-communication-with-containers
 
 main:
   - title: "Technical blog"

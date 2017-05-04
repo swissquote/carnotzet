@@ -9,8 +9,11 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <!-- this module performs an e2e test on the example environment, using selenium grid (also packaged as a module) -->
     <artifactId>carnotzet-e2e-tests</artifactId>
+
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -41,6 +44,7 @@
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-remote-driver</artifactId>
             <version>3.3.0</version>
+            <scope>test</scope>
         </dependency>
         <!-- secret dependency requirement of selenium :-/ -->
         <dependency>

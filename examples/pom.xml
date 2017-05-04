@@ -14,6 +14,10 @@
     <packaging>pom</packaging>
     <description>Example distributed application : https://github.com/docker/example-voting-app packaged as carnotzet modules</description>
 
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
+
     <modules>
         <module>redis</module>
         <module>postgres</module>

@@ -12,6 +12,10 @@
 	<!-- This is the e2e testing environment : the voting app and selenium -->
 	<artifactId>carnotzet-e2e-tests-carnotzet</artifactId>
 
+	<properties>
+		<maven.deploy.skip>true</maven.deploy.skip>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>com.github.swissquote.examples</groupId>

@@ -79,3 +79,16 @@ zet:welcome
 
 ```
 
+## Running the same environment multiple times
+
+Each command supports a -Dinstance=... option. This allows you to start multiple instances of the same environment 
+on a docker-host and control them independently. Instance names are global to the docker host, independently of the
+"top level module" you are running.
+
+```
+mvn zet:start -Dinstance=myapp1
+mvn zet:start -Dinstance=myapp2
+mvn zet:stop -Dinstance=myapp2
+mvn zet:logs -Dinstance=myapp1
+```
+

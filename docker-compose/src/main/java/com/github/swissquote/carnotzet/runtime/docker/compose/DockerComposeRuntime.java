@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -69,18 +70,28 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 			Map<String, ContainerNetwork> networks = new HashMap<>();
 			Set<String> networkAliases = new HashSet<>();
-			if (module.getProperties().containsKey("network.aliases")) {
-				networkAliases.addAll(Arrays.stream(module.getProperties().get("network.aliases")
-						.split(","))
-						.map(String::trim)
-						.collect(Collectors.toList()));
-			}
-			// TODO : add those aliases as a "DNSDock" extension
+			networkAliases.addAll(lookUpCustomAliases(carnotzet, module));
+
+			// Carnotzet semantics name
+			networkAliases.add(module.getName() + ".docker");
+			networkAliases.add(instanceId + "." + module.getName() + ".docker");
+
+			// Legacy compat (default dnsdock pattern)
 			networkAliases.add(module.getShortImageName() + ".docker");
 			networkAliases.add(instanceId + "_" + module.getName() + "." + module.getShortImageName() + ".docker");
+
 			ContainerNetwork network = ContainerNetwork.builder().aliases(networkAliases).build();
 			networks.put("carnotzet", network);
 			serviceBuilder.networks(networks);
+
+			Map<String, String> labels = new HashMap<>();
+			labels.putAll(module.getLabels());
+			labels.put("com.dnsdock.alias", instanceId + "." + module.getName() + ".docker");
+			labels.put("carnotzet.instance.id", instanceId);
+			labels.put("carnotzet.module.name", module.getName());
+			labels.put("carnotzet.top.level.module.name", carnotzet.getTopLevelModuleName());
+
+			serviceBuilder.labels(labels);
 
 			services.put(moduleName, serviceBuilder.build());
 		}
@@ -100,6 +111,22 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			throw new UncheckedIOException("Failed to write docker-compose.yml", e);
 		}
 		log.debug(String.format("End build compose file for module %s", carnotzet.getConfig().getTopLevelModuleId()));
+	}
+
+	private Collection<String> lookUpCustomAliases(Carnotzet carnotzet, CarnotzetModule module) {
+		Set<String> result = new HashSet<>();
+		for (CarnotzetModule m : carnotzet.getModules()) {
+			if (m.getProperties().containsKey(module.getName() + ".network.aliases")) {
+				result.addAll(parseNetworkAliases(m.getProperties().get(module.getName() + ".network.aliases")));
+			}
+		}
+		return result;
+	}
+
+	private List<String> parseNetworkAliases(String s) {
+		return Arrays.stream(s.split(","))
+				.map(String::trim)
+				.collect(Collectors.toList());
 	}
 
 	@Override

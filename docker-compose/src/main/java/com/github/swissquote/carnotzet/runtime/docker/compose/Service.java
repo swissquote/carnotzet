@@ -25,6 +25,8 @@ public class Service {
 	@JsonProperty
 	private final String entrypoint;
 	@JsonProperty
+	private final Map<String, String> labels;
+	@JsonProperty
 	private final String command;
 	@JsonProperty
 	private final Map<String, ContainerNetwork> networks;

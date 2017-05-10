@@ -21,6 +21,7 @@ public class CarnotzetModule {
 	private final String name;
 	private final String topLevelModuleName;
 	private final Map<String, String> properties;
+	private final Map<String, String> labels;
 	private final String imageName;
 	private final Set<String> dockerVolumes;
 	private final String dockerEntrypoint;

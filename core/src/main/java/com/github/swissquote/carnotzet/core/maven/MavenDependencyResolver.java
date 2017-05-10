@@ -68,6 +68,7 @@ public class MavenDependencyResolver {
 					.imageName(imageName)
 					.topLevelModuleName(topLevelModuleName)
 					.properties(artifactProperties)
+					.labels(new HashMap<>())
 					.build();
 
 			result.add(0, module);

@@ -1,6 +1,9 @@
 package com.github.swissquote.carnotzet.maven.plugin;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ServiceLoader;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -15,6 +18,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import com.github.swissquote.carnotzet.core.Carnotzet;
 import com.github.swissquote.carnotzet.core.CarnotzetConfig;
+import com.github.swissquote.carnotzet.core.CarnotzetExtension;
 import com.github.swissquote.carnotzet.core.maven.CarnotzetModuleCoordinates;
 import com.github.swissquote.carnotzet.core.runtime.api.ContainerOrchestrationRuntime;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
@@ -68,10 +72,14 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	public void execute() throws MojoFailureException, MojoExecutionException {
 		SLF4JBridgeHandler.install();
 
+		List<CarnotzetExtension> extensions = new ArrayList<>(0);
+		ServiceLoader.load(CarnotzetExtension.class).iterator().forEachRemaining(extensions::add);
+
 		CarnotzetConfig config = CarnotzetConfig.builder()
 				.topLevelModuleId(new CarnotzetModuleCoordinates(project.getGroupId(), project.getArtifactId(), project.getVersion()))
 				.resourcesPath(Paths.get(project.getBuild().getDirectory(), "carnotzet"))
 				.topLevelModuleResourcesPath(project.getBasedir().toPath().resolve("src/main/resources"))
+				.extensions(extensions)
 				.build();
 		carnotzet = new Carnotzet(config);
 		runtime = new DockerComposeRuntime(carnotzet, instanceId);

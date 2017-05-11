@@ -31,6 +31,13 @@
 				<groupId>com.github.swissquote</groupId>
 				<artifactId>zet-maven-plugin</artifactId>
 				<version>${project.version}</version>
+				<dependencies>
+					<dependency>
+						<groupId>com.github.swissquote.examples</groupId>
+						<artifactId>helloworld-extention</artifactId>
+						<version>${project.version}</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 		</plugins>
 	</build>

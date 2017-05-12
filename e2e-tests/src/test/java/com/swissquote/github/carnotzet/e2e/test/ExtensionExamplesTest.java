@@ -26,8 +26,8 @@ public class ExtensionExamplesTest {
 		logFile = File.createTempFile("log", "txt", projectPom.toFile());
 		mavenVerifier = new Verifier(projectPom.toAbsolutePath().toString());
 		mavenVerifier.setLogFileName(logFile.getName());
-		mavenVerifier.executeGoal("clean");
-
+		mavenVerifier.setAutoclean(true);
+		mavenVerifier.setForkJvm(true);
 	}
 
 	@Test

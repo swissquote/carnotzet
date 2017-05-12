@@ -11,7 +11,7 @@ public class HelloLabelExtension implements CarnotzetExtension {
 	@Override
 	public List<CarnotzetModule> apply(Carnotzet carnotzet) {
 		return carnotzet.getModules().stream().map(module -> {
-					module.getLabels().put("carnotzet.hello.message", "Hello Carnotzet from moudle");
+					module.getLabels().put("carnotzet.hello.message", "Hello Carnotzet");
 					return module;
 				}
 		).collect(Collectors.toList());

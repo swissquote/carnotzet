@@ -31,6 +31,19 @@
 				<groupId>com.github.swissquote</groupId>
 				<artifactId>zet-maven-plugin</artifactId>
 				<version>${project.version}</version>
+				<configuration>
+					<extensions>
+						<extension>
+							<factoryClass>com.github.swissquote.carnotzet.extention.HelloLabelExtensionFactory</factoryClass>
+							<properties>
+								<property>
+									<name>message.text</name>
+									<value>Hello Carnotzet</value>
+								</property>
+							</properties>
+						</extension>
+					</extensions>
+				</configuration>
 				<dependencies>
 					<dependency>
 						<groupId>com.github.swissquote.examples</groupId>

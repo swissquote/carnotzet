@@ -7,7 +7,6 @@ import java.nio.file.Path;
 
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
-import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -22,12 +21,20 @@ public class ExtensionExamplesTest {
 
 	@BeforeClass
 	public static void setUp() throws IOException, VerificationException {
-		Path projectPom = FileSystems.getDefault().getPath("../examples/voting-worker").toRealPath();
+		Path projectPom = FileSystems.getDefault().getPath("../examples/redis").toRealPath();
 		logFile = File.createTempFile("log", "txt", projectPom.toFile());
 		mavenVerifier = new Verifier(projectPom.toAbsolutePath().toString());
 		mavenVerifier.setLogFileName(logFile.getName());
 		mavenVerifier.setAutoclean(true);
 		mavenVerifier.setForkJvm(true);
+	}
+
+	@AfterClass
+	public static void tearDown() throws VerificationException {
+		mavenVerifier.executeGoal("zet:stop");
+		mavenVerifier.executeGoal("zet:clean");
+		mavenVerifier.resetStreams();
+		logFile.delete();
 	}
 
 	@Test
@@ -37,15 +44,7 @@ public class ExtensionExamplesTest {
 		mavenVerifier.executeGoal("zet:start");
 
 		String output = CommandRunner
-				.runCommandAndCaptureOutput("docker", "ps", "--filter", "label=carnotzet.hello.message=Hello Carnotzet");
-		Assert.assertThat(output.split("\n").length, CoreMatchers.equalTo(4));
-	}
-
-	@AfterClass
-	public static void tearDown() throws VerificationException {
-		mavenVerifier.executeGoal("zet:stop");
-		mavenVerifier.executeGoal("zet:clean");
-		mavenVerifier.resetStreams();
-		logFile.delete();
+				.runCommandAndCaptureOutput("docker", "ps", "-q", "--filter", "label=carnotzet.hello.message=Hello Carnotzet");
+		Assert.assertFalse("The output should contain single entry for redis zet module", output.isEmpty());
 	}
 }

@@ -26,6 +26,7 @@
         <module>voting-vote</module>
         <module>voting-worker</module>
         <module>voting-all</module>
+        <module>hello-extension</module>
     </modules>
 
 </project>

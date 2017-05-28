@@ -85,7 +85,9 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			serviceBuilder.networks(networks);
 
 			Map<String, String> labels = new HashMap<>();
-			labels.putAll(module.getLabels());
+			if (module.getLabels() != null) {
+				labels.putAll(module.getLabels());
+			}
 			labels.put("com.dnsdock.alias", instanceId + "." + module.getName() + ".docker");
 			labels.put("carnotzet.instance.id", instanceId);
 			labels.put("carnotzet.module.name", module.getName());
@@ -116,7 +118,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	private Collection<String> lookUpCustomAliases(Carnotzet carnotzet, CarnotzetModule module) {
 		Set<String> result = new HashSet<>();
 		for (CarnotzetModule m : carnotzet.getModules()) {
-			if (m.getProperties().containsKey(module.getName() + ".network.aliases")) {
+			if (m.getProperties() != null && m.getProperties().containsKey(module.getName() + ".network.aliases")) {
 				result.addAll(parseNetworkAliases(m.getProperties().get(module.getName() + ".network.aliases")));
 			}
 		}

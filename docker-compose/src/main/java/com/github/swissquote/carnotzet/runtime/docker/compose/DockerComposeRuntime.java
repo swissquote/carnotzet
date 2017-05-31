@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import com.github.swissquote.carnotzet.core.Carnotzet;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
 import com.github.swissquote.carnotzet.core.runtime.CommandRunner;
+import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.api.Container;
 import com.github.swissquote.carnotzet.core.runtime.api.ContainerOrchestrationRuntime;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
@@ -36,11 +37,13 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	private final DockerLogManager logManager;
 
+	private final CommandRunner commandRunner;
+
 	public DockerComposeRuntime(Carnotzet carnotzet) {
 		this(carnotzet, carnotzet.getTopLevelModuleName());
 	}
 
-	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId) {
+	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId, CommandRunner commandRunner) {
 		this.carnotzet = carnotzet;
 		if (instanceId != null) {
 			this.instanceId = instanceId;
@@ -48,6 +51,11 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			this.instanceId = carnotzet.getTopLevelModuleName();
 		}
 		this.logManager = new DockerLogManager();
+		this.commandRunner = commandRunner;
+	}
+
+	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId) {
+		this(carnotzet, instanceId, DefaultCommandRunner.INSTANCE);
 	}
 
 	private void computeDockerComposeFile() {
@@ -287,11 +295,11 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	private int runCommand(String... command) {
-		return CommandRunner.runCommand(carnotzet.getResourcesFolder().toFile(), command);
+		return commandRunner.runCommand(carnotzet.getResourcesFolder().toFile(), command);
 	}
 
 	private String runCommandAndCaptureOutput(String... command) {
-		return CommandRunner.runCommandAndCaptureOutput(carnotzet.getResourcesFolder().toFile(), command);
+		return commandRunner.runCommandAndCaptureOutput(carnotzet.getResourcesFolder().toFile(), command);
 	}
 
 	private boolean dockerComposeFileExists() {

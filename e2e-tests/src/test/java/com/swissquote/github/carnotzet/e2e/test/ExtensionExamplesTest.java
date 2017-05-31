@@ -12,7 +12,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.github.swissquote.carnotzet.core.runtime.CommandRunner;
+import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
 
 public class ExtensionExamplesTest {
 
@@ -43,7 +43,7 @@ public class ExtensionExamplesTest {
 		mavenVerifier.verify(false);
 		mavenVerifier.executeGoal("zet:start");
 
-		String output = CommandRunner
+		String output = DefaultCommandRunner.INSTANCE
 				.runCommandAndCaptureOutput("docker", "ps", "-q", "--filter", "label=carnotzet.hello.message=Hello Carnotzet");
 		Assert.assertFalse("The output should contain single entry for redis zet module", output.isEmpty());
 	}

@@ -22,6 +22,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.openqa.selenium.Cookie;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.logging.LogType;
 import org.openqa.selenium.logging.LoggingPreferences;
@@ -51,7 +52,7 @@ public class ExamplesTest {
 		Carnotzet carnotzet = new Carnotzet(config);
 		runtime = new DockerComposeRuntime(carnotzet);
 
-		if (runtime.isRunning()){
+		if (runtime.isRunning()) {
 			runtime.stop();
 			runtime.clean();
 		}
@@ -84,7 +85,7 @@ public class ExamplesTest {
 	@Before
 	public void resetDb() throws SQLException {
 		String postgresIp = runtime.getContainer("postgres").getIp();
-		try (Connection conn = DriverManager.getConnection("jdbc:postgresql://"+postgresIp+":5432/postgres","postgres","")) {
+		try (Connection conn = DriverManager.getConnection("jdbc:postgresql://" + postgresIp + ":5432/postgres", "postgres", "")) {
 			try (Statement statement = conn.createStatement()) {
 				statement.execute("TRUNCATE TABLE votes");
 			}
@@ -93,32 +94,27 @@ public class ExamplesTest {
 
 	@Test
 	public void test_result_app_is_updated_on_new_votes() throws IOException, InterruptedException {
-
-		vote("a", true);
+		vote("a", "voter_1");
 		assertResultPage("100.0%", "0.0%", "1 vote");
 
-		vote("b", true);
+		vote("b", "voter_2");
 		assertResultPage("50.0%", "50.0%", "2 votes");
 
-		vote("b", true);
+		vote("b", "voter_3");
 		assertResultPage("33.0%", "67.0%", "3 votes");
-
 	}
 
 	@Test
 	public void test_user_can_change_his_vote() throws IOException, InterruptedException {
-		vote("a", true);
+		vote("a", "voter_1");
 		assertResultPage("100.0%", "0.0%", "1 vote");
 
-		vote("b", false);
+		vote("b", "voter_1");
 		assertResultPage("0.0%", "100.0%", "1 vote");
 	}
 
-	private void vote(String choice, boolean newBrowserSession) throws MalformedURLException {
-		if (newBrowserSession) {
-			// create a new browser session
-			driver = createBrowserSession();
-		}
+	private void vote(String choice, String voterId) throws MalformedURLException {
+		setVoterId(driver, voterId);
 		driver.get(votingApp);
 		driver.findElement(className(choice)).click();
 	}
@@ -139,11 +135,16 @@ public class ExamplesTest {
 		LoggingPreferences logPreferences = new LoggingPreferences();
 		logPreferences.enable(LogType.BROWSER, Level.ALL);
 		capabilities.setCapability(CapabilityType.LOGGING_PREFS, logPreferences);
-
 		return new RemoteWebDriver(
-				new URL("http://" + runtime.getContainer("selenium-chrome").getIp()+":4444/wd/hub"),
+				new URL("http://" + runtime.getContainer("selenium-chrome").getIp() + ":4444/wd/hub"),
 				capabilities
 		);
+	}
+
+	private static void setVoterId(WebDriver driver, String voterId) {
+		driver.get(votingApp); // needed by selenium to set the cookie
+		driver.manage().deleteCookieNamed("voter_id");
+		driver.manage().addCookie(new Cookie.Builder("voter_id", voterId).build());
 	}
 
 }

@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>selenium-chrome-carnotzet</artifactId>
-    <version>3.3.0</version>
+    <version>3.4.0</version>
     <description>Carnotzet module for running selenium grid with chrome</description>
 
     <build>

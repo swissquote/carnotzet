@@ -18,7 +18,7 @@ voting-app environment and selenium-chrome :
 	<dependency>
 		<groupId>com.github.swissquote.examples</groupId>
 		<artifactId>selenium-chrome-carnotzet</artifactId>
-		<version>3.3.0</version>
+		<version>3.4.0</version>
 	</dependency>
 	<dependency>
 		<groupId>com.github.swissquote.examples</groupId>
@@ -59,21 +59,28 @@ In order to interact with the environment (start/stop etc...) we need to import 
 </dependency>
 ```
 
-Our test will simulate 3 users that vote on the voting-app and assert that the voting-result page is updated acordingly :
+Our test will simulate users that vote on the voting-app and assert that the voting-result page is updated accordingly :
 
 ```java
 @Test
 public void test_result_app_is_updated_on_new_votes() throws IOException, InterruptedException {
-
-	vote("a", true);
+	vote("a", "voter_1");
 	assertResultPage("100.0%", "0.0%", "1 vote");
 
-	vote("b", true);
+	vote("b", "voter_2");
 	assertResultPage("50.0%", "50.0%", "2 votes");
 
-	vote("b", true);
+	vote("b", "voter_3");
 	assertResultPage("33.0%", "67.0%", "3 votes");
+}
 
+@Test
+public void test_user_can_change_his_vote() throws IOException, InterruptedException {
+	vote("a", "voter_1");
+	assertResultPage("100.0%", "0.0%", "1 vote");
+
+	vote("b", "voter_1");
+	assertResultPage("0.0%", "100.0%", "1 vote");
 }
 ```
 
@@ -150,10 +157,6 @@ That's it ! we now have all the pieces to make our test work here's the final co
 (also available in the e2e-test directory of the project, those tests are actually run by travis on every push to the carnotzet project).
 
 ```java
-package com.swissquote.github.carnotzet.e2e.test;
-
-import ...
-
 public class ExamplesTest {
 
 	private static WebDriver driver;
@@ -169,14 +172,17 @@ public class ExamplesTest {
 		Carnotzet carnotzet = new Carnotzet(config);
 		runtime = new DockerComposeRuntime(carnotzet);
 
-		if (runtime.isRunning()){
+		if (runtime.isRunning()) {
 			runtime.stop();
 			runtime.clean();
 		}
 
 		LogEvents logEvents = new LogEvents();
 		runtime.registerLogListener(logEvents);
-		runtime.registerLogListener(new StdOutLogPrinter(1000, true));
+
+		// print the environment logs in the test console, with consistent colors
+		List<String> moduleNames = carnotzet.getModules().stream().map(CarnotzetModule::getName).collect(Collectors.toList());
+		runtime.registerLogListener(new StdOutLogPrinter(moduleNames, 1000, true));
 		runtime.start();
 
 		votingApp = "http://" + runtime.getContainer("voting-vote").getIp();
@@ -199,7 +205,7 @@ public class ExamplesTest {
 	@Before
 	public void resetDb() throws SQLException {
 		String postgresIp = runtime.getContainer("postgres").getIp();
-		try (Connection conn = DriverManager.getConnection("jdbc:postgresql://"+postgresIp+":5432/postgres","postgres","")) {
+		try (Connection conn = DriverManager.getConnection("jdbc:postgresql://" + postgresIp + ":5432/postgres", "postgres", "")) {
 			try (Statement statement = conn.createStatement()) {
 				statement.execute("TRUNCATE TABLE votes");
 			}
@@ -208,32 +214,27 @@ public class ExamplesTest {
 
 	@Test
 	public void test_result_app_is_updated_on_new_votes() throws IOException, InterruptedException {
-
-		vote("a", true);
+		vote("a", "voter_1");
 		assertResultPage("100.0%", "0.0%", "1 vote");
 
-		vote("b", true);
+		vote("b", "voter_2");
 		assertResultPage("50.0%", "50.0%", "2 votes");
 
-		vote("b", true);
+		vote("b", "voter_3");
 		assertResultPage("33.0%", "67.0%", "3 votes");
-
 	}
 
 	@Test
 	public void test_user_can_change_his_vote() throws IOException, InterruptedException {
-		vote("a", true);
+		vote("a", "voter_1");
 		assertResultPage("100.0%", "0.0%", "1 vote");
 
-		vote("b", false);
+		vote("b", "voter_1");
 		assertResultPage("0.0%", "100.0%", "1 vote");
 	}
 
-	private void vote(String choice, boolean newBrowserSession) throws MalformedURLException {
-		if (newBrowserSession) {
-			// create a new browser session
-			driver = createBrowserSession();
-		}
+	private void vote(String choice, String voterId) throws MalformedURLException {
+		setVoterId(driver, voterId);
 		driver.get(votingApp);
 		driver.findElement(className(choice)).click();
 	}
@@ -254,12 +255,18 @@ public class ExamplesTest {
 		LoggingPreferences logPreferences = new LoggingPreferences();
 		logPreferences.enable(LogType.BROWSER, Level.ALL);
 		capabilities.setCapability(CapabilityType.LOGGING_PREFS, logPreferences);
-
 		return new RemoteWebDriver(
-				new URL("http://" + runtime.getContainer("selenium-chrome").getIp()+":4444/wd/hub"),
+				new URL("http://" + runtime.getContainer("selenium-chrome").getIp() + ":4444/wd/hub"),
 				capabilities
 		);
 	}
+
+	private static void setVoterId(WebDriver driver, String voterId) {
+		driver.get(votingApp); // needed by selenium to set the cookie
+		driver.manage().deleteCookieNamed("voter_id");
+		driver.manage().addCookie(new Cookie.Builder("voter_id", voterId).build());
+	}
+
 }
 
 ```

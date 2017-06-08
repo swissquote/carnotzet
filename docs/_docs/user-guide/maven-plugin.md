@@ -6,6 +6,19 @@ url: /user-guide/maven-plugin
 The Carnotzet maven plugin ("zet" for short) provides a simple way to manage
 a carnotzet environments in your build and from the terminal.
 
+## In your carnotzet module's pom.xml
+```
+<build>
+	<plugins>
+		<plugin>
+			<groupId>com.github.swissquote</groupId>
+			<artifactId>zet-maven-plugin</artifactId>
+			<version>1.1.0</version>
+		</plugin>
+	</plugins>
+</build>
+```
+
 ## Example usage
 
 ```

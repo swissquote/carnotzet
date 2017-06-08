@@ -26,7 +26,7 @@ Here is a minimal example :
             <plugin>
                 <groupId>com.github.swissquote</groupId>
                 <artifactId>zet-maven-plugin</artifactId>
-                <version>1.0.0</version>
+                <version>1.1.0</version>
             </plugin>
         </plugins>
     </build>

@@ -12,6 +12,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Prevent NPE when programmatically adding modules that have no labels or properties
 - e2e tests randomly freezing
-## [1.0.0] - 2015-10-06
+## [1.0.0] - 2017-05-04
 
 Intitial release. 

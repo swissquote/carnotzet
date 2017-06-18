@@ -16,7 +16,6 @@ import java.util.ServiceLoader;
 import java.util.function.BiPredicate;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenCoordinate;
 
@@ -53,6 +52,7 @@ public class ResourcesManager {
 
 	/**
 	 * Extract the files of all module this one depends on, overriding and merging files
+	 *
 	 * @param modules top level module for which we want to resolve dependencies and resources
 	 */
 	public void resolveResources(List<CarnotzetModule> modules) {
@@ -143,8 +143,9 @@ public class ResourcesManager {
 	 * Override files in processed modules by files in a given module <br>
 	 * In effect, it deletes a file from the resources of
 	 * the processed module if it is also present in the resources of the given module
+	 *
 	 * @param processedModules modules that have been processed so far
-	 * @param module new module to process
+	 * @param module           new module to process
 	 */
 	private void overrideFiles(List<CarnotzetModule> processedModules, CarnotzetModule module) throws IOException {
 
@@ -196,7 +197,7 @@ public class ResourcesManager {
 		return null;
 	}
 
-	private ZipFile getJarFile(MavenCoordinate id) throws DependencyResolutionRequiredException, ZipException {
+	private ZipFile getJarFile(MavenCoordinate id) throws ZipException {
 		File jarFile = Maven.configureResolver().workOffline()
 				.resolve(id.getGroupId() + ":" + id.getArtifactId() + ":" + id.getVersion())
 				.withoutTransitivity().asSingleFile();
@@ -208,7 +209,7 @@ public class ResourcesManager {
 			ZipFile f = this.getJarFile(moduleId);
 			f.extractAll(moduleResourcesPath.toAbsolutePath().toString());
 		}
-		catch (DependencyResolutionRequiredException | ZipException e) {
+		catch (ZipException e) {
 			throw new CarnotzetDefinitionException(e);
 		}
 

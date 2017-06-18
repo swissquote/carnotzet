@@ -13,4 +13,4 @@ services:
   - docker
 
 script:
-  - ./mvnw clean install -B -V
+  - ./mvnw clean install -V

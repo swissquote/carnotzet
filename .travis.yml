@@ -12,5 +12,9 @@ sudo: required
 services:
   - docker
 
+before_script:
+  - ln -s ../mvnw .mvn/mvn
+  - export PATH=$PWD/.mvn:$PATH
+
 script:
-  - ./mvnw clean install -V
+  - mvn clean install -V

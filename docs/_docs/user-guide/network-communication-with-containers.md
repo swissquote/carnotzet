@@ -30,9 +30,9 @@ The second format allows you to disambiguate when running multiple environments 
 ## Using custom network aliases
 You can add hostnames for any service using `src/main/resources/carnotzet.properties` :
 ```
-voting-result.network.aliases = result
-postgres.network.aliases= db,database
+network.aliases= db,database
 ```
+Sicne version 1.2.0, you can also add aliases to your dependencies by [merging the carnotzet.properties]({{ site.baseurl }}{% link _docs/creating-your-own/configuration-using-config-files.md %}) to override the network.aliases property in other modules. To do so, create a file named `src/main/resources/my-dependency-app/carnotzet.properties.merge` with the aliases you want.
 ## How is it resolved under the hood ?
   
 Depending on your environment, it may be resolved differently :

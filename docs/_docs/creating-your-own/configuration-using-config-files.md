@@ -96,6 +96,10 @@ e.f=ef                                                    e.f=ef
                                                           foo=foo
 ```                                                         
 
+### Merging/Overriding carnotzet.properties
+In some cases, you may want to override the cartnozet configuration of a module (docker.image, network.aliases, etc...)
+It can be done by creating a file `src/main/resources/{a-dependency}/carnotzet.properties(.merge)` in your module. This feature was added in version 1.2.0
+
 ### Merging other types of files
 
 At the moment, Carnotzet only knows how to merge `.properties` files, if you need to merge other file types, you may implement the `FileMerger` SPI to add support for your file type.

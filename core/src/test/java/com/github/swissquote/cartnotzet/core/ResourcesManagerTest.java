@@ -45,13 +45,15 @@ public class ResourcesManagerTest {
 		manager.resolveResources(modules);
 
 		// Then
-		Assert.assertThat(readFile(resources, "service3/service3/injected.by.service1"), is("service1"));
-		Assert.assertThat(readFile(resources, "service3/service3/injected.by.service2"), is("service2"));
-		Assert.assertThat(readFile(resources, "service3/service3/injected.by.service3"), is("service3"));
-		Assert.assertThat(readFile(resources, "service3/service3/overridden.by.service1"), is("service1"));
-		Assert.assertThat(readFile(resources, "service3/service3/overridden.by.service2"), is("service2"));
-		Assert.assertThat(readFile(resources, "service3/service3/injected.by.service2.and.overridden.by.service1"), is("service1"));
-		Assert.assertThat(readFile(resources, "service3/service3/injected.by.service2.and.overridden.by.service1"), is("service1"));
+		Assert.assertThat(readFile(resources, "resolved/service3/files/injected.by.service1"), is("service1"));
+		Assert.assertThat(readFile(resources, "resolved/service3/files/injected.by.service2"), is("service2"));
+		Assert.assertThat(readFile(resources, "resolved/service3/files/injected.by.service3"), is("service3"));
+		Assert.assertThat(readFile(resources, "resolved/service3/files/overridden.by.service1"), is("service1"));
+		Assert.assertThat(readFile(resources, "resolved/service3/files/overridden.by.service2"), is("service2"));
+		Assert.assertThat(readFile(resources, "resolved/service3/files/injected.by.service2.and.overridden.by.service1"), is("service1"));
+		Assert.assertThat(readFile(resources, "resolved/service3/files/injected.by.service2.and.overridden.by.service1"), is("service1"));
+		Assert.assertThat(readFile(resources, "resolved/service3/files/subfolder/subfolder.injected.by.service1"), is("service1"));
+
     }
 
 	private String readFile(Path root, String path) throws IOException {
@@ -77,7 +79,7 @@ public class ResourcesManagerTest {
 
         // Then
 		Properties service3config = new Properties();
-		service3config.load(Files.newInputStream(resources.resolve("service3/service3/files/config.properties")));
+		service3config.load(Files.newInputStream(resources.resolve("resolved/service3/files/config.properties")));
 		assertThat(service3config.getProperty("overridden.from.service2"), is("service2value"));
 		assertThat(service3config.getProperty("overridden.from.service1"), is("service1value"));
 		assertThat(service3config.getProperty("added.from.service3"), is("service3value"));
@@ -86,7 +88,7 @@ public class ResourcesManagerTest {
 		assertThat(service3config.getProperty("added.from.service2.and.overridden.from.service1"), is("service1value"));
 
 		Properties service3carnotzet = new Properties();
-		service3carnotzet.load(Files.newInputStream(resources.resolve("service3/service3/carnotzet.properties")));
+		service3carnotzet.load(Files.newInputStream(resources.resolve("resolved/service3/carnotzet.properties")));
 		assertThat(service3carnotzet.getProperty("docker.image"), is("service3"));
 		assertThat(service3carnotzet.getProperty("network.aliases"), is("my-service3"));
 

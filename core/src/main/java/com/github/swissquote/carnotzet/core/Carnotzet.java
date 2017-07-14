@@ -74,7 +74,6 @@ public class Carnotzet {
 		if (resourcesPath == null) {
 			resourcesPath = Paths.get("/tmp/carnotzet_" + System.nanoTime());
 		}
-		resourcesPath = resourcesPath.resolve(topLevelModuleName);
 		this.resourceManager = new ResourcesManager(resourcesPath, config.getTopLevelModuleResourcesPath());
 
 		if (config.getDefaultDockerRegistry() != null) {
@@ -145,7 +144,7 @@ public class Carnotzet {
 	private Map<String, String> readPropertiesFiles(CarnotzetModule module) {
 		Map<String, String> result = new HashMap<>();
 		for (String fileName : propFileNames) {
-			Path filePath = getModuleResourcesPath(module).resolve(module.getName()).resolve(fileName);
+			Path filePath = getModuleResourcesPath(module).resolve(fileName);
 			if (filePath.toFile().exists()) {
 				try {
 					Properties props = new Properties();
@@ -166,41 +165,38 @@ public class Carnotzet {
 
 	private Set<String> getEnvFiles(CarnotzetModule module) {
 		Set<String> envFiles = new HashSet<>();
-		for (CarnotzetModule otherModule : modules) {
-			Path otherModuleEnvFolder = getModuleResourcesPath(otherModule).resolve(module.getName()).resolve("env");
-			if (!exists(otherModuleEnvFolder)) {
-				continue;
-			}
-			try {
-				envFiles.addAll(walk(otherModuleEnvFolder).filter(p -> p.toFile().isFile()).map(Path::toString).collect(toList()));
-			}
-			catch (IOException e) {
-				log.error(String.format("Error while reading env files for module: %s", module.getName()), e);
-			}
+		Path envFilesRoot = getModuleResourcesPath(module).resolve("env");
+		if (!exists(envFilesRoot)) {
+			return Collections.emptySet();
 		}
+		try {
+			envFiles.addAll(walk(envFilesRoot).filter(p -> p.toFile().isFile()).map(Path::toString).collect(toList()));
+		}
+		catch (IOException e) {
+			log.error(String.format("Error while reading env files for module: %s", module.getName()), e);
+		}
+
 		return envFiles.isEmpty() ? null : envFiles;
 	}
 
 	private Set<String> getFileVolumes(CarnotzetModule module) {
 		Map<String, String> result = new HashMap<>();
-		//look for files proposed by other modules that will need to be linked to the given module
-		for (CarnotzetModule otherModule : getModules()) {
-			Path toMount = getModuleResourcesPath(otherModule).resolve(module.getName()).resolve("files");
-			if (!Files.exists(toMount)) {
-				continue;
-			}
-			try {
-				Files.walk(toMount).forEach((p) -> {
-					if (p.toFile().isFile()) {
-						result.put(p.toString(),
-								new File(p.toString().substring(p.toString().indexOf("/files/") + "files/".length())).getAbsolutePath());
-					}
-				});
-			}
-			catch (IOException e) {
-				log.error(String.format("Error while reading env files for module:%s", module.getName()), e);
-			}
+		Path toMount = getModuleResourcesPath(module).resolve("files");
+		if (!Files.exists(toMount)) {
+			return Collections.emptySet();
 		}
+		try {
+			Files.walk(toMount).forEach((p) -> {
+				if (p.toFile().isFile()) {
+					result.put(p.toString(),
+							new File(p.toString().substring(p.toString().indexOf("/files/") + "files/".length())).getAbsolutePath());
+				}
+			});
+		}
+		catch (IOException e) {
+			log.error(String.format("Error while reading files to mount for module:%s", module.getName()), e);
+		}
+
 		return result.isEmpty() ? Collections.emptySet() : result.entrySet().stream().map(
 				entry -> String.format("%s:%s", entry.getKey(), entry.getValue()))
 				.collect(Collectors.toSet());

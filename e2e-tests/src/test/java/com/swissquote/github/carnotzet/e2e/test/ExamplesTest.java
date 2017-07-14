@@ -3,6 +3,7 @@ package com.swissquote.github.carnotzet.e2e.test;
 import static com.github.swissquote.carnotzet.core.maven.CarnotzetModuleCoordinates.fromPom;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.openqa.selenium.By.className;
 import static org.openqa.selenium.By.id;
 
@@ -33,6 +34,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import com.github.swissquote.carnotzet.core.Carnotzet;
 import com.github.swissquote.carnotzet.core.CarnotzetConfig;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
+import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.log.LogEvents;
 import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
 import com.github.swissquote.carnotzet.runtime.docker.compose.DockerComposeRuntime;
@@ -111,6 +113,20 @@ public class ExamplesTest {
 
 		vote("b", "voter_1");
 		assertResultPage("0.0%", "100.0%", "1 vote");
+	}
+
+	@Test
+	public void test_transitive_file_config() {
+		String commandResult = DefaultCommandRunner.INSTANCE
+				.runCommandAndCaptureOutput("docker", "exec", "-t", runtime.getContainer("redis").getId(), "cat", "/testfile");
+		assertThat(commandResult, is("injected_file_content_into_redis"));
+	}
+
+	@Test
+	public void test_transitive_env_config() {
+		String commandResult = DefaultCommandRunner.INSTANCE
+				.runCommandAndCaptureOutput("docker", "exec", "-t", runtime.getContainer("redis").getId(), "env");
+		assertTrue(commandResult.contains("CARNOTZET_TEST=test_value"));
 	}
 
 	private void vote(String choice, String voterId) throws MalformedURLException {

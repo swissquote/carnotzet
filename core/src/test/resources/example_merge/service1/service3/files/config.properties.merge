@@ -1,0 +1,3 @@
+overridden.from.service1=service1value
+added.from.service2.and.overridden.from.service1=service1value
+added.from.service1=service1value

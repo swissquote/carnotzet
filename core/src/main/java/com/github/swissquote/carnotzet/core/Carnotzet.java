@@ -6,16 +6,17 @@ import static java.util.stream.Collectors.toList;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,8 +31,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * This is the main class of this library <br>
- * It represents an environment definition as a set of executable applications with their configuration.
+ * Represents an environment definition as a set of executable applications with their configuration.
  */
 @Slf4j
 public class Carnotzet {
@@ -50,6 +50,10 @@ public class Carnotzet {
 	private final MavenDependencyResolver resolver;
 
 	private final ResourcesManager resourceManager;
+
+	private final String defaultContainerRegistry;
+
+	private final List<String> propFileNames;
 
 	public Carnotzet(CarnotzetConfig config) {
 		log.debug("Creating new carnotzet with config [{}]", config);
@@ -73,16 +77,19 @@ public class Carnotzet {
 		resourcesPath = resourcesPath.resolve(topLevelModuleName);
 		this.resourceManager = new ResourcesManager(resourcesPath, config.getTopLevelModuleResourcesPath());
 
-		String defaultContainerRegistry = "docker.io";
 		if (config.getDefaultDockerRegistry() != null) {
-			defaultContainerRegistry = config.getDefaultDockerRegistry();
+			this.defaultContainerRegistry = config.getDefaultDockerRegistry();
+		} else {
+			this.defaultContainerRegistry = "docker.io";
 		}
 
-		List<String> propFileNames = Arrays.asList("carnotzet.properties");
 		if (config.getPropFileNames() != null) {
-			propFileNames = config.getPropFileNames();
+			this.propFileNames = config.getPropFileNames();
+		} else {
+			this.propFileNames = Arrays.asList("carnotzet.properties");
 		}
-		resolver = new MavenDependencyResolver(this::getModuleName, defaultContainerRegistry, propFileNames);
+
+		resolver = new MavenDependencyResolver(this::getModuleName);
 
 	}
 
@@ -90,12 +97,12 @@ public class Carnotzet {
 		if (modules == null) {
 			log.debug("resolving module dependencies");
 			modules = resolver.resolve(config.getTopLevelModuleId());
-			log.debug("resolving module resources");
+			log.debug("extracting module resources");
+			resourceManager.extractResources(modules);
+			log.debug("resolving module resources overrides and merges");
 			resourceManager.resolveResources(modules);
-			log.debug("Configuring individual file volumes");
-			modules = configureFilesVolumes(modules);
-			log.debug("Configuring env_file volumes");
-			modules = configureEnvFilesVolumes(modules);
+			log.debug("configuring modules");
+			modules = configureModules(modules);
 
 			if (config.getExtensions() != null) {
 				for (CarnotzetExtension feature : config.getExtensions()) {
@@ -107,18 +114,54 @@ public class Carnotzet {
 		return modules;
 	}
 
-	public Path getModuleResourcesPath(CarnotzetModule module) {
-		return resourceManager.getModuleResourcesPath(module);
+	private List<CarnotzetModule> configureModules(List<CarnotzetModule> modules) {
+		return modules.stream().map(this::configureModule).collect(toList());
 	}
 
-	private List<CarnotzetModule> configureEnvFilesVolumes(List<CarnotzetModule> modules) {
-		List<CarnotzetModule> result = new ArrayList<>();
-		for (CarnotzetModule module : modules) {
-			CarnotzetModule.CarnotzetModuleBuilder clone = module.toBuilder();
-			clone.dockerEnvFiles(getEnvFiles(module));
-			result.add(clone.build());
+	private CarnotzetModule configureModule(CarnotzetModule module) {
+		CarnotzetModule.CarnotzetModuleBuilder result = module.toBuilder();
+		Map<String, String> properties = readPropertiesFiles(module);
+		result.properties(properties);
+
+		// Default convention
+		String imageName = defaultContainerRegistry + "/" + module.getName() + ":" + module.getId().getVersion();
+
+		// Allow custom image through configuration
+		if (properties.containsKey("docker.image")) {
+			imageName = properties.get("docker.image");
+		}
+
+		// Allow configuration based disabling of docker container (config only module)
+		if ("none".equals(imageName)) {
+			imageName = null;
+		}
+		result.imageName(imageName);
+		result.dockerVolumes(getFileVolumes(module));
+		result.dockerEnvFiles(getEnvFiles(module));
+
+		return result.build();
+	}
+
+	private Map<String, String> readPropertiesFiles(CarnotzetModule module) {
+		Map<String, String> result = new HashMap<>();
+		for (String fileName : propFileNames) {
+			Path filePath = getModuleResourcesPath(module).resolve(module.getName()).resolve(fileName);
+			if (filePath.toFile().exists()) {
+				try {
+					Properties props = new Properties();
+					props.load(Files.newInputStream(filePath));
+					result.putAll((Map) props);
+				}
+				catch (IOException e) {
+					throw new UncheckedIOException(e);
+				}
+			}
 		}
 		return result;
+	}
+
+	public Path getModuleResourcesPath(CarnotzetModule module) {
+		return resourceManager.getModuleResourcesPath(module);
 	}
 
 	private Set<String> getEnvFiles(CarnotzetModule module) {
@@ -136,16 +179,6 @@ public class Carnotzet {
 			}
 		}
 		return envFiles.isEmpty() ? null : envFiles;
-	}
-
-	private List<CarnotzetModule> configureFilesVolumes(List<CarnotzetModule> modules) {
-		List<CarnotzetModule> result = new ArrayList<>();
-		for (CarnotzetModule module : modules) {
-			CarnotzetModule.CarnotzetModuleBuilder clone = module.toBuilder();
-			clone.dockerVolumes(getFileVolumes(module));
-			result.add(clone.build());
-		}
-		return result;
 	}
 
 	private Set<String> getFileVolumes(CarnotzetModule module) {

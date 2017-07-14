@@ -1,6 +1,8 @@
 package com.github.swissquote.carnotzet.extention;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.github.swissquote.carnotzet.core.Carnotzet;
@@ -18,8 +20,14 @@ public final class HelloLabelExtension implements CarnotzetExtension {
 	@Override
 	public List<CarnotzetModule> apply(Carnotzet carnotzet) {
 		return carnotzet.getModules().stream().map(module -> {
-					module.getLabels().put("carnotzet.hello.message", message);
-					return module;
+					CarnotzetModule.CarnotzetModuleBuilder result = module.toBuilder();
+					Map<String, String> labels = new HashMap<>();
+					if (module.getLabels() != null) {
+						labels.putAll(module.getLabels());
+					}
+					labels.put("carnotzet.hello.message", message);
+					result.labels(labels);
+					return result.build();
 				}
 		).collect(Collectors.toList());
 	}

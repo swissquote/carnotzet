@@ -78,7 +78,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 			Map<String, ContainerNetwork> networks = new HashMap<>();
 			Set<String> networkAliases = new HashSet<>();
-			networkAliases.addAll(lookUpCustomAliases(carnotzet, module));
+			networkAliases.addAll(lookUpCustomAliases(module));
 
 			// Carnotzet semantics name
 			networkAliases.add(module.getName() + ".docker");
@@ -123,12 +123,10 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		log.debug(String.format("End build compose file for module %s", carnotzet.getConfig().getTopLevelModuleId()));
 	}
 
-	private Collection<String> lookUpCustomAliases(Carnotzet carnotzet, CarnotzetModule module) {
+	private Collection<String> lookUpCustomAliases(CarnotzetModule m) {
 		Set<String> result = new HashSet<>();
-		for (CarnotzetModule m : carnotzet.getModules()) {
-			if (m.getProperties() != null && m.getProperties().containsKey(module.getName() + ".network.aliases")) {
-				result.addAll(parseNetworkAliases(m.getProperties().get(module.getName() + ".network.aliases")));
-			}
+		if (m.getProperties() != null && m.getProperties().containsKey("network.aliases")) {
+			result.addAll(parseNetworkAliases(m.getProperties().get("network.aliases")));
 		}
 		return result;
 	}

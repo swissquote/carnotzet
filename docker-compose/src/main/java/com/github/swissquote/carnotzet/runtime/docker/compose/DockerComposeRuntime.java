@@ -74,6 +74,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			serviceBuilder.image(module.getImageName());
 			serviceBuilder.volumes(module.getDockerVolumes());
 			serviceBuilder.entrypoint(module.getDockerEntrypoint());
+			serviceBuilder.command(module.getDockerCmd());
 			serviceBuilder.env_file(module.getDockerEnvFiles());
 
 			Map<String, ContainerNetwork> networks = new HashMap<>();

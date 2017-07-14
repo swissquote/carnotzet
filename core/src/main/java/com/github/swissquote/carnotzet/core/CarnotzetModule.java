@@ -25,6 +25,7 @@ public class CarnotzetModule {
 	private final String imageName;
 	private final Set<String> dockerVolumes;
 	private final String dockerEntrypoint;
+	private final String dockerCmd;
 	private final Set<String> dockerEnvFiles;
 
 	public String getShortImageName() {

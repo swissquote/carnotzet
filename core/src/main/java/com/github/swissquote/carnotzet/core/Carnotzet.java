@@ -135,6 +135,12 @@ public class Carnotzet {
 			imageName = null;
 		}
 		result.imageName(imageName);
+		if (properties.containsKey("docker.entrypoint")) {
+			result.dockerEntrypoint(properties.get("docker.entrypoint"));
+		}
+		if (properties.containsKey("docker.cmd")) {
+			result.dockerCmd(properties.get("docker.cmd"));
+		}
 		result.dockerVolumes(getFileVolumes(module));
 		result.dockerEnvFiles(getEnvFiles(module));
 

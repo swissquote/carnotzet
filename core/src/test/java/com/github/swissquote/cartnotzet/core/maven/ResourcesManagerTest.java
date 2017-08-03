@@ -1,4 +1,4 @@
-package com.github.swissquote.cartnotzet.core;
+package com.github.swissquote.cartnotzet.core.maven;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
-import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,17 +23,17 @@ import com.github.swissquote.carnotzet.core.maven.ResourcesManager;
 
 public class ResourcesManagerTest {
 
-    @Rule
-    public TemporaryFolder temp = new TemporaryFolder();
+	@Rule
+	public TemporaryFolder temp = new TemporaryFolder();
 
-    @Test
-    public void override_file() throws IOException {
+	@Test
+	public void override_file() throws IOException {
 		// Given
 		URL url = Thread.currentThread().getContextClassLoader().getResource("example_override");
 		File example = new File(url.getPath());
 		Path resources = temp.newFolder().toPath();
 		FileUtils.copyDirectory(example, resources.toFile());
-		ResourcesManager manager = new ResourcesManager(resources,null);
+		ResourcesManager manager = new ResourcesManager(resources, null);
 		List<CarnotzetModule> modules = Arrays.asList(
 				CarnotzetModule.builder().name("service3").build(),
 				CarnotzetModule.builder().name("service2").build(),
@@ -54,30 +53,30 @@ public class ResourcesManagerTest {
 		Assert.assertThat(readFile(resources, "resolved/service3/files/injected.by.service2.and.overridden.by.service1"), is("service1"));
 		Assert.assertThat(readFile(resources, "resolved/service3/files/subfolder/subfolder.injected.by.service1"), is("service1"));
 
-    }
+	}
 
 	private String readFile(Path root, String path) throws IOException {
-    	return new String(Files.readAllBytes(root.resolve(path)),"UTF-8");
+		return new String(Files.readAllBytes(root.resolve(path)), "UTF-8");
 	}
 
 	@Test
-    public void merge_files() throws IOException {
+	public void merge_files() throws IOException {
 		// Given
-    	URL url = Thread.currentThread().getContextClassLoader().getResource("example_merge");
+		URL url = Thread.currentThread().getContextClassLoader().getResource("example_merge");
 		File example = new File(url.getPath());
-        Path resources = temp.newFolder().toPath();
+		Path resources = temp.newFolder().toPath();
 		FileUtils.copyDirectory(example, resources.toFile());
-        ResourcesManager manager = new ResourcesManager(resources,null);
-        List<CarnotzetModule> modules = Arrays.asList(
+		ResourcesManager manager = new ResourcesManager(resources, null);
+		List<CarnotzetModule> modules = Arrays.asList(
 				CarnotzetModule.builder().name("service3").build(),
 				CarnotzetModule.builder().name("service2").build(),
 				CarnotzetModule.builder().name("service1").build()
 		);
 
-        // When
-        manager.resolveResources(modules);
+		// When
+		manager.resolveResources(modules);
 
-        // Then
+		// Then
 		Properties service3config = new Properties();
 		service3config.load(Files.newInputStream(resources.resolve("resolved/service3/files/config.properties")));
 		assertThat(service3config.getProperty("overridden.from.service2"), is("service2value"));
@@ -93,6 +92,5 @@ public class ResourcesManagerTest {
 		assertThat(service3carnotzet.getProperty("network.aliases"), is("my-service3"));
 
 	}
-
 
 }

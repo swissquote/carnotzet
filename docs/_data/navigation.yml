@@ -16,6 +16,8 @@ docs:
         url: /creating-your-own/configuration-using-environment-variables
       - title: "Configuration using config files"
         url: /creating-your-own/configuration-using-config-files
+      - title: "Documenting environments"
+        url: /creating-your-own/documenting
       - title: "Debugging"
         url: /creating-your-own/debugging
 

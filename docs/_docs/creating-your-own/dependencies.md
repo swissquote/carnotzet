@@ -2,7 +2,6 @@
 title: "Dependencies"
 permalink: /creating-your-own/dependencies
 ---
-{% include toc %}
 
 ## Environment composition
 

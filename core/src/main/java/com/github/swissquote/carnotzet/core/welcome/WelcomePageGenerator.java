@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -57,7 +58,7 @@ public class WelcomePageGenerator {
 			throw new CarnotzetDefinitionException(
 					"Resources folder does not exist or is not a directory : [" + moduleResources + "]");
 		}
-
+		Arrays.sort(children);
 		for (File child : children) {
 			appendWelcomeFrom(child, welcomePage);
 		}

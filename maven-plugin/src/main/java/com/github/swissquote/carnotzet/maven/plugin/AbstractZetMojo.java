@@ -49,11 +49,11 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	@Getter
 	private MavenSession session;
 
-	@Parameter(property = "instance", readonly = true)
+	@Parameter(property = "instance")
 	@Getter
 	private String instanceId;
 
-	@Parameter(property = "service", readonly = true)
+	@Parameter(property = "service")
 	@Getter
 	private String service;
 

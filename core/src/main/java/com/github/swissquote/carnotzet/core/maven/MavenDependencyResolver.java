@@ -39,9 +39,6 @@ public class MavenDependencyResolver {
 
 	private final TopologicalSorter topologicalSorter = new TopologicalSorter();
 
-	/**
-	 * Computes the list of modules in an environment in topological order (leaves first)
-	 */
 	public List<CarnotzetModule> resolve(CarnotzetModuleCoordinates topLevelModuleId) {
 		log.debug("Resolving module dependencies");
 		Path pomFile = getPomFile(topLevelModuleId);

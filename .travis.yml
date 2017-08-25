@@ -12,11 +12,12 @@ sudo: required
 services:
   - docker
 
-before_install:
+before_script:
   - wget https://archive.apache.org/dist/maven/maven-3/3.5.0/binaries/apache-maven-3.5.0-bin.zip
   - unzip -qq apache-maven-3.5.0-bin.zip
   - export M2_HOME=$PWD/apache-maven-3.5.0
   - export PATH=$M2_HOME/bin:$PATH
 
-install:
-  - mvn clean install -V
+install: true
+
+script: mvn clean install -V

@@ -122,6 +122,7 @@ public class TreeTextParser {
 	 *     project: MavenProject: com.acme.org:foobar:1.0.41-SNAPSHOT @ /opt/jenkins/home/jobs/foobar/workspace/trunk/foobar/pom.xml;
 	 *     project: MavenProject: com.acme.org:foobar:1.0.41-SNAPSHOT @ /opt/jenkins/home/jobs/foobar/workspace/trunk/foobar/pom.xml
 	 * </pre>
+	 * @return The artifact's GAV
 	 */
 	protected String extractActiveProjectArtifact() {
 		String artifact = null;

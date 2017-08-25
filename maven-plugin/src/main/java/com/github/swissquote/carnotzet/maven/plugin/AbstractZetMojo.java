@@ -83,14 +83,13 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	public void execute() throws MojoFailureException, MojoExecutionException {
 		SLF4JBridgeHandler.install();
 
-		List<CarnotzetExtensionsFactory> factories = new ArrayList<>(0);
-		ServiceLoader.load(CarnotzetExtensionsFactory.class).iterator().forEachRemaining(factories::add);
+		List<CarnotzetExtension> runtimeExtensions = findRuntimeExtensions();
 
 		CarnotzetConfig config = CarnotzetConfig.builder()
 				.topLevelModuleId(new CarnotzetModuleCoordinates(project.getGroupId(), project.getArtifactId(), project.getVersion()))
 				.resourcesPath(Paths.get(project.getBuild().getDirectory(), "carnotzet"))
 				.topLevelModuleResourcesPath(project.getBasedir().toPath().resolve("src/main/resources"))
-				.extensions(findRuntimeExtensions(factories))
+				.extensions(runtimeExtensions)
 				.build();
 		carnotzet = new Carnotzet(config);
 		runtime = new DockerComposeRuntime(carnotzet, instanceId);
@@ -100,7 +99,10 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 		SLF4JBridgeHandler.uninstall();
 	}
 
-	private List<CarnotzetExtension> findRuntimeExtensions(List<CarnotzetExtensionsFactory> factories) {
+	protected List<CarnotzetExtension> findRuntimeExtensions() {
+		List<CarnotzetExtensionsFactory> factories = new ArrayList<>(0);
+		ServiceLoader.load(CarnotzetExtensionsFactory.class).iterator().forEachRemaining(factories::add);
+
 		return factories.stream()
 				.map(factory -> factory.create(findExtensionFactoryProperties(factory)))
 				.collect(Collectors.toList());

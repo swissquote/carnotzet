@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+
+## [1.2.2] - 2017-08-25
+### Fixed
+- Fixed a bug where configuration file overrides were not applied properly in some cases
+### Changed
+- Changed maven resolver from shrinkwrap to maven invoker + maven-dependency-plugin
+- The core library now depends on having a functional maven installation in the environment (M2_HOME or ${maven.home} must be set)
 ## [1.2.1] - 2017-08-03
 ### Fixed
 - Fixed "welcome" page generation regression introduced in 1.2.0

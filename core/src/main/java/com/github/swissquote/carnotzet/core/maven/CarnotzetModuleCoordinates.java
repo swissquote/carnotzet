@@ -7,9 +7,6 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 
-import org.jboss.shrinkwrap.resolver.api.maven.PackagingType;
-import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenCoordinate;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -21,31 +18,11 @@ import java.nio.file.Path;
  */
 @Value
 @AllArgsConstructor
-public class CarnotzetModuleCoordinates implements MavenCoordinate {
+public class CarnotzetModuleCoordinates {
 
 	private final String groupId;
 	private final String artifactId;
 	private final String version;
-
-	@Override
-	public PackagingType getPackaging() {
-		return PackagingType.JAR;
-	}
-
-	@Override
-	public PackagingType getType() {
-		return PackagingType.JAR;
-	}
-
-	@Override
-	public String getClassifier() {
-		return null;
-	}
-
-	@Override
-	public String toCanonicalForm() {
-		return groupId + ":" + artifactId + ":jar:" + version;
-	}
 
 	public static CarnotzetModuleCoordinates fromPom(Path pom) {
 		Model result;
@@ -67,5 +44,5 @@ public class CarnotzetModuleCoordinates implements MavenCoordinate {
 		}
 		return new CarnotzetModuleCoordinates(groupId, result.getArtifactId(), version);
 	}
-	
+
 }

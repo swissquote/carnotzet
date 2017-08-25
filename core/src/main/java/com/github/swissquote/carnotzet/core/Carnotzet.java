@@ -22,8 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenCoordinate;
-
+import com.github.swissquote.carnotzet.core.maven.CarnotzetModuleCoordinates;
 import com.github.swissquote.carnotzet.core.maven.MavenDependencyResolver;
 import com.github.swissquote.carnotzet.core.maven.ResourcesManager;
 
@@ -88,17 +87,14 @@ public class Carnotzet {
 			this.propFileNames = Arrays.asList("carnotzet.properties");
 		}
 
-		resolver = new MavenDependencyResolver(this::getModuleName);
+		resolver = new MavenDependencyResolver(this::getModuleName, resourcesPath.resolve("maven"));
 
 	}
 
 	public List<CarnotzetModule> getModules() {
 		if (modules == null) {
-			log.debug("resolving module dependencies");
 			modules = resolver.resolve(config.getTopLevelModuleId());
-			log.debug("extracting module resources");
 			resourceManager.extractResources(modules);
-			log.debug("resolving module resources overrides and merges");
 			resourceManager.resolveResources(modules);
 			log.debug("configuring modules");
 			modules = configureModules(modules);
@@ -212,7 +208,7 @@ public class Carnotzet {
 		return resourceManager.getResourcesRoot();
 	}
 
-	public String getModuleName(MavenCoordinate module) {
+	public String getModuleName(CarnotzetModuleCoordinates module) {
 		Matcher m = moduleFilterPattern.matcher(module.getArtifactId());
 		if (m.find()) {
 			return m.group(1);

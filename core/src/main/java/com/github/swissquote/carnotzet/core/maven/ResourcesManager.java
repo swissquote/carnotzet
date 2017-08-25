@@ -3,7 +3,6 @@ package com.github.swissquote.carnotzet.core.maven;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.find;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -17,8 +16,6 @@ import java.util.ServiceLoader;
 import java.util.function.BiPredicate;
 
 import org.apache.commons.io.FileUtils;
-import org.jboss.shrinkwrap.resolver.api.maven.Maven;
-import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenCoordinate;
 
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
@@ -78,7 +75,7 @@ public class ResourcesManager {
 					FileUtils.copyDirectory(topLevelModuleResourcesPath.toFile(),
 							expandedJars.resolve(topLevelModuleName).toFile());
 				} else {
-					copyModuleResources(module.getId(), expandedJars.resolve(module.getName()));
+					copyModuleResources(module, expandedJars.resolve(module.getName()));
 				}
 			}
 		}
@@ -225,16 +222,9 @@ public class ResourcesManager {
 		return null;
 	}
 
-	private ZipFile getJarFile(MavenCoordinate id) throws ZipException {
-		File jarFile = Maven.configureResolver().workOffline()
-				.resolve(id.getGroupId() + ":" + id.getArtifactId() + ":" + id.getVersion())
-				.withoutTransitivity().asSingleFile();
-		return new ZipFile(jarFile);
-	}
-
-	public void copyModuleResources(MavenCoordinate moduleId, Path moduleResourcesPath) {
+	private void copyModuleResources(CarnotzetModule module, Path moduleResourcesPath) {
 		try {
-			ZipFile f = this.getJarFile(moduleId);
+			ZipFile f = new ZipFile(module.getJarPath().toFile());
 			f.extractAll(moduleResourcesPath.toAbsolutePath().toString());
 		}
 		catch (ZipException e) {

@@ -1,23 +1,24 @@
 package com.github.swissquote.carnotzet.core;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 
-import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenCoordinate;
+import com.github.swissquote.carnotzet.core.maven.CarnotzetModuleCoordinates;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
 
-@Value
-@AllArgsConstructor
-@Builder(toBuilder = true)
 /**
  * Represents and application with it's configuration inside a Carnotzet environment
  */
+@Value
+@AllArgsConstructor
+@Builder(toBuilder = true)
 public class CarnotzetModule {
 
-	private final MavenCoordinate id;
+	private final CarnotzetModuleCoordinates id;
 	private final String name;
 	private final String topLevelModuleName;
 	private final Map<String, String> properties;
@@ -27,6 +28,7 @@ public class CarnotzetModule {
 	private final String dockerEntrypoint;
 	private final String dockerCmd;
 	private final Set<String> dockerEnvFiles;
+	private final Path jarPath;
 
 	public String getShortImageName() {
 		String withoutHost = imageName.replaceFirst(".*/", "");

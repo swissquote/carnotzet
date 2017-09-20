@@ -123,6 +123,15 @@ public class ResourcesManager {
 				throw new UncheckedIOException(e);
 			}
 		});
+		// copy all directories from the expanded jar recursively
+		find(expandedJarPath, 1, (p, a) -> a.isDirectory()).forEach(source -> {
+			try {
+				FileUtils.copyDirectory(source.toFile(), resolvedModulePath.resolve(source.getFileName()).toFile());
+			}
+			catch (IOException e) {
+				throw new UncheckedIOException(e);
+			}
+		});
 	}
 
 	/**

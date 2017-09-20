@@ -2,6 +2,7 @@ package com.github.swissquote.cartnotzet.core.maven;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -90,6 +91,30 @@ public class ResourcesManagerTest {
 		service3carnotzet.load(Files.newInputStream(resources.resolve("resolved/service3/carnotzet.properties")));
 		assertThat(service3carnotzet.getProperty("docker.image"), is("service3"));
 		assertThat(service3carnotzet.getProperty("network.aliases"), is("my-service3"));
+
+	}
+
+	@Test
+	public void copy_own_resources() throws IOException {
+		// Given
+		URL url = Thread.currentThread().getContextClassLoader().getResource("example_copy_own_resources");
+		File example = new File(url.getPath());
+		Path resources = temp.newFolder().toPath();
+		FileUtils.copyDirectory(example, resources.toFile());
+		ResourcesManager manager = new ResourcesManager(resources, null);
+		List<CarnotzetModule> modules = Arrays.asList(
+				CarnotzetModule.builder().name("service2").build(),
+				CarnotzetModule.builder().name("service1").build()
+		);
+
+		// When
+		manager.resolveResources(modules);
+
+		// Then
+		assertTrue(resources.resolve("resolved/service2/s2").toFile().exists());
+		assertTrue(resources.resolve("resolved/service2/resourcedir/from_service_2").toFile().exists());
+		assertTrue(resources.resolve("resolved/service2/resourcedir/from_service_1").toFile().exists());
+		assertTrue(resources.resolve("resolved/service2/resourcedir2/from_service_1").toFile().exists());
 
 	}
 

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
@@ -44,11 +45,18 @@ public class MavenDependencyResolver {
 		Path pomFile = getPomFile(topLevelModuleId);
 		Node tree = resolveDependencyTree(pomFile);
 		log.debug("Computing topological ordering of GAs in full dependency tree before resolution (maven2)");
-		List<GAV> topology = topologicalSorter.sort(tree);
+		List<Node> topology = topologicalSorter.sort(tree);
+		topology = filterInterestingNodes(topology);
 		String topLevelModuleName = moduleNameProvider.apply(topLevelModuleId);
 		List<CarnotzetModule> result = convertNodesToModules(topology, topLevelModuleName);
 		ensureJarFilesAreDownloaded(result, topLevelModuleId);
 		return result;
+	}
+
+	private List<Node> filterInterestingNodes(List<Node> topology) {
+		return topology.stream()
+				.filter(n -> n.getScope() == null || "compile".equals(n.getScope()) || "runtime".equals(n.getScope()))
+				.collect(Collectors.toList());
 	}
 
 	private void ensureJarFilesAreDownloaded(List<CarnotzetModule> result, CarnotzetModuleCoordinates topLevelModuleId) {
@@ -67,10 +75,10 @@ public class MavenDependencyResolver {
 		executeMavenBuild(Arrays.asList("org.apache.maven.plugins:maven-dependency-plugin:2.10:get -Dartifact=" + gav), null);
 	}
 
-	private List<CarnotzetModule> convertNodesToModules(List<GAV> artifacts, String topLevelModuleName) {
+	private List<CarnotzetModule> convertNodesToModules(List<Node> nodes, String topLevelModuleName) {
 		List<CarnotzetModule> result = new ArrayList<>();
 
-		for (GAV artifact : artifacts) {
+		for (Node artifact : nodes) {
 			CarnotzetModuleCoordinates coord = new CarnotzetModuleCoordinates(
 					artifact.getGroupId(),
 					artifact.getArtifactId(),

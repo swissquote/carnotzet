@@ -17,11 +17,11 @@ import com.github.swissquote.carnotzet.core.maven.TopologicalSorter;
 public class TopologicalSorterTest {
 
 	private Node createNode(String artifactId, String version) {
-		return new Node("com.test", artifactId, null, null, version, null, null, false, null, new LinkedList<>());
+		return new Node("com.test", artifactId, null, null, version, "compile", null, false, null, new LinkedList<>());
 	}
 
 	private Node createOmittedNode(String artifactId, String version) {
-		return new Node("com.test", artifactId, null, null, version, null, null, true, null, new LinkedList<>());
+		return new Node("com.test", artifactId, null, null, version, "compile", null, true, null, new LinkedList<>());
 	}
 
 	@Test
@@ -38,7 +38,7 @@ public class TopologicalSorterTest {
 		b.addChildNode(d);
 		c.addChildNode(e);
 
-		List<String> r = new TopologicalSorter().sort(a).stream().map(GAV::getArtifactId).collect(Collectors.toList());
+		List<String> r = new TopologicalSorter().sort(a).stream().map(Node::getArtifactId).collect(Collectors.toList());
 		Assert.assertTrue(r.indexOf("a") > r.indexOf("b"));
 		Assert.assertTrue(r.indexOf("a") > r.indexOf("c"));
 		Assert.assertTrue(r.indexOf("b") > r.indexOf("d"));
@@ -59,13 +59,13 @@ public class TopologicalSorterTest {
 		c.addChildNode(d);
 		// unexpressed : oc depends on d
 
-		List<GAV> resultGAVs = new TopologicalSorter().sort(a);
-		List<String> r = resultGAVs.stream().map(GAV::getArtifactId).collect(Collectors.toList());
+		List<Node> resultNodes = new TopologicalSorter().sort(a);
+		List<String> r = resultNodes.stream().map(Node::getArtifactId).collect(Collectors.toList());
 		Assert.assertTrue(r.indexOf("a") > r.indexOf("c"));
 		Assert.assertTrue(r.indexOf("a") > r.indexOf("b"));
 		Assert.assertTrue(r.indexOf("b") > r.indexOf("c"));
 		Assert.assertTrue(r.indexOf("c") > r.indexOf("d"));
-		Assert.assertTrue(resultGAVs.contains(new GAV("com.test", "c", "2")));
+		Assert.assertTrue(resultNodes.contains(c));
 	}
 
 	@Test
@@ -84,13 +84,13 @@ public class TopologicalSorterTest {
 		d.addChildNode(e);
 		// unexpressed : od depends on e
 
-		List<GAV> resultGAVs = new TopologicalSorter().sort(a);
-		List<String> r = resultGAVs.stream().map(GAV::getArtifactId).collect(Collectors.toList());
+		List<Node> resultNodes = new TopologicalSorter().sort(a);
+		List<String> r = resultNodes.stream().map(Node::getArtifactId).collect(Collectors.toList());
 		Assert.assertTrue(r.indexOf("a") > r.indexOf("b"));
 		Assert.assertTrue(r.indexOf("b") > r.indexOf("c"));
 		Assert.assertTrue(r.indexOf("a") > r.indexOf("d"));
 		Assert.assertTrue(r.indexOf("d") > r.indexOf("e"));
-		Assert.assertTrue(resultGAVs.contains(new GAV("com.test", "d", "1")));
+		Assert.assertTrue(resultNodes.contains(d));
 	}
 
 	@Test
@@ -112,7 +112,7 @@ public class TopologicalSorterTest {
 			Assert.assertTrue(e.getMessage().contains("Cycle detected"));
 			return;
 		}
-		
+
 		fail("Expected a CarnotzetDefinitionException to be thrown, but it was not.");
 	}
 

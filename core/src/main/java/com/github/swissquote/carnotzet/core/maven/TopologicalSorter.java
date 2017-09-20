@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
  */
 public class TopologicalSorter {
 
-	public List<GAV> sort(Node root) {
+	public List<Node> sort(Node root) {
 		return new Sort(root).compute();
 	}
 
@@ -33,9 +33,9 @@ public class TopologicalSorter {
 		private final Set<GA> temporaryMarkers = new HashSet<>();
 		private final Set<GA> permanentMarkers = new HashSet<>();
 
-		private List<GAV> result = new ArrayList<>();
+		private List<Node> result = new ArrayList<>();
 
-		private List<GAV> compute() {
+		private List<Node> compute() {
 			// sorting the resolved tree is not enough because of omitted nodes, see unit tests for counter examples.
 			getGraphFromResolvedTree(root);
 			depthFirst(root);
@@ -79,15 +79,15 @@ public class TopologicalSorter {
 				return;
 			}
 			if (temporaryMarkers.contains(nGA)) {
-				throw new CarnotzetDefinitionException("Cycle detected in dependencies graph (not a DAG). Fix your dependencies to remove cycles and try again.");
+				throw new CarnotzetDefinitionException(
+						"Cycle detected in dependencies graph (not a DAG). Fix your dependencies to remove cycles and try again.");
 			}
 			temporaryMarkers.add(nGA);
 			for (Node child : n.getChildNodes()) {
 				depthFirst(child);
 			}
-			GAV gav = new GAV(n.getGroupId(), n.getArtifactId(), n.getVersion());
 			permanentMarkers.add(nGA);
-			result.add(gav);
+			result.add(n);
 
 		}
 	}

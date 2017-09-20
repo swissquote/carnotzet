@@ -2,9 +2,13 @@ package com.github.swissquote.carnotzet.core.maven;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
+
+import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,12 +29,17 @@ public class TopologicalSorter {
 
 		private final Map<GA, Node> resolvedNodes = new HashMap<>();
 
+		// for cycles detection
+		private final Set<GA> temporaryMarkers = new HashSet<>();
+		private final Set<GA> permanentMarkers = new HashSet<>();
+
 		private List<GAV> result = new ArrayList<>();
 
 		private List<GAV> compute() {
 			// sorting the resolved tree is not enough because of omitted nodes, see unit tests for counter examples.
 			getGraphFromResolvedTree(root);
-			return depthFirst(root);
+			depthFirst(root);
+			return result;
 		}
 
 		private void getGraphFromResolvedTree(Node n) {
@@ -64,17 +73,23 @@ public class TopologicalSorter {
 			}
 		}
 
-		private List<GAV> depthFirst(Node n) {
+		private void depthFirst(Node n) {
+			GA nGA = new GA(n.getGroupId(), n.getArtifactId());
+			if (permanentMarkers.contains(nGA)) {
+				return;
+			}
+			if (temporaryMarkers.contains(nGA)) {
+				throw new CarnotzetDefinitionException("Cycle detected in dependencies graph (not a DAG). Fix your dependencies to remove cycles and try again.");
+			}
+			temporaryMarkers.add(nGA);
 			for (Node child : n.getChildNodes()) {
 				depthFirst(child);
 			}
 			GAV gav = new GAV(n.getGroupId(), n.getArtifactId(), n.getVersion());
-			if (!result.contains(gav)) {
-				result.add(gav);
-			}
-			return result;
-		}
+			permanentMarkers.add(nGA);
+			result.add(gav);
 
+		}
 	}
 }
 

@@ -1,5 +1,7 @@
 package com.github.swissquote.cartnotzet.core.maven;
 
+import static org.junit.Assert.fail;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -7,6 +9,7 @@ import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.github.swissquote.carnotzet.core.maven.GAV;
 import com.github.swissquote.carnotzet.core.maven.Node;
 import com.github.swissquote.carnotzet.core.maven.TopologicalSorter;
@@ -88,6 +91,29 @@ public class TopologicalSorterTest {
 		Assert.assertTrue(r.indexOf("a") > r.indexOf("d"));
 		Assert.assertTrue(r.indexOf("d") > r.indexOf("e"));
 		Assert.assertTrue(resultGAVs.contains(new GAV("com.test", "d", "1")));
+	}
+
+	@Test
+	public void cycle_detection() {
+		Node a = createNode("a", "1");
+		Node b = createNode("b", "1");
+		Node c = createNode("c", "1");
+		Node oc = createOmittedNode("c", "1");
+		Node ob = createOmittedNode("b", "1");
+
+		a.addChildNode(b);
+		a.addChildNode(c);
+		c.addChildNode(ob);
+		b.addChildNode(oc);
+
+		try {
+			new TopologicalSorter().sort(a);
+		} catch (CarnotzetDefinitionException e){
+			Assert.assertTrue(e.getMessage().contains("Cycle detected"));
+			return;
+		}
+		
+		fail("Expected a CarnotzetDefinitionException to be thrown, but it was not.");
 	}
 
 }

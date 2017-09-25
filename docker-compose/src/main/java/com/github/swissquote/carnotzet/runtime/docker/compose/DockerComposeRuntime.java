@@ -97,7 +97,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			if (module.getLabels() != null) {
 				labels.putAll(module.getLabels());
 			}
-			labels.put("com.dnsdock.alias", instanceId + "." + module.getName() + ".docker");
+			labels.put("com.dnsdock.alias", networkAliases.stream().collect(Collectors.joining(",")));
 			labels.put("carnotzet.instance.id", instanceId);
 			labels.put("carnotzet.module.name", module.getName());
 			labels.put("carnotzet.top.level.module.name", carnotzet.getTopLevelModuleName());

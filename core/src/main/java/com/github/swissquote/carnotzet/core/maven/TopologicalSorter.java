@@ -80,7 +80,8 @@ public class TopologicalSorter {
 			}
 			if (temporaryMarkers.contains(nGA)) {
 				throw new CarnotzetDefinitionException(
-						"Cycle detected in dependencies graph (not a DAG). Fix your dependencies to remove cycles and try again.");
+						"Cycle detected in dependencies graph (not a DAG). Check where [" + nGA.getArtifactId()
+								+ "] is imported, fix your dependencies to remove cycles and try again.");
 			}
 			temporaryMarkers.add(nGA);
 			for (Node child : n.getChildNodes()) {

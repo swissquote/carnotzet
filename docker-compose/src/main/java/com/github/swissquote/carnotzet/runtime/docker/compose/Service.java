@@ -32,6 +32,10 @@ public class Service {
 	private final Map<String, ContainerNetwork> networks;
 	@JsonProperty
 	private final Set<String> expose;
+	@JsonProperty
+	//CHECKSTYLE:OFF
+	private final Set<String> extra_hosts;
+	//CHECKSTYLE:ON
 
 	@JsonPOJOBuilder(withPrefix = "")
 	public static final class ServiceBuilder {

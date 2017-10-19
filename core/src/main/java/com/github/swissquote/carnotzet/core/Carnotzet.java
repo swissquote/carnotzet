@@ -28,6 +28,7 @@ import com.github.swissquote.carnotzet.core.maven.ResourcesManager;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.text.StrSubstitutor;
 
 /**
  * Represents an environment definition as a set of executable applications with their configuration.
@@ -123,7 +124,13 @@ public class Carnotzet {
 
 		// Allow custom image through configuration
 		if (properties.containsKey("docker.image")) {
-			imageName = properties.get("docker.image");
+			// docker.image might contain project.version which requires substitution
+			String templateString = properties.get("docker.image");
+			// for that we use StrSubstitutor
+			Map<String, String> valuesMap = new HashMap<>();
+			valuesMap.put("module.version", module.getId().getVersion());
+			StrSubstitutor sub = new StrSubstitutor(valuesMap);
+			imageName = sub.replace(templateString);
 		}
 
 		// Allow configuration based disabling of docker container (config only module)

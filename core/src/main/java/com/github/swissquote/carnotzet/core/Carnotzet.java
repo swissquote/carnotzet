@@ -26,9 +26,9 @@ import com.github.swissquote.carnotzet.core.maven.CarnotzetModuleCoordinates;
 import com.github.swissquote.carnotzet.core.maven.MavenDependencyResolver;
 import com.github.swissquote.carnotzet.core.maven.ResourcesManager;
 
+import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.text.StrSubstitutor;
 
 /**
  * Represents an environment definition as a set of executable applications with their configuration.

@@ -124,13 +124,28 @@ public class Carnotzet {
 
 		// Allow custom image through configuration
 		if (properties.containsKey("docker.image")) {
-			// docker.image might contain project.version which requires substitution
-			String templateString = properties.get("docker.image");
-			// for that we use StrSubstitutor
-			Map<String, String> valuesMap = new HashMap<>();
-			valuesMap.put("module.version", module.getId().getVersion());
-			StrSubstitutor sub = new StrSubstitutor(valuesMap);
-			imageName = sub.replace(templateString);
+			imageName = properties.get("docker.image");
+			// imageName might contain <module>.version which requires substitution
+			Pattern pattern = Pattern.compile("(\\$\\{(\\S+)\\.version\\})");
+			Matcher matcher = pattern.matcher(imageName);
+			if (matcher.find()) {
+				// we have identified myModule
+				String myModule = matcher.group(2);
+				// let's try to find myModule in modules and get its version
+				String myModuleVersion = modules.stream()
+						.filter(m -> m.getName().equals(myModule))
+						.map(m -> m.getId().getVersion())
+						.findFirst()
+						.orElse("");
+				if (Strings.isNullOrEmpty(myModuleVersion)) {
+					// complain nicely with a list of modules
+					String modulesList = modules.stream()
+							.map(m -> m.getName())
+							.collect(Collectors.joining(", "));
+					throw new CarnotzetDefinitionException("Module " + myModule + " wasn't found in modules: " + modulesList);
+				}
+				imageName = matcher.replaceFirst(myModuleVersion);
+			}
 		}
 
 		// Allow configuration based disabling of docker container (config only module)

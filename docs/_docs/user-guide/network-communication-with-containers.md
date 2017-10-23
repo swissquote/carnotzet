@@ -33,6 +33,13 @@ You can add hostnames for any service using `src/main/resources/carnotzet.proper
 network.aliases= db,database
 ```
 Since version 1.2.0, you can also add aliases to your dependencies by [merging the carnotzet.properties]({{ site.baseurl }}{% link _docs/creating-your-own/configuration-using-config-files.md %}) to override the network.aliases property in other modules. To do so, create a file named `src/main/resources/my-dependency-app/carnotzet.properties.merge` with the aliases you want.
+
+## Adding external hosts
+You can add custom entries in /etc/hosts for different containers in your environment by editing the extra.hosts property in carnotzet.properties using the same syntax as docker-compose :
+```
+extra.hosts=ext-service1:172.16.1.3, ext-service2:172.16.1.4
+```
+
 ## How is it resolved under the hood ?
   
 Depending on your environment, it may be resolved differently :

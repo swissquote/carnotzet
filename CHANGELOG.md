@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.4] - 2017-10-23
+### Added
+- Support for maven version placeholders in docker.image versions. Example : docker.image=my-image:${my-module.version}
+- Support for extra entries in /etc/hosts in containers, use the extra.hosts property in carnotzet.properties
+### Fixed
+- Ignore MAVEN_DEBUG_OPTS when invoking maven to resolve dependencies, this allows to debug (with suspend=y) 
+without the sub-maven also suspending.
+- Custom network aliases are now properly exported as dnsdock aliases.
+- Improved the error message in case of cycles in the maven dependency graph
+
 ## [1.2.3] - 2017-09-21
 ### Fixed
 - Detect cycles in maven dependency graphs to avoid StackOverflowErrors in case of cycles.

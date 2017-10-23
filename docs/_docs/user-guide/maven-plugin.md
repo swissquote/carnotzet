@@ -13,7 +13,7 @@ a carnotzet environments in your build and from the terminal.
 		<plugin>
 			<groupId>com.github.swissquote</groupId>
 			<artifactId>zet-maven-plugin</artifactId>
-			<version>1.1.0</version>
+			<version>1.2.4</version>
 		</plugin>
 	</plugins>
 </build>

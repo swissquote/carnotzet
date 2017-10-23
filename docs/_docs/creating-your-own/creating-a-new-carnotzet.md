@@ -118,7 +118,7 @@ For example you can override the docker image :
 ```properties
 docker.image=redis:3.0.7
 ```
-You can also choose to automatically use a carnotzet module version as the image version :
+You can also re-use use a carnotzet module version as the image version :
 ```properties
 docker.image=redis:${<module>.version}
 ```

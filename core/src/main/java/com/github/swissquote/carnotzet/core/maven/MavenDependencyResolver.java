@@ -136,6 +136,8 @@ public class MavenDependencyResolver {
 		InvocationRequest request = new DefaultInvocationRequest();
 		request.setBatchMode(true);
 		request.setGoals(goals);
+		// reset MAVEN_DEBUG_OPTS to allow debugging without blocking the invoker calls
+		request.addShellEnvironment("MAVEN_DEBUG_OPTS", "");
 		InvocationOutputHandler outHandler = outputHandler;
 		if (outHandler == null) {
 			outHandler = log::debug;

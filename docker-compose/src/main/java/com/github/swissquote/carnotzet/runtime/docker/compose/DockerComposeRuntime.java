@@ -103,6 +103,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			labels.put("carnotzet.top.level.module.name", carnotzet.getTopLevelModuleName());
 
 			serviceBuilder.labels(labels);
+			serviceBuilder.extra_hosts(lookUpExtraHosts(module));
 
 			services.put(moduleName, serviceBuilder.build());
 		}
@@ -136,6 +137,16 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		return Arrays.stream(s.split(","))
 				.map(String::trim)
 				.collect(Collectors.toList());
+	}
+
+	private Set<String> lookUpExtraHosts(CarnotzetModule m) {
+		Set<String> result = new HashSet<>();
+		if (m.getProperties() != null && m.getProperties().containsKey("extra.hosts")) {
+			result.addAll(Arrays.stream(m.getProperties().get("extra.hosts").split(","))
+					.map(String::trim)
+					.collect(Collectors.toList()));
+		}
+		return result;
 	}
 
 	@Override

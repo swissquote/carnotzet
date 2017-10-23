@@ -118,7 +118,11 @@ For example you can override the docker image :
 ```properties
 docker.image=redis:3.0.7
 ```
-You can create modules that only aggregate and provide configuration, but do not add any docker application to the envrionment
+You can also choose to automatically use a carnotzet module version as the image version :
+```properties
+docker.image=redis:${<module>.version}
+```
+You can create modules that only aggregate and provide configuration, but do not add any docker application to the environment
 ```properties
 docker.image=none
 ```

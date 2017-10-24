@@ -12,6 +12,12 @@ import java.util.Properties;
  */
 public class PropertiesAndEnvFileMerger implements FileMerger {
 
+	@Override
+	public boolean knowsHowToMerge(Path path) {
+		return path.toString().endsWith(".properties")
+				|| path.toAbsolutePath().toString().contains("/env/");
+	}
+
 	/**
 	 * Properties of file2 have precedence over the ones in file1
 	 */
@@ -25,17 +31,12 @@ public class PropertiesAndEnvFileMerger implements FileMerger {
 			file2.load(Files.newInputStream(file2Path));
 			merged.putAll(file1);
 			merged.putAll(file2);
-			merged.store(Files.newOutputStream(output), "Merged by carnotzet");
+			// We don't use merged.store because the output is not consistent.
+			PropertyUtils.outputCleanPropFile(merged, output);
 		}
 		catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
-	}
-
-	@Override
-	public boolean knowsHowToMerge(Path path) {
-		return path.toString().endsWith(".properties")
-				|| path.toAbsolutePath().toString().contains("/env/");
 	}
 
 }

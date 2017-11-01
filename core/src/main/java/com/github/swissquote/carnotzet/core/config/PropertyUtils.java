@@ -13,25 +13,32 @@ import java.util.stream.Collectors;
 public final class PropertyUtils {
 
 	/**
+	 * Utility classes cannot have constructors.
+	 */
+	private PropertyUtils() {
+	}
+
+	/**
 	 * Inspired by java.utils.Properties#store0, but sorts lines in lexicographical order and doesn't output comments in the file
 	 */
 	public static void outputCleanPropFile(Properties props, Path path) throws IOException {
-		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(path), "8859_1"));
-		synchronized (props) {
-			List<String> keys = Collections.list(props.keys()).stream().map(Object::toString).collect(Collectors.toList());
-			Collections.sort(keys);
-			for (String key : keys) {
-				String val = (String) props.get(key);
-				key = saveConvert(key, true, true);
-				/* No need to escape embedded and trailing spaces for value, hence
-				 * pass false to flag.
-                 */
-				val = saveConvert(val, false, true);
-				bw.write(key + "=" + val);
-				bw.newLine();
+		try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(path), "8859_1"))) {
+			synchronized (props) {
+				List<String> keys = Collections.list(props.keys()).stream().map(Object::toString).collect(Collectors.toList());
+				Collections.sort(keys);
+				for (String key : keys) {
+					String val = (String) props.get(key);
+					key = saveConvert(key, true, true);
+					/* No need to escape embedded and trailing spaces for value, hence
+					 * pass false to flag.
+					 */
+					val = saveConvert(val, false, true);
+					bw.write(key + "=" + val);
+					bw.newLine();
+				}
 			}
+			bw.flush();
 		}
-		bw.flush();
 	}
 
 	/**
@@ -112,13 +119,13 @@ public final class PropertyUtils {
 	 * @param nibble the nibble to convert.
 	 */
 	private static char toHex(int nibble) {
-		return hexDigit[(nibble & 0xF)];
+		return HEX_DIGIT[(nibble & 0xF)];
 	}
 
 	/**
 	 * A table of hex digits
 	 */
-	private static final char[] hexDigit = {
+	private static final char[] HEX_DIGIT = {
 			'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
 	};
 

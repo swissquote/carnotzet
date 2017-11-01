@@ -3,7 +3,9 @@ package com.github.swissquote.carnotzet.runtime.docker.compose;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,7 +19,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.github.swissquote.carnotzet.core.Carnotzet;
+import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
+import com.github.swissquote.carnotzet.core.docker.registry.DockerRegistry;
+import com.github.swissquote.carnotzet.core.docker.registry.ImageMetaData;
+import com.github.swissquote.carnotzet.core.docker.registry.ImageRef;
 import com.github.swissquote.carnotzet.core.runtime.CommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.api.Container;
@@ -26,6 +32,7 @@ import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -250,15 +257,85 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	@Override
-	public void pull(String service) {
-		ensureDockerComposeFileIsPresent();
-		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "pull", service);
+	public void pull() {
+		pull(true);
 	}
 
 	@Override
-	public void pull() {
-		ensureDockerComposeFileIsPresent();
-		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "pull");
+	public void pull(boolean force) {
+		if (force) {
+			// pull everything at once
+			ensureDockerComposeFileIsPresent();
+			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "pull");
+
+		} else {
+			// We need to check service by service if a newer version exists or not
+			carnotzet.getModules().forEach(module -> pull(module.getName(), false));
+		}
+	}
+
+	@Override
+	public void pull(@NonNull String service) {
+		pull(service, true);
+	}
+
+	@Override
+	public void pull(@NonNull String service, boolean force) {
+		if (force) {
+			// Pull a newer version of the image
+			ensureDockerComposeFileIsPresent();
+			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "pull", service);
+
+		} else {
+			// Find out the name and tag of the image we are trying to pull
+			CarnotzetModule serviceModule = carnotzet.getModule(service)
+					.orElseThrow(() -> new IllegalArgumentException("No such service: " + service));
+
+			String imageName = serviceModule.getImageName();
+			if (imageName == null) {
+				// This module has no image. There is nothing to pull in any case
+				return;
+			}
+
+			Instant localTimestamp = getLocalImageTimestamp(imageName);
+			Instant registryTimeStamp = getRegistryImageTimestamp(imageName);
+
+			if (registryTimeStamp == null) {
+				log.debug("Image [" + imageName + "] doesn't exist on remote registry. Pulling is not possible");
+
+			} else if (localTimestamp == null || localTimestamp.isBefore(registryTimeStamp)) {
+				log.debug("Registry image is more recent than local image for [" + imageName + "], pulling remote image");
+				ensureDockerComposeFileIsPresent();
+				runCommand("docker-compose", "-p", getDockerComposeProjectName(), "pull", service);
+
+			} else {
+				log.debug("Registry image is older than local image for [" + imageName + "], not pulling remote image");
+			}
+		}
+	}
+
+	private Instant getLocalImageTimestamp(String imageName) {
+		// Use docker inspect
+		String isoDatetime = runCommandAndCaptureOutput("docker", "inspect", "-f", "{{.Created}}", imageName);
+		try {
+			return Instant.from(DateTimeFormatter.ISO_INSTANT.parse(isoDatetime));
+		}
+		catch (DateTimeException e) {
+			log.debug("Could not determine timestamp of local image [" + imageName + "], it probably doesn't exist", e);
+			return null;
+		}
+	}
+
+	private Instant getRegistryImageTimestamp(String imageName) {
+		// Call docker registry to ask for image details.
+		try {
+			ImageMetaData image = DockerRegistry.INSTANCE.getImageMetaData(new ImageRef(imageName));
+			return image.getContainerImage().getCreated();
+		}
+		catch (CarnotzetDefinitionException cde) {
+			log.debug("Could not determine timestamp of registry image [" + imageName + "]", cde);
+			return null;
+		}
 	}
 
 	@Override

@@ -306,7 +306,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		// Use docker inspect
 		String isoDatetime = runCommandAndCaptureOutput("docker", "inspect", "-f", "{{.Created}}", imageName);
 		try {
-			return Instant.from(DateTimeFormatter.ISO_INSTANT.parse(isoDatetime));
+			return Instant.from(DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(isoDatetime));
 		}
 		catch (DateTimeException e) {
 			log.debug("Could not determine timestamp of local image [" + imageName + "], it probably doesn't exist", e);

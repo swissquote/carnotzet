@@ -1,6 +1,6 @@
 package com.github.swissquote.carnotzet.core.docker.registry;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,7 +11,7 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ContainerImageHistoryItem {
 	@JsonProperty("created")
-	private Instant created;
+	private ZonedDateTime created;
 
 	@JsonProperty("created_by")
 	private String createdBy;

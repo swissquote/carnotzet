@@ -79,7 +79,7 @@ public interface PullPolicy {
 			}
 
 			// Pull if registry image is newer.
-			return localImageCreated.isBefore(registryImageMetadata.getContainerImage().getCreated());
+			return localImageCreated.isBefore(registryImageMetadata.getContainerImage().getCreated().toInstant());
 		}
 
 		@Override

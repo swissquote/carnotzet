@@ -1,6 +1,6 @@
 package com.github.swissquote.carnotzet.core.docker.registry;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -25,7 +25,7 @@ public class ContainerImageV1 {
 	private ContainerImageConfig containerConfig;
 
 	@JsonProperty("created")
-	private Instant created;
+	private ZonedDateTime created;
 
 	@JsonProperty("docker_version")
 	private String dockerVersion;

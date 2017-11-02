@@ -60,39 +60,35 @@ public interface ContainerOrchestrationRuntime {
 	void shell(Container container);
 
 	/**
-	 * Pull all docker images used in this environment. If there is any local image with a tag that matches the pulled images, the local
+	 * Pulls all docker images used in this environment. If there is any local image with a tag that matches the pulled images, the local
 	 * tag will be overridden and point to the freshly pushed images.
-	 * Equivalent to calling pull(true).
+	 * Equivalent to calling pull(PullPolicy.ALWAYS).
 	 */
 	void pull();
 
 	/**
-	 * Pull all docker images used in this environment unless the force parameter is set to false and local images are more recent than
-	 * the corresponding images on the remote repository. Calling pull(false) will make sure that the most recent version of all images is
-	 * available locally after this method returns.
+	 * Pulls all docker images used in this environment according to the rules set by the specified PullPolicy.
 	 *
-	 * @param force true overrides the local image if it exists, false only overrides it if the registry image is more recent
+	 * @param policy decides whether an image must be pulled or not
 	 */
-	void pull(boolean force);
+	void pull(PullPolicy policy);
 
 	/**
-	 * Pull a docker image used in this environment. If there is any local image with a tag that matches the pulled image, the local
+	 * Pulls a single docker image used in this environment. If there is any local image with a tag that matches the pulled image, the local
 	 * tag will be overridden and point to the freshly pushed image.
-	 * Equivalent to calling pull(service, true).
+	 * Equivalent to calling pull(service, PullPolicy.ALWAYS).
 	 *
-	 * @param service to pull
+	 * @param service the name of the service whose docker image to be pulled
 	 */
 	void pull(String service);
 
 	/**
-	 * Pull a docker image used in this environment	unless the force parameter is set to false and the local image is more recent than
-	 * the corresponding image on the remote repository. Calling pull(service, false) will make sure that the most recent version of the
-	 * image is available locally after this method returns.
+	 * Pulls a single docker image used in this environment	according to the rules set by the specified PullPolicy.
 	 *
-	 * @param service to pull
-	 * @param force   true overrides the local image if it exists, false only overrides it if the registry image is more recent
+	 * @param service the name of the service whose docker image to be pulled
+	 * @param policy  decides whether an image must be pulled or not
 	 */
-	void pull(String service, boolean force);
+	void pull(String service, PullPolicy policy);
 
 	/**
 	 * List containers managed by this

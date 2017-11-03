@@ -3,7 +3,9 @@ package com.github.swissquote.carnotzet.runtime.docker.compose;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,15 +19,21 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.github.swissquote.carnotzet.core.Carnotzet;
+import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
+import com.github.swissquote.carnotzet.core.docker.registry.DockerRegistry;
+import com.github.swissquote.carnotzet.core.docker.registry.ImageMetaData;
+import com.github.swissquote.carnotzet.core.docker.registry.ImageRef;
 import com.github.swissquote.carnotzet.core.runtime.CommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.api.Container;
 import com.github.swissquote.carnotzet.core.runtime.api.ContainerOrchestrationRuntime;
+import com.github.swissquote.carnotzet.core.runtime.api.PullPolicy;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -250,15 +258,71 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	@Override
-	public void pull(String service) {
-		ensureDockerComposeFileIsPresent();
-		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "pull", service);
+	public void pull() {
+		pull(PullPolicy.ALWAYS);
 	}
 
 	@Override
-	public void pull() {
-		ensureDockerComposeFileIsPresent();
-		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "pull");
+	public void pull(PullPolicy policy) {
+		// We need to check service by service if a newer version exists or not
+		carnotzet.getModules().forEach(module -> pull(module.getName(), policy));
+	}
+
+	@Override
+	public void pull(@NonNull String service) {
+		pull(service, PullPolicy.ALWAYS);
+	}
+
+	@Override
+	public void pull(@NonNull String service, PullPolicy policy) {
+		// Find out the name and tag of the image we are trying to pull
+		CarnotzetModule serviceModule = carnotzet.getModule(service)
+				.orElseThrow(() -> new IllegalArgumentException("No such service: " + service));
+
+		String imageName = serviceModule.getImageName();
+		if (imageName == null) {
+			// This module has no image. There is nothing to pull in any case
+			return;
+		}
+
+		// fetch metadata if the policy needs it to take its decision
+		Instant localTimestamp = null;
+		if (policy.requiresLocalMetadata()) {
+			localTimestamp = getLocalImageTimestamp(imageName);
+		}
+		ImageMetaData registryImageMetadata = null;
+		if (policy.requiresRegistryMetadata()) {
+			registryImageMetadata = getRegistryImageMetadata(imageName);
+		}
+
+		// pull if needed
+		if (policy.shouldPullImage(serviceModule, localTimestamp, registryImageMetadata)) {
+			ensureDockerComposeFileIsPresent();
+			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "pull", service);
+		}
+	}
+
+	private Instant getLocalImageTimestamp(String imageName) {
+		// Use docker inspect
+		String isoDatetime = runCommandAndCaptureOutput("docker", "inspect", "-f", "{{.Created}}", imageName);
+		try {
+			return Instant.from(DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(isoDatetime));
+		}
+		catch (DateTimeException e) {
+			log.debug("Could not determine timestamp of local image [" + imageName + "], it probably doesn't exist", e);
+			return null;
+		}
+	}
+
+	private ImageMetaData getRegistryImageMetadata(String imageName) {
+		// Call docker registry to ask for image details.
+		try {
+			return DockerRegistry.INSTANCE.getImageMetaData(new ImageRef(imageName));
+		}
+		catch (CarnotzetDefinitionException cde) {
+			log.debug("Could not determine metadata of registry image [" + imageName + "]", cde);
+			return null;
+		}
 	}
 
 	@Override

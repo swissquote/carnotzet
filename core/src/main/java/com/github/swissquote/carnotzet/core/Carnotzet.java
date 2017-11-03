@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -25,9 +26,10 @@ import java.util.stream.Collectors;
 import com.github.swissquote.carnotzet.core.maven.CarnotzetModuleCoordinates;
 import com.github.swissquote.carnotzet.core.maven.MavenDependencyResolver;
 import com.github.swissquote.carnotzet.core.maven.ResourcesManager;
-
 import com.google.common.base.Strings;
+
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -108,6 +110,10 @@ public class Carnotzet {
 			}
 		}
 		return modules;
+	}
+
+	public Optional<CarnotzetModule> getModule(@NonNull String moduleName) {
+		return getModules().stream().filter(module -> moduleName.equals(module.getName())).findFirst();
 	}
 
 	private List<CarnotzetModule> configureModules(List<CarnotzetModule> modules) {

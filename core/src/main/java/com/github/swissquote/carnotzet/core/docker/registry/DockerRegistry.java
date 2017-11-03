@@ -72,11 +72,9 @@ public class DockerRegistry {
 			if (auth != null) {
 				String[] credentials = new String(Base64.getDecoder().decode(auth), StandardCharsets.UTF_8).split(":");
 				client.register(HttpAuthenticationFeature.basicBuilder().credentials(credentials[0], credentials[1]));
-				{
-				}
-				WebTarget webTarget = client.target(imageRef.getRegistryUrl());
-				proxyClients.put(imageRef.getRegistryUrl(), WebResourceFactory.newResource(RegistryEndpoints.class, webTarget));
 			}
+			WebTarget webTarget = client.target(imageRef.getRegistryUrl());
+			proxyClients.put(imageRef.getRegistryUrl(), WebResourceFactory.newResource(RegistryEndpoints.class, webTarget));
 		}
 		return proxyClients.get(imageRef.getRegistryUrl());
 	}

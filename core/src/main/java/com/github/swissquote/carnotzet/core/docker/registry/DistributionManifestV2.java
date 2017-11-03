@@ -7,9 +7,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
 
-/**
- * Can be a distribution manifest or an image manifest
- */
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DistributionManifestV2 {

@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+
+## [1.4.0] - 2017-11-03
+### Added
+- Support for image pulling policies in docker-compose runtime
+### Fixed
 ## [1.3.0] - 2017-10-23
 ### Added
 - Support for maven version placeholders in docker.image versions. Example : docker.image=my-image:${my-module.version}

@@ -14,6 +14,5 @@ public class EmptyObject {
 	 * the Go type map[string]struct{} and is represented in JSON as an object
 	 * mapping its keys to an empty object.
 	 *
-	 * This is what happens when you think API in the wrong language I guess...
 	 */
 }

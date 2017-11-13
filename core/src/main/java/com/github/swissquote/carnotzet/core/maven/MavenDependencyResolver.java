@@ -82,7 +82,8 @@ public class MavenDependencyResolver {
 			CarnotzetModuleCoordinates coord = new CarnotzetModuleCoordinates(
 					artifact.getGroupId(),
 					artifact.getArtifactId(),
-					artifact.getVersion());
+					artifact.getVersion(),
+					artifact.getClassifier());
 			String name = moduleNameProvider.apply(coord);
 			if (name == null) {
 				continue;

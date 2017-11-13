@@ -30,10 +30,21 @@ public class CarnotzetConfig {
 	 * and filter out some dependencies.<br>
 	 * Must have exactly one capture group.<br>
 	 * The first capture group will be the name of the module.<br>
-	 * Dependencies which do not match the pattern will be ignored.<br>
+	 * Dependencies which do not match the pattern will be ignored, unless they use a
+	 * classifier that matches classifierIncludePattern.<br>
 	 * defaults to (.*)-cartnozet
 	 */
 	private final String moduleFilterPattern;
+
+	/**
+	 * If non-null, makes it possible for any artifact that doesn't match the <br>
+	 * moduleFilterPattern but matches the classifier include pattern to be be picked <br>
+	 * up in a Carnotzet.<br>
+	 * If a dependency matches the moduleFilterPattern, then classifierIncludePattern is ignored.<br>
+	 * The name of the module will be the artifactId of the dependency.<br>
+	 * defaults to null (i.e. disabled)
+	 */
+	private final String classifierIncludePattern;
 
 	/**
 	 * Registry used when inferring docker image name from artifact id (convention).<br>

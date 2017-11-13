@@ -47,6 +47,9 @@ public class Carnotzet {
 	@Getter
 	private final Pattern moduleFilterPattern;
 
+	@Getter
+	private final Pattern classifierIncludePattern;
+
 	private List<CarnotzetModule> modules;
 
 	private final MavenDependencyResolver resolver;
@@ -68,6 +71,12 @@ public class Carnotzet {
 		moduleFilterPattern = Pattern.compile(filterPattern);
 		if (moduleFilterPattern.matcher("").groupCount() != 1) {
 			throw new CarnotzetDefinitionException("moduleFilterPattern must have exactly 1 capture group");
+		}
+
+		if (config.getClassifierIncludePattern() == null) {
+			this.classifierIncludePattern = null;
+		} else {
+			this.classifierIncludePattern = Pattern.compile(config.getClassifierIncludePattern());
 		}
 
 		this.topLevelModuleName = getModuleName(config.getTopLevelModuleId());
@@ -241,6 +250,19 @@ public class Carnotzet {
 		if (m.find()) {
 			return m.group(1);
 		}
+
+		// artifactId doesn't match. Can we try with classifier instead?
+		if (module.getClassifier() == null || classifierIncludePattern == null) {
+			return null;
+		}
+
+		// classifier exists and include pattern is specified, let's try
+		m = classifierIncludePattern.matcher(module.getClassifier());
+		if (m.matches()) {
+			return module.getArtifactId();
+		}
+
+		// nothing matches. Nothing to do
 		return null;
 	}
 

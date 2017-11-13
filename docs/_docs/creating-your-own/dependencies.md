@@ -40,6 +40,11 @@ The environment will contain app1, redis and postgres:
 +-------+          +----------+
 ```
 
+By convention, Carnotzet will automatically create docker services for all dependencies of the root module whose
+artifactId ends with "-carnotzet". In some cases, suffixing all your dependencies artifact names with "-carnotzet"
+might not be convenient, or might be impossible. For those cases, Carnotzet will also include dependencies whose
+classifier is set to "carnotzet".
+
 Now if another team wants to import "app1" into the environment of "app2" (let's say it provides them a REST api, and we want 
 to avoid integration surprises so they don't want to mock it). This other team can depend on the app1 module and redis
  and postgres will transitively become part of their dev/test environment.

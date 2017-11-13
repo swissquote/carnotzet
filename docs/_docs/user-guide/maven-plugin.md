@@ -66,7 +66,9 @@ zet:ps
   Lists the state of the carnotzet containers
 
 zet:pull
-  Pulls all images in the carnotzet from the docker image registry
+  Pulls all images in the carnotzet from the docker image registry.
+  use -Dpull.policy=... to pull only under certain conditions.
+  supported policies are (always|ifNotPresent|ifNewer)
 
 zet:restart
   restart all services for this carnotzet if -Dservice=... is passed, ony the

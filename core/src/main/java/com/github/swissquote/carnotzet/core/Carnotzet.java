@@ -74,7 +74,7 @@ public class Carnotzet {
 		}
 
 		if (config.getClassifierIncludePattern() == null) {
-			this.classifierIncludePattern = null;
+			this.classifierIncludePattern = Pattern.compile("carnotzet");
 		} else {
 			this.classifierIncludePattern = Pattern.compile(config.getClassifierIncludePattern());
 		}

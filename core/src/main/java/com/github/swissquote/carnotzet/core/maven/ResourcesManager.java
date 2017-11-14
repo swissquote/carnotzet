@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.function.BiPredicate;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 
@@ -138,41 +139,71 @@ public class ResourcesManager {
 	 * Merge the content of files in processed modules and a given module
 	 */
 	private void mergeFiles(List<CarnotzetModule> processedModules, CarnotzetModule module) throws IOException {
-		find(expandedJars.resolve(module.getName()), FIND_MAX_DEPTH, getPotentialMergeFileFilter()).forEach(mergeFile -> {
-			String mergeFileModuleName = expandedJars.resolve(module.getName()).relativize(mergeFile).getName(0).toString();
+		String moduleName = module.getName();
+		// list all resource modules  in that module
+		// we use an old style array to eventually swap elements
+		Path[] resourceModules = find(expandedJars.resolve(moduleName), 1, (p, a) -> a.isDirectory()).toArray(Path[]::new);
+		// start at 1 because 0 is the module itself
+		for (int i = 1; i < resourceModules.length; i++) {
+			Path tempResourceModule = resourceModules[i];
+			String tempResourceModuleName = tempResourceModule.getName(tempResourceModule.getNameCount() - 1).toString();
+			if ("common".equals(tempResourceModuleName) && i < resourceModules.length - 1) {
+				// not the last element of the array
+				// we swap common with the last one and continue
+				resourceModules[i] = resourceModules[resourceModules.length - 1];
+				resourceModules[resourceModules.length - 1] = tempResourceModule;
+				tempResourceModule = resourceModules[i];
+			}
 
+			final Path resourceModule = tempResourceModule;
+			final String resourceModuleName = resourceModule.getName(resourceModule.getNameCount() - 1).toString();
 			CarnotzetModule processedModule = processedModules.stream()
-					.filter(m -> m.getName().equals(mergeFileModuleName))
+					.filter(m -> m.getName().equals(resourceModuleName))
 					.findFirst().orElse(null);
-
-			if (processedModule == null) {
-				log.warn("Module [" + mergeFileModuleName + "] not found in processed modules, "
-						+ "merge file [" + mergeFile + "] will be ignored");
-				return;
+			if (processedModule == null && !"common".equals(resourceModuleName)) {
+				continue;
 			}
 
-			Path relativePath = expandedJars.resolve(module.getName()).relativize(mergeFile);
-			relativePath = Paths.get(relativePath.toString().replace(".merge", ""));
-			Path toMerge = resolved.resolve(relativePath); // copied as own resource
-			if (exists(toMerge)) {
+			find(resourceModule, FIND_MAX_DEPTH, getPotentialMergeFileFilter()).forEach(sourceFile -> {
+				final Path relativePath = Paths.get(resourceModule.relativize(sourceFile).toString().replace(".merge", ""));
 
-				FileMerger fileMerger = getFileMerger(toMerge);
-				if (fileMerger == null) {
-					log.error("Found [" + mergeFile + "] file in module [" + module.getName()
-							+ "] but there is no registered FileMerger to merge it with [" + toMerge + "]. Merge file will be ignored");
-					return;
+				Stream<Path> destinationModules;
+				if ("common".equals(resourceModuleName)) {
+					try {
+						// .skip(1) because first one is top folder
+						destinationModules = find(resolved, 1, (p, a) -> a.isDirectory()).skip(1);
+					}
+					catch (IOException e) {
+						throw new UncheckedIOException(e);
+					}
+				} else {
+					destinationModules = Stream.of(resolved.resolve(resourceModuleName));
 				}
-				fileMerger.merge(toMerge, mergeFile, toMerge);
-				log.debug("Merged [" + toMerge.getFileName() + "] for "
-						+ "[" + processedModule.getName() + "] "
-						+ "with .merge file from [" + module.getName() + "]");
 
-			} else {
-				log.warn("Found [" + mergeFile.getFileName() + "] in module [" + module.getName() + "]"
-						+ " but there is no file to merge it with in module [" + mergeFileModuleName + "]");
-			}
-
-		});
+				destinationModules.forEach(destinationModule -> {
+					Path destinationFile = destinationModule.resolve(relativePath);
+					FileMerger fileMerger = getFileMerger(destinationFile);
+					if (fileMerger == null) {
+						log.error("Found [{}] file in module [{}] but there is no registered FileMerger to merge"
+										+ " it with [{}]. Merge file will be ignored",
+								sourceFile, resourceModuleName, destinationFile);
+						return;
+					}
+					if (!exists(destinationFile)) {
+						try {
+							Files.createFile(destinationFile);
+						}
+						catch (IOException e) {
+							throw new UncheckedIOException(e);
+						}
+						log.debug("Created empty file [{}]", destinationFile);
+					}
+					fileMerger.merge(destinationFile, sourceFile, destinationFile);
+					log.debug("Merged [{}] from [{}] into [{}]",
+							sourceFile, resourceModuleName, destinationFile);
+				});
+			});
+		}
 	}
 
 	/**
@@ -184,29 +215,63 @@ public class ResourcesManager {
 	 * @param module           new module to process
 	 */
 	private void overrideFiles(List<CarnotzetModule> processedModules, CarnotzetModule module) throws IOException {
-
-		//going through all the files of the module in target/carnotzet folder
-		find(expandedJars.resolve(module.getName()), FIND_MAX_DEPTH, getPotentialOverridingFileFilter()).forEach(overridingFilePath -> {
-			for (CarnotzetModule processedModule : processedModules) {
-				Path relativePath = expandedJars.resolve(module.getName()).relativize(overridingFilePath);
-				if (!relativePath.subpath(0, 1).getFileName().toString().equals(processedModule.getName())) {
-					continue;
-				}
-				Path toOverrideFile = resolved.resolve(relativePath);
-				try {
-					if (!toOverrideFile.getParent().toFile().exists() && !toOverrideFile.getParent().toFile().mkdirs()) {
-						throw new IOException("Unable to create directory " + toOverrideFile.getParent());
-					}
-					Files.copy(overridingFilePath, toOverrideFile, StandardCopyOption.REPLACE_EXISTING);
-					log.debug("Overridden [" + toOverrideFile.getFileName().toString() + "] "
-							+ "in [" + processedModule.getName() + "] "
-							+ "with file from [" + module.getName() + "]");
-				}
-				catch (IOException e) {
-					throw new UncheckedIOException(e);
-				}
+		String moduleName = module.getName();
+		// list all resource modules  in that module
+		// we use an old style array to eventually swap elements
+		Path[] resourceModules = find(expandedJars.resolve(moduleName), 1, (p, a) -> a.isDirectory()).toArray(Path[]::new);
+		// start at 1 because 0 is the module itself
+		for (int i = 1; i < resourceModules.length; i++) {
+			Path tempResourceModule = resourceModules[i];
+			String tempResourceModuleName = tempResourceModule.getName(tempResourceModule.getNameCount() - 1).toString();
+			if ("common".equals(tempResourceModuleName) && i < resourceModules.length - 1) {
+				// not the last element of the array
+				// we swap common with the last one and continue
+				resourceModules[i] = resourceModules[resourceModules.length - 1];
+				resourceModules[resourceModules.length - 1] = tempResourceModule;
+				tempResourceModule = resourceModules[i];
 			}
-		});
+
+			final Path resourceModule = tempResourceModule;
+			final String resourceModuleName = resourceModule.getName(resourceModule.getNameCount() - 1).toString();
+			CarnotzetModule processedModule = processedModules.stream()
+					.filter(m -> m.getName().equals(resourceModuleName))
+					.findFirst().orElse(null);
+			if (processedModule == null && !"common".equals(resourceModuleName)) {
+				continue;
+			}
+
+			find(resourceModule, FIND_MAX_DEPTH, getPotentialOverridingFileFilter()).forEach(sourceFile -> {
+				final Path relativePath = resourceModule.relativize(sourceFile);
+
+				Stream<Path> destinationModules;
+				if ("common".equals(resourceModuleName)) {
+					try {
+						// .skip(1) because first one is top folder
+						destinationModules = find(resolved, 1, (p, a) -> a.isDirectory()).skip(1);
+					}
+					catch (IOException e) {
+						throw new UncheckedIOException(e);
+					}
+				} else {
+					destinationModules = Stream.of(resolved.resolve(resourceModuleName));
+				}
+
+				destinationModules.forEach(destinationModule -> {
+					Path destinationFile = destinationModule.resolve(relativePath);
+					try {
+						if (!destinationFile.getParent().toFile().exists() && !destinationFile.getParent().toFile().mkdirs()) {
+							throw new IOException("Unable to create directory " + destinationFile.getParent());
+						}
+						Files.copy(sourceFile, destinationFile, StandardCopyOption.REPLACE_EXISTING);
+						log.debug("Overridden [{}] with [{}]",
+								destinationFile, sourceFile);
+					}
+					catch (IOException e) {
+						throw new UncheckedIOException(e);
+					}
+				});
+			});
+		}
 	}
 
 	private BiPredicate<Path, BasicFileAttributes> getPotentialMergeFileFilter() {

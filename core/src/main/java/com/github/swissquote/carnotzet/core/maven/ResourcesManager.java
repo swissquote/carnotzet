@@ -182,23 +182,25 @@ public class ResourcesManager {
 
 				destinationModules.forEach(destinationModule -> {
 					Path destinationFile = destinationModule.resolve(relativePath);
-					if (exists(destinationFile)) {
-						FileMerger fileMerger = getFileMerger(destinationFile);
-						if (fileMerger == null) {
-							log.error("Found [{}] file in module [{}] but there is no registered FileMerger to merge it with [{}]. Merge file will be ignored",
-									sourceFile, resourceModuleName, destinationFile);
-							return;
-						}
-						fileMerger.merge(destinationFile, sourceFile, destinationFile);
-						log.debug("Merged [{}] from [{}] into [{}]",
+					FileMerger fileMerger = getFileMerger(destinationFile);
+					if (fileMerger == null) {
+						log.error("Found [{}] file in module [{}] but there is no registered FileMerger to merge"
+										+ " it with [{}]. Merge file will be ignored",
 								sourceFile, resourceModuleName, destinationFile);
-
-					} else {
-						log.warn("Found [{}] in module [{}] but there is no file to merge it with in module [{}]",
-								sourceFile, resourceModuleName, destinationModule.getFileName());
-						log.debug("Merge target file would have been [{}]",
-								destinationFile);
+						return;
 					}
+					if (!exists(destinationFile)) {
+						try {
+							Files.createFile(destinationFile);
+						}
+						catch (IOException e) {
+							throw new UncheckedIOException(e);
+						}
+						log.debug("Created empty file [{}]", destinationFile);
+					}
+					fileMerger.merge(destinationFile, sourceFile, destinationFile);
+					log.debug("Merged [{}] from [{}] into [{}]",
+							sourceFile, resourceModuleName, destinationFile);
 				});
 			});
 		}

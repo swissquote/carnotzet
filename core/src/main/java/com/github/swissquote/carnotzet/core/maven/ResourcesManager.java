@@ -97,10 +97,10 @@ public class ResourcesManager {
 			log.debug("Resolving resources overrides and merges in [{}]", resourcesRoot);
 			List<CarnotzetModule> processedModules = new ArrayList<>();
 			for (CarnotzetModule module : modules) {
-				copyOwnResources(module);
+				processedModules.add(module);
+				copyOwnResources(processedModules, module);
 				mergeFiles(processedModules, module);
 				overrideFiles(processedModules, module);
-				processedModules.add(module);
 			}
 		}
 		catch (IOException ex) {
@@ -108,45 +108,47 @@ public class ResourcesManager {
 		}
 	}
 
-	private void copyOwnResources(CarnotzetModule module) throws IOException {
+	/**
+	 * Copies the resources from the specified module that affects itself. Resources that affect dependencies of the
+	 * specified module are not copied.
+	 */
+	private void copyOwnResources(List<CarnotzetModule> processedModules, CarnotzetModule module) throws IOException {
 		Path expandedJarPath = expandedJars.resolve(module.getName());
 		Path resolvedModulePath = resolved.resolve(module.getName());
 		if (!resolvedModulePath.toFile().mkdirs()) {
 			throw new CarnotzetDefinitionException("Could not create directory " + resolvedModulePath);
 		}
-		if (expandedJarPath.resolve(module.getName()).toFile().exists()) {
-			FileUtils.copyDirectory(expandedJarPath.resolve(module.getName()).toFile(), resolvedModulePath.toFile());
-		}
+
 		// copy all regular files at the root of the expanded jar (such as carnotzet.properties)
-		find(expandedJarPath, 1, (p, a) -> a.isRegularFile()).forEach(source -> {
-			try {
-				Files.copy(source, resolvedModulePath.resolve(source.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-			}
-			catch (IOException e) {
-				throw new UncheckedIOException(e);
-			}
-		});
-		// copy all directories from the expanded jar recursively
-		find(expandedJarPath, 1, (p, a) -> a.isDirectory()).forEach(source -> {
-			try {
-				FileUtils.copyDirectory(source.toFile(), resolvedModulePath.resolve(source.getFileName()).toFile());
-			}
-			catch (IOException e) {
-				throw new UncheckedIOException(e);
-			}
-		});
+		// copy all directories that do not reconfigure another module from the expanded jar recursively
+		Files.find(expandedJarPath, 1, isRegularFile().or(nameMatchesModule(processedModules).negate()))
+				.forEach(source -> {
+					try {
+						if (Files.isRegularFile(source)) {
+							Files.copy(source, resolvedModulePath.resolve(source.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+						} else if (Files.isDirectory(source)) {
+							FileUtils.copyDirectory(source.toFile(), resolvedModulePath.resolve(source.getFileName()).toFile());
+						}
+					}
+					catch (IOException e) {
+						throw new UncheckedIOException(e);
+					}
+				});
 	}
 
 	/**
-	 * Merge the content of files in processed modules and a given module
+	 * Merge the content of files in processed modules and a given module. Note that when this method is called, all the dependencies
+	 * of the specified module have been fully processed, and their currently resolved files are available in ${resolved}/${dep}.
 	 */
 	private void mergeFiles(List<CarnotzetModule> processedModules, CarnotzetModule module) throws IOException {
-		find(expandedJars.resolve(module.getName()), FIND_MAX_DEPTH, getPotentialMergeFileFilter()).forEach(mergeFile -> {
-			String mergeFileModuleName = expandedJars.resolve(module.getName()).relativize(mergeFile).getName(0).toString();
+		Path moduleExpandedJarPath = expandedJars.resolve(module.getName());
+		find(moduleExpandedJarPath, FIND_MAX_DEPTH, isPotentialMerge()).forEach(mergeFile -> {
+			String mergeFileModuleName = moduleExpandedJarPath.relativize(mergeFile).getName(0).toString();
 
 			CarnotzetModule processedModule = processedModules.stream()
 					.filter(m -> m.getName().equals(mergeFileModuleName))
-					.findFirst().orElse(null);
+					.findFirst()
+					.orElse(null);
 
 			if (processedModule == null) {
 				log.warn("Module [" + mergeFileModuleName + "] not found in processed modules, "
@@ -154,11 +156,11 @@ public class ResourcesManager {
 				return;
 			}
 
-			Path relativePath = expandedJars.resolve(module.getName()).relativize(mergeFile);
+			Path relativePath = moduleExpandedJarPath.relativize(mergeFile); // path is now ${dependency}/path/to/file
 			relativePath = Paths.get(relativePath.toString().replace(".merge", ""));
-			Path toMerge = resolved.resolve(relativePath); // copied as own resource
-			if (exists(toMerge)) {
+			Path toMerge = resolved.resolve(relativePath); // merging into ${resolved}/${dependency}/path/to/file
 
+			if (exists(toMerge)) {
 				FileMerger fileMerger = getFileMerger(toMerge);
 				if (fileMerger == null) {
 					log.error("Found [" + mergeFile + "] file in module [" + module.getName()
@@ -187,39 +189,52 @@ public class ResourcesManager {
 	 * @param module           new module to process
 	 */
 	private void overrideFiles(List<CarnotzetModule> processedModules, CarnotzetModule module) throws IOException {
+		Path moduleExpandedJarPath = expandedJars.resolve(module.getName());
 
 		//going through all the files of the module in target/carnotzet folder
-		find(expandedJars.resolve(module.getName()), FIND_MAX_DEPTH, getPotentialOverridingFileFilter()).forEach(overridingFilePath -> {
-			for (CarnotzetModule processedModule : processedModules) {
-				Path relativePath = expandedJars.resolve(module.getName()).relativize(overridingFilePath);
-				if (!relativePath.subpath(0, 1).getFileName().toString().equals(processedModule.getName())) {
-					continue;
-				}
-				Path toOverrideFile = resolved.resolve(relativePath);
-				try {
-					if (!toOverrideFile.getParent().toFile().exists() && !toOverrideFile.getParent().toFile().mkdirs()) {
-						throw new IOException("Unable to create directory " + toOverrideFile.getParent());
-					}
-					Files.copy(overridingFilePath, toOverrideFile, StandardCopyOption.REPLACE_EXISTING);
-					log.debug("Overridden [" + toOverrideFile.getFileName().toString() + "] "
-							+ "in [" + processedModule.getName() + "] "
-							+ "with file from [" + module.getName() + "]");
-				}
-				catch (IOException e) {
-					throw new UncheckedIOException(e);
-				}
-			}
+		find(moduleExpandedJarPath, FIND_MAX_DEPTH, isPotentialOverride()).forEach(overridingFilePath -> {
+
+			Path relativePath = moduleExpandedJarPath.relativize(overridingFilePath); // ${overridenModule}/path/to/file
+			String overriddenModuleName = relativePath.subpath(0, 1).getFileName().toString(); // ${overridenModule}
+			processedModules.stream()
+					.filter(m -> m.getName().equals(overriddenModuleName))
+					.findFirst()
+					.ifPresent(overriddenModule -> {
+						Path toOverrideFile = resolved.resolve(relativePath); // ${resolved}/${overrideModule}/path/to/file
+						try {
+							if (!toOverrideFile.getParent().toFile().exists() && !toOverrideFile.getParent().toFile().mkdirs()) {
+								throw new IOException("Unable to create directory " + toOverrideFile.getParent());
+							}
+							Files.copy(overridingFilePath, toOverrideFile, StandardCopyOption.REPLACE_EXISTING);
+							log.debug("Overridden [" + toOverrideFile.getFileName().toString() + "] "
+									+ "in [" + overriddenModule.getName() + "] "
+									+ "with file from [" + module.getName() + "]");
+						}
+						catch (IOException e) {
+							throw new UncheckedIOException(e);
+						}
+					});
 		});
 	}
 
-	private BiPredicate<Path, BasicFileAttributes> getPotentialMergeFileFilter() {
-		BiPredicate<Path, BasicFileAttributes> isRegularFile = (filePath, fileAttr) -> fileAttr.isRegularFile();
-		return isRegularFile.and((filePath, fileAttr) -> filePath.toAbsolutePath().toString().endsWith(".merge"));
+	private BiPredicate<Path, BasicFileAttributes> isPotentialMerge() {
+		return isRegularFile().and(nameEndsWithMerge());
 	}
 
-	private BiPredicate<Path, BasicFileAttributes> getPotentialOverridingFileFilter() {
-		BiPredicate<Path, BasicFileAttributes> isRegularFile = (filePath, fileAttr) -> fileAttr.isRegularFile();
-		return isRegularFile.and((filePath, fileAttr) -> !filePath.toAbsolutePath().toString().endsWith(".merge"));
+	private BiPredicate<Path, BasicFileAttributes> isPotentialOverride() {
+		return isRegularFile().and(nameEndsWithMerge().negate());
+	}
+
+	private BiPredicate<Path, BasicFileAttributes> isRegularFile() {
+		return (filePath, fileAttr) -> fileAttr.isRegularFile();
+	}
+
+	private BiPredicate<Path, BasicFileAttributes> nameEndsWithMerge() {
+		return (filePath, fileAttr) -> filePath.toAbsolutePath().toString().endsWith(".merge");
+	}
+
+	private BiPredicate<Path, BasicFileAttributes> nameMatchesModule(List<CarnotzetModule> modules) {
+		return (filePath, fileAttr) -> modules.stream().anyMatch(m -> m.getName().equals(filePath.getFileName().toString()));
 	}
 
 	/**

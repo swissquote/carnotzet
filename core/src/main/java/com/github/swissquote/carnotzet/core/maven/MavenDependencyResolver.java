@@ -71,7 +71,15 @@ public class MavenDependencyResolver {
 	}
 
 	private void downloadJars(CarnotzetModuleCoordinates topLevelModuleId) {
-		String gav = topLevelModuleId.getGroupId() + ":" + topLevelModuleId.getArtifactId() + ":" + topLevelModuleId.getVersion();
+		// GAV are specified in this order:
+		// groupId:artifactId:packaging:classifier:version
+		// groupId:artifactId:packaging:version
+		String gav = topLevelModuleId.getGroupId() + ":" + topLevelModuleId.getArtifactId() + ":jar:";
+		if (topLevelModuleId.getClassifier() != null) {
+			gav += topLevelModuleId.getClassifier() + ":";
+		}
+		gav += topLevelModuleId.getVersion();
+
 		executeMavenBuild(Arrays.asList("org.apache.maven.plugins:maven-dependency-plugin:2.10:get -Dartifact=" + gav), null);
 	}
 
@@ -107,7 +115,15 @@ public class MavenDependencyResolver {
 				.resolve(artifact.getGroupId().replace(".", "/"))
 				.resolve(artifact.getArtifactId())
 				.resolve(artifact.getVersion())
-				.resolve(artifact.getArtifactId() + "-" + artifact.getVersion() + ".jar");
+				.resolve(getJarName(artifact));
+	}
+
+	private String getJarName(CarnotzetModuleCoordinates artifact) {
+		String jarName = artifact.getArtifactId() + "-" + artifact.getVersion();
+		if (artifact.getClassifier() != null) {
+			jarName += "-" + artifact.getClassifier();
+		}
+		return jarName + ".jar";
 	}
 
 	private Path getPomFile(CarnotzetModuleCoordinates artifact) {

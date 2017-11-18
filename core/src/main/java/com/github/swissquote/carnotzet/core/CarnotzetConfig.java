@@ -42,7 +42,7 @@ public class CarnotzetConfig {
 	 * up in a Carnotzet.<br>
 	 * If a dependency matches the moduleFilterPattern, then classifierIncludePattern is ignored.<br>
 	 * The name of the module will be the artifactId of the dependency.<br>
-	 * defaults to "carnotzet"
+	 * defaults to ".*carnotzet"
 	 */
 	private final String classifierIncludePattern;
 

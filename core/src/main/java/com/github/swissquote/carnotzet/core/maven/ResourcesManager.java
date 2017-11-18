@@ -69,13 +69,16 @@ public class ResourcesManager {
 			String topLevelModuleName = modules.get(0).getTopLevelModuleName();
 
 			for (CarnotzetModule module : modules) {
+				// First copy all of the resources in the .jar of the module
+				copyModuleResources(module, expandedJars.resolve(module.getName()));
+
+				// If the module is the top level one, then we attempt to overwrite the files from the jar
+				// with fresher files coming directly from the source resource folder
 				if (module.getName().equals(topLevelModuleName)
 						&& topLevelModuleResourcesPath != null
 						&& topLevelModuleResourcesPath.toFile().exists()) {
 					FileUtils.copyDirectory(topLevelModuleResourcesPath.toFile(),
 							expandedJars.resolve(topLevelModuleName).toFile());
-				} else {
-					copyModuleResources(module, expandedJars.resolve(module.getName()));
 				}
 			}
 		}

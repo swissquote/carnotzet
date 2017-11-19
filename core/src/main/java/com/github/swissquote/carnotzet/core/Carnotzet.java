@@ -6,6 +6,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -185,9 +186,9 @@ public class Carnotzet {
 		for (String fileName : propFileNames) {
 			Path filePath = getModuleResourcesPath(module).resolve(fileName);
 			if (filePath.toFile().exists()) {
-				try {
-					Properties props = new Properties();
-					props.load(Files.newInputStream(filePath));
+				Properties props = new Properties();
+				try (InputStream in = Files.newInputStream(filePath)) {
+					props.load(in);
 					result.putAll((Map) props);
 				}
 				catch (IOException e) {

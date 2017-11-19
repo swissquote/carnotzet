@@ -195,18 +195,27 @@ public class ResourcesManager {
 		find(moduleExpandedJarPath, FIND_MAX_DEPTH, isPotentialOverride()).forEach(overridingFilePath -> {
 
 			Path relativePath = moduleExpandedJarPath.relativize(overridingFilePath); // ${overridenModule}/path/to/file
-			String overriddenModuleName = relativePath.subpath(0, 1).getFileName().toString(); // ${overridenModule}
+			Path overriddenModulePath = relativePath.subpath(0, 1).getFileName();
+			if (overriddenModulePath == null) {
+				// should not happen
+				return;
+			}
+			String overriddenModuleName = overriddenModulePath.toString(); // ${overridenModule}
 			processedModules.stream()
 					.filter(m -> m.getName().equals(overriddenModuleName))
 					.findFirst()
 					.ifPresent(overriddenModule -> {
 						Path toOverrideFile = resolved.resolve(relativePath); // ${resolved}/${overrideModule}/path/to/file
+						Path toOverrideParent = toOverrideFile.getParent();
+						if (toOverrideParent == null) {
+							return;
+						}
 						try {
-							if (!toOverrideFile.getParent().toFile().exists() && !toOverrideFile.getParent().toFile().mkdirs()) {
+							if (!toOverrideParent.toFile().exists() && !toOverrideParent.toFile().mkdirs()) {
 								throw new IOException("Unable to create directory " + toOverrideFile.getParent());
 							}
 							Files.copy(overridingFilePath, toOverrideFile, StandardCopyOption.REPLACE_EXISTING);
-							log.debug("Overridden [" + toOverrideFile.getFileName().toString() + "] "
+							log.debug("Overridden [" + toOverrideFile.getFileName() + "] "
 									+ "in [" + overriddenModule.getName() + "] "
 									+ "with file from [" + module.getName() + "]");
 						}
@@ -234,7 +243,14 @@ public class ResourcesManager {
 	}
 
 	private BiPredicate<Path, BasicFileAttributes> nameMatchesModule(List<CarnotzetModule> modules) {
-		return (filePath, fileAttr) -> modules.stream().anyMatch(m -> m.getName().equals(filePath.getFileName().toString()));
+		return (filePath, fileAttr) -> {
+			Path fileName = filePath.getFileName();
+			if (fileName == null) {
+				// Should not happen
+				return false;
+			}
+			return modules.stream().anyMatch(m -> m.getName().equals(fileName.toString()));
+		};
 	}
 
 	/**

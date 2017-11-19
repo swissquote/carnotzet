@@ -73,7 +73,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.6.1</version>
+				<version>3.7.0</version>
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
@@ -95,9 +95,9 @@
 		<pluginManagement>
 			<plugins>
 				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>findbugs-maven-plugin</artifactId>
-					<version>3.0.4</version>
+					<groupId>com.github.spotbugs</groupId>
+					<artifactId>spotbugs-maven-plugin</artifactId>
+					<version>3.1.0-RC7</version>
 					<configuration>
 						<effort>Max</effort>
 						<threshold>Low</threshold>
@@ -185,7 +185,7 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.16.12</version>
+			<version>1.16.18</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

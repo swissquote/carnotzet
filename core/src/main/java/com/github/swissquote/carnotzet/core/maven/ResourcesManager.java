@@ -142,41 +142,41 @@ public class ResourcesManager {
 	 */
 	private void mergeFiles(List<CarnotzetModule> processedModules, CarnotzetModule module) throws IOException {
 		Path moduleExpandedJarPath = expandedJars.resolve(module.getName());
-		find(moduleExpandedJarPath, FIND_MAX_DEPTH, isPotentialMerge()).forEach(mergeFile -> {
-			String mergeFileModuleName = moduleExpandedJarPath.relativize(mergeFile).getName(0).toString();
 
-			CarnotzetModule processedModule = processedModules.stream()
-					.filter(m -> m.getName().equals(mergeFileModuleName))
-					.findFirst()
-					.orElse(null);
+		//going through all the files of the module in target/carnotzet folder
+		find(moduleExpandedJarPath, FIND_MAX_DEPTH, isPotentialMerge()).forEach(mergingFilePath -> {
 
-			if (processedModule == null) {
-				log.warn("Module [" + mergeFileModuleName + "] not found in processed modules, "
-						+ "merge file [" + mergeFile + "] will be ignored");
+			Path relativePath = Paths.get(moduleExpandedJarPath.relativize(mergingFilePath).toString().replace(".merge", ""));
+			Path mergedModulePath = relativePath.subpath(0, 1).getFileName();
+			if (mergedModulePath == null) {
+				// should not happen
 				return;
 			}
-
-			Path relativePath = moduleExpandedJarPath.relativize(mergeFile); // path is now ${dependency}/path/to/file
-			relativePath = Paths.get(relativePath.toString().replace(".merge", ""));
-			Path toMerge = resolved.resolve(relativePath); // merging into ${resolved}/${dependency}/path/to/file
-
-			if (exists(toMerge)) {
-				FileMerger fileMerger = getFileMerger(toMerge);
-				if (fileMerger == null) {
-					log.error("Found [" + mergeFile + "] file in module [" + module.getName()
-							+ "] but there is no registered FileMerger to merge it with [" + toMerge + "]. Merge file will be ignored");
-					return;
-				}
-				fileMerger.merge(toMerge, mergeFile, toMerge);
-				log.debug("Merged [" + toMerge.getFileName() + "] for "
-						+ "[" + processedModule.getName() + "] "
-						+ "with .merge file from [" + module.getName() + "]");
-
-			} else {
-				log.warn("Found [" + mergeFile.getFileName() + "] in module [" + module.getName() + "]"
-						+ " but there is no file to merge it with in module [" + mergeFileModuleName + "]");
-			}
-
+			String mergedModuleName = mergedModulePath.toString(); // ${mergedModule}
+			processedModules.stream()
+					.filter(m -> m.getName().equals(mergedModuleName))
+					.findFirst()
+					.ifPresent(mergedModule -> {
+						Path toMergeFile = resolved.resolve(relativePath); // ${resolved}/${mergedModule}/path/to/file
+						FileMerger fileMerger = getFileMerger(toMergeFile);
+						if (fileMerger == null) {
+							log.error("Found [{}] file in module [{}] but there is no registered FileMerger to merge"
+											+ " it with [{}]. Merge file will be ignored",
+									mergingFilePath, module.getName(), toMergeFile);
+							return;
+						}
+						if (!exists(toMergeFile)) {
+							try {
+								Files.createFile(toMergeFile);
+							}
+							catch (IOException e) {
+								throw new UncheckedIOException(e);
+							}
+							log.debug("Created empty file [{}]", toMergeFile);
+						}
+						fileMerger.merge(toMergeFile, mergingFilePath, toMergeFile);
+						log.debug("Merged [{}] from [{}] into [{}]", mergingFilePath, mergedModule.getName(), toMergeFile);
+					});
 		});
 	}
 

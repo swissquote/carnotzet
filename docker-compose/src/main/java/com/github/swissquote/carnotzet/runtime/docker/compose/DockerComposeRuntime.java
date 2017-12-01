@@ -162,9 +162,28 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		log.debug("Forcing update of docker-compose.yml before start");
 		computeDockerComposeFile();
 		Instant start = Instant.now();
-		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d");
+		carnotzet.getModules().stream().filter(this::shouldStartByDefault).forEach(m ->
+				runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d", m.getName())
+		);
 		ensureNetworkCommunicationIsPossible();
 		logManager.ensureCapturingLogs(start, getContainers());
+	}
+
+	private boolean shouldStartByDefault(CarnotzetModule m) {
+		if (m.getImageName() == null) {
+			return false;
+		}
+		if (m.getProperties() == null){
+			return true;
+		}
+		String str = m.getProperties().get("start.by.default");
+		if (str == null){
+			return true;
+		}
+		if (str.trim().toLowerCase().equals("false")){
+			return false;
+		}
+		return true;
 	}
 
 	@Override

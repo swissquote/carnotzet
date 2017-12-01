@@ -21,7 +21,17 @@ public final class Run {
 		} else {
 			runtime.start(service);
 		}
-		Runtime.getRuntime().addShutdownHook(new Thread(runtime::stop));
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			if (service == null) {
+				if (runtime.isRunning()) {
+					runtime.stop();
+				}
+			} else {
+				if (runtime.getContainer(service).isRunning()) {
+					runtime.stop(service);
+				}
+			}
+		}));
 		LogListener printer = new StdOutLogPrinter(Utils.getServiceNames(carnotzet), null, true);
 		if (service != null) {
 			printer.setEventFilter(event -> event.getService().equals(service));

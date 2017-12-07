@@ -126,8 +126,21 @@ public class Carnotzet {
 					modules = feature.apply(this);
 				}
 			}
+			assertNoDuplicateArtifactId(modules);
 		}
 		return modules;
+	}
+
+	private void assertNoDuplicateArtifactId(List<CarnotzetModule> modules) {
+		Map<String, CarnotzetModule> seen = new HashMap<>();
+		modules.forEach(m -> {
+			String artifactId = m.getId().getArtifactId();
+			if (seen.containsKey(artifactId)) {
+				throw new CarnotzetDefinitionException("Duplicate artifact ID [" + artifactId + "] with groupIds "
+						+ "[" + m.getId().getGroupId() + "] and [" + seen.get(artifactId).getId().getGroupId() + "]");
+			}
+			seen.put(artifactId, m);
+		});
 	}
 
 	public Optional<CarnotzetModule> getModule(@NonNull String moduleName) {

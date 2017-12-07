@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.5.1] - 2017-12-07
+### Changed
+- Add option to degrade the correctness of configuration overrides in cases of dependency cycles instead of failing. The default behavior remains unchanged (fail).
+- Configuration in .merge files is not ignored when there is no target file to merge with.
+- Add support for `start.by.default=false` in carnotzet.properties to support optional services.
 ## [1.5.0] - 2017-11-18
 ### Added
 - Classifiers can now be used instead of suffixes in the artifactId to define carnotzet maven artifacts

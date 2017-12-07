@@ -166,7 +166,14 @@ public class ResourcesManager {
 							return;
 						}
 						if (!exists(toMergeFile)) {
+							Path toMergeParent = toMergeFile.getParent();
+							if (toMergeParent == null) {
+								return;
+							}
 							try {
+								if (!toMergeParent.toFile().exists() && !toMergeParent.toFile().mkdirs()) {
+									throw new IOException("Unable to create directory " + toMergeFile.getParent());
+								}
 								Files.createFile(toMergeFile);
 							}
 							catch (IOException e) {

@@ -92,6 +92,9 @@ public class ResourcesManagerTest {
 		assertThat(service3carnotzet.getProperty("docker.image"), is("service3"));
 		assertThat(service3carnotzet.getProperty("network.aliases"), is("my-service3"));
 
+		Properties service3carnotzet2 = new Properties();
+		service3carnotzet2.load(Files.newInputStream(resources.resolve("resolved/service3/files/injected/from/service1/injected.properties")));
+		assertThat(service3carnotzet2.getProperty("injected.from.service1"), is("service1value"));
 	}
 
 	@Test

@@ -2,6 +2,7 @@ package com.github.swissquote.carnotzet.core.maven;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -179,8 +180,8 @@ public class MavenDependencyResolver {
 				+ " -DoutputType=text "
 				+ " -DoutputFile=" + treePath.toAbsolutePath().toString();
 		executeMavenBuild(Arrays.asList(command), null);
-		try {
-			return new TreeTextParser().parse(new InputStreamReader(Files.newInputStream(treePath), "UTF-8"));
+		try (Reader r = new InputStreamReader(Files.newInputStream(treePath), "UTF-8")) {
+			return new TreeTextParser().parse(r);
 		}
 		catch (ParseException | IOException e) {
 			throw new RuntimeException(e);

@@ -10,7 +10,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
-import com.github.swissquote.carnotzet.core.maven.GAV;
 import com.github.swissquote.carnotzet.core.maven.Node;
 import com.github.swissquote.carnotzet.core.maven.TopologicalSorter;
 
@@ -38,7 +37,7 @@ public class TopologicalSorterTest {
 		b.addChildNode(d);
 		c.addChildNode(e);
 
-		List<String> r = new TopologicalSorter().sort(a).stream().map(Node::getArtifactId).collect(Collectors.toList());
+		List<String> r = new TopologicalSorter().sort(a, true).stream().map(Node::getArtifactId).collect(Collectors.toList());
 		Assert.assertTrue(r.indexOf("a") > r.indexOf("b"));
 		Assert.assertTrue(r.indexOf("a") > r.indexOf("c"));
 		Assert.assertTrue(r.indexOf("b") > r.indexOf("d"));
@@ -59,7 +58,7 @@ public class TopologicalSorterTest {
 		c.addChildNode(d);
 		// unexpressed : oc depends on d
 
-		List<Node> resultNodes = new TopologicalSorter().sort(a);
+		List<Node> resultNodes = new TopologicalSorter().sort(a, true);
 		List<String> r = resultNodes.stream().map(Node::getArtifactId).collect(Collectors.toList());
 		Assert.assertTrue(r.indexOf("a") > r.indexOf("c"));
 		Assert.assertTrue(r.indexOf("a") > r.indexOf("b"));
@@ -84,7 +83,7 @@ public class TopologicalSorterTest {
 		d.addChildNode(e);
 		// unexpressed : od depends on e
 
-		List<Node> resultNodes = new TopologicalSorter().sort(a);
+		List<Node> resultNodes = new TopologicalSorter().sort(a, true);
 		List<String> r = resultNodes.stream().map(Node::getArtifactId).collect(Collectors.toList());
 		Assert.assertTrue(r.indexOf("a") > r.indexOf("b"));
 		Assert.assertTrue(r.indexOf("b") > r.indexOf("c"));
@@ -94,26 +93,53 @@ public class TopologicalSorterTest {
 	}
 
 	@Test
-	public void cycle_detection() {
+	public void cycle_lenient() {
 		Node a = createNode("a", "1");
 		Node b = createNode("b", "1");
 		Node c = createNode("c", "1");
+		Node d = createNode("d", "1");
 		Node oc = createOmittedNode("c", "1");
 		Node ob = createOmittedNode("b", "1");
 
 		a.addChildNode(b);
 		a.addChildNode(c);
+		b.addChildNode(d);
+		c.addChildNode(ob);
+		b.addChildNode(oc);
+
+		List<Node> resultNodes = new TopologicalSorter().sort(a, false);
+		List<String> r = resultNodes.stream().map(Node::getArtifactId).collect(Collectors.toList());
+		Assert.assertTrue(r.indexOf("a") > r.indexOf("b"));
+		Assert.assertTrue(r.indexOf("a") > r.indexOf("c"));
+		Assert.assertTrue(r.indexOf("b") > r.indexOf("d"));
+
+	}
+
+	@Test
+	public void cycle_strict() {
+		Node a = createNode("a", "1");
+		Node b = createNode("b", "1");
+		Node c = createNode("c", "1");
+		Node d = createNode("d", "1");
+		Node oc = createOmittedNode("c", "1");
+		Node ob = createOmittedNode("b", "1");
+
+		a.addChildNode(b);
+		a.addChildNode(c);
+		b.addChildNode(d);
 		c.addChildNode(ob);
 		b.addChildNode(oc);
 
 		try {
-			new TopologicalSorter().sort(a);
-		} catch (CarnotzetDefinitionException e){
+			new TopologicalSorter().sort(a, true);
+		}
+		catch (CarnotzetDefinitionException e) {
 			Assert.assertTrue(e.getMessage().contains("Cycle detected"));
 			return;
 		}
 
 		fail("Expected a CarnotzetDefinitionException to be thrown, but it was not.");
+
 	}
 
 }

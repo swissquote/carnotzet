@@ -61,6 +61,8 @@ public class Carnotzet {
 
 	private final List<String> propFileNames;
 
+	private final Boolean failOnDependencyCycle;
+
 	public Carnotzet(CarnotzetConfig config) {
 		log.debug("Creating new carnotzet with config [{}]", config);
 		this.config = config;
@@ -100,13 +102,19 @@ public class Carnotzet {
 			this.propFileNames = Arrays.asList("carnotzet.properties");
 		}
 
+		if (config.getFailOnDependencyCycle() != null) {
+			this.failOnDependencyCycle = config.getFailOnDependencyCycle();
+		} else {
+			this.failOnDependencyCycle = true;
+		}
+
 		resolver = new MavenDependencyResolver(this::getModuleName, resourcesPath.resolve("maven"));
 
 	}
 
 	public List<CarnotzetModule> getModules() {
 		if (modules == null) {
-			modules = resolver.resolve(config.getTopLevelModuleId());
+			modules = resolver.resolve(config.getTopLevelModuleId(), failOnDependencyCycle);
 			resourceManager.extractResources(modules);
 			resourceManager.resolveResources(modules);
 			log.debug("configuring modules");

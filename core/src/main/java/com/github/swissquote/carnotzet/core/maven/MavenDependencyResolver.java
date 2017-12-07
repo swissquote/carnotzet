@@ -40,12 +40,12 @@ public class MavenDependencyResolver {
 
 	private final TopologicalSorter topologicalSorter = new TopologicalSorter();
 
-	public List<CarnotzetModule> resolve(CarnotzetModuleCoordinates topLevelModuleId) {
+	public List<CarnotzetModule> resolve(CarnotzetModuleCoordinates topLevelModuleId, Boolean failOnCycle) {
 		log.debug("Resolving module dependencies");
 		Path pomFile = getPomFile(topLevelModuleId);
 		Node tree = resolveDependencyTree(pomFile);
 		log.debug("Computing topological ordering of GAs in full dependency tree before resolution (maven2)");
-		List<Node> topology = topologicalSorter.sort(tree);
+		List<Node> topology = topologicalSorter.sort(tree, failOnCycle);
 		topology = filterInterestingNodes(topology);
 		String topLevelModuleName = moduleNameProvider.apply(topLevelModuleId);
 		List<CarnotzetModule> result = convertNodesToModules(topology, topLevelModuleName);

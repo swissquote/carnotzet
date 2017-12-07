@@ -11,21 +11,25 @@ import java.util.Set;
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Topologically order the dependency graph<br>
  * https://en.wikipedia.org/wiki/Topological_sorting<br>
  */
+@Slf4j
 public class TopologicalSorter {
 
-	public List<Node> sort(Node root) {
-		return new Sort(root).compute();
+	public List<Node> sort(Node root, boolean failOnCycles) {
+		return new Sort(root, failOnCycles).compute();
 	}
 
 	@RequiredArgsConstructor
 	private static final class Sort {
 
 		private final Node root;
+
+		private final Boolean failOnCycles;
 
 		private final Map<GA, Node> resolvedNodes = new HashMap<>();
 
@@ -79,9 +83,17 @@ public class TopologicalSorter {
 				return;
 			}
 			if (temporaryMarkers.contains(nGA)) {
-				throw new CarnotzetDefinitionException(
-						"Cycle detected in dependencies graph (not a DAG). Check where [" + nGA.getArtifactId()
-								+ "] is imported, fix your dependencies to remove cycles and try again.");
+				String message =
+						"Cycle detected in dependencies graph (not a DAG). This can cause configuration overrides to be ignored. "
+								+ "To ensure correctness, check where [" + nGA.getGroupId() + ":"
+								+ nGA.getArtifactId() + "] is imported and remove the cycle.";
+				if (failOnCycles) {
+					throw new CarnotzetDefinitionException(message);
+				} else {
+					log.warn(message);
+					return; // ignore the dependency
+				}
+
 			}
 			temporaryMarkers.add(nGA);
 			for (Node child : n.getChildNodes()) {

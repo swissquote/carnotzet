@@ -13,6 +13,14 @@
 	<version>3.2.8-alpine</version>
 	<description>Example carnotzet module for redis https://redis.io/</description>
 
+	<!--<dependencies>-->
+		<!--<dependency>-->
+			<!--<groupId>com.github.swissquote.examples</groupId>-->
+			<!--<artifactId>voting-worker-carnotzet</artifactId>-->
+			<!--<version>1.5.0</version>-->
+		<!--</dependency>-->
+	<!--</dependencies>-->
+
 	<build>
 		<plugins>
 			<plugin>

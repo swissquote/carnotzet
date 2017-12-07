@@ -62,4 +62,11 @@ public class CarnotzetConfig {
 	 */
 	private final List<String> propFileNames;
 
+	/**
+	 * Indicates if the dependency resolution should throw and exception if a dependency cycle is detected.<br>
+	 * defaults to true.<br>
+	 * When false, some configuration overrides may be ignored.
+	 */
+	private final Boolean failOnDependencyCycle;
+
 }

@@ -17,6 +17,7 @@ import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationOutputHandler;
 import org.apache.maven.shared.invoker.InvocationRequest;
+import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 
@@ -162,7 +163,11 @@ public class MavenDependencyResolver {
 		}
 		request.setOutputHandler(outHandler);
 		try {
-			maven.execute(request);
+			InvocationResult result = maven.execute(request);
+			if (result.getExitCode() != 0) {
+				throw new MavenInvocationException("Maven process exited with non-zero code [" + result.getExitCode() + "]. "
+						+ "Retry with debug log level enabled to see the maven invocation logs");
+			}
 		}
 		catch (MavenInvocationException e) {
 			throw new CarnotzetDefinitionException("Error invoking mvn " + goals, e);

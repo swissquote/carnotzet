@@ -173,14 +173,14 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		if (m.getImageName() == null) {
 			return false;
 		}
-		if (m.getProperties() == null){
+		if (m.getProperties() == null) {
 			return true;
 		}
 		String str = m.getProperties().get("start.by.default");
-		if (str == null){
+		if (str == null) {
 			return true;
 		}
-		if (str.trim().toLowerCase().equals("false")){
+		if (str.trim().toLowerCase().equals("false")) {
 			return false;
 		}
 		return true;

@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.5.3] - 2017-12-07
+### Changed
+- Added exit-code check on internal maven invocations
+- Added check for uniqueness of artifactIds in environments
+- Improved error message when dependency cycles are detected
+### Fixed
+- Windows compatibility fixes
+## [1.5.2] - 2017-12-07
+### fixed
+- Fix IOException when merging into non-existing file
 ## [1.5.1] - 2017-12-07
 ### Changed
 - Add option to degrade the correctness of configuration overrides in cases of dependency cycles instead of failing. The default behavior remains unchanged (fail).

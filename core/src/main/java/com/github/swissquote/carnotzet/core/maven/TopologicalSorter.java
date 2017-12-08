@@ -3,10 +3,12 @@ package com.github.swissquote.carnotzet.core.maven;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 
@@ -32,6 +34,9 @@ public class TopologicalSorter {
 		private final Boolean failOnCycles;
 
 		private final Map<GA, Node> resolvedNodes = new HashMap<>();
+
+		// Only used to provide nice error messages in case of cycles
+		private Stack<Node> stack = new Stack<>();
 
 		// for cycles detection
 		private final Set<GA> temporaryMarkers = new HashSet<>();
@@ -78,15 +83,13 @@ public class TopologicalSorter {
 		}
 
 		private void depthFirst(Node n) {
+			stack.push(n);
 			GA nGA = new GA(n.getGroupId(), n.getArtifactId());
 			if (permanentMarkers.contains(nGA)) {
 				return;
 			}
 			if (temporaryMarkers.contains(nGA)) {
-				String message =
-						"Cycle detected in dependencies graph (not a DAG). This can cause configuration overrides to be ignored. "
-								+ "To ensure correctness, check where [" + nGA.getGroupId() + ":"
-								+ nGA.getArtifactId() + "] is imported and remove the cycle.";
+				String message = buildCycleMessage();
 				if (failOnCycles) {
 					throw new CarnotzetDefinitionException(message);
 				} else {
@@ -101,7 +104,38 @@ public class TopologicalSorter {
 			}
 			permanentMarkers.add(nGA);
 			result.add(n);
+			stack.pop();
 
+		}
+
+		private String buildCycleMessage() {
+			Stack<Node> s = (Stack<Node>) stack.clone();
+			Node root = s.pop();
+			List<Node> cycle = new LinkedList<>();
+			cycle.add(root);
+			Node current = s.pop();
+			while (current != root) {
+				cycle.add(0, current);
+				current = s.pop();
+			}
+
+			StringBuilder sb = new StringBuilder();
+
+			sb.append("Cycle detected in dependencies graph (not a DAG). This can cause configuration overrides to be ignored.");
+			sb.append(" To ensure correctness, remove the following cycle : ");
+
+			sb.append(formatNode(root));
+
+			cycle.forEach(node -> {
+				sb.append(" -> ");
+				sb.append(formatNode(node));
+			});
+
+			return sb.toString();
+		}
+
+		private String formatNode(Node n) {
+			return "[" + n.getGroupId() + ":" + n.getArtifactId() + ":" + n.getVersion() + "]";
 		}
 	}
 }

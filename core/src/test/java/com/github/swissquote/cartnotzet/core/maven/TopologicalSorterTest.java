@@ -142,4 +142,29 @@ public class TopologicalSorterTest {
 
 	}
 
+	@Test
+	public void cycle_larger() {
+		Node a = createNode("a", "1");
+		Node b = createNode("b", "1");
+		Node c = createNode("c", "1");
+		Node d = createNode("d", "1");
+		Node oa = createOmittedNode("a", "1");
+
+		a.addChildNode(b);
+		b.addChildNode(c);
+		c.addChildNode(d);
+		d.addChildNode(oa);
+
+		try {
+			new TopologicalSorter().sort(a, true);
+		}
+		catch (CarnotzetDefinitionException e) {
+			Assert.assertTrue(e.getMessage().contains("Cycle detected"));
+			return;
+		}
+
+		fail("Expected a CarnotzetDefinitionException to be thrown, but it was not.");
+
+	}
+
 }

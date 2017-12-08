@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 
+import org.apache.commons.lang.SystemUtils;
+
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.google.common.base.Joiner;
 
@@ -39,8 +41,9 @@ public final class DefaultCommandRunner implements CommandRunner {
 		if (inheritIo) {
 			pb.inheritIO();
 		} else {
-			pb.redirectError(new File("/dev/null"));
-			pb.redirectOutput(new File("/dev/null"));
+			File sink = getOsSpecificSink();
+			pb.redirectError(sink);
+			pb.redirectOutput(sink);
 		}
 		try {
 			Process p = pb.start();
@@ -55,6 +58,13 @@ public final class DefaultCommandRunner implements CommandRunner {
 		catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
+	}
+
+	private File getOsSpecificSink() {
+		if (SystemUtils.IS_OS_WINDOWS) {
+			return new File("NUL");
+		}
+		return new File("/dev/null");
 	}
 
 	public String runCommandAndCaptureOutput(String... command) {

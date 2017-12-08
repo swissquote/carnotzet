@@ -83,11 +83,11 @@ public class TopologicalSorter {
 		}
 
 		private void depthFirst(Node n) {
-			stack.push(n);
 			GA nGA = new GA(n.getGroupId(), n.getArtifactId());
 			if (permanentMarkers.contains(nGA)) {
 				return;
 			}
+			stack.push(n);
 			if (temporaryMarkers.contains(nGA)) {
 				String message = buildCycleMessage();
 				if (failOnCycles) {
@@ -102,9 +102,9 @@ public class TopologicalSorter {
 			for (Node child : n.getChildNodes()) {
 				depthFirst(child);
 			}
+			stack.pop();
 			permanentMarkers.add(nGA);
 			result.add(n);
-			stack.pop();
 
 		}
 

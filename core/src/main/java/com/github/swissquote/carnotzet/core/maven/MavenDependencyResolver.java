@@ -73,14 +73,11 @@ public class MavenDependencyResolver {
 	}
 
 	private void downloadJars(CarnotzetModuleCoordinates topLevelModuleId) {
-		// GAV are specified in this order:
-		// groupId:artifactId:packaging:classifier:version
-		// groupId:artifactId:packaging:version
-		String gav = topLevelModuleId.getGroupId() + ":" + topLevelModuleId.getArtifactId() + ":jar:";
+		// format : groupId:artifactId:version[:packaging[:classifier]]
+		String gav = topLevelModuleId.getGroupId() + ":" + topLevelModuleId.getArtifactId() + ":" + topLevelModuleId.getVersion() + ":jar";
 		if (topLevelModuleId.getClassifier() != null) {
-			gav += topLevelModuleId.getClassifier() + ":";
+			gav += ":" + topLevelModuleId.getClassifier();
 		}
-		gav += topLevelModuleId.getVersion();
 
 		executeMavenBuild(Arrays.asList("org.apache.maven.plugins:maven-dependency-plugin:2.10:get -Dartifact=" + gav), null);
 	}

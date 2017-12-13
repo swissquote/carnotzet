@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.5.4] - 2017-12-13
+### Fixed
+- No longer ignore -Dservice=... in zet:clean goal of the maven plugin
+- Fixed Windows compatibility issue
+- Fixed Error message describing detected cycles
+- Fixed an error when downloading the top level pom file from a remote maven repo (the bug was introduced in 1.5.0)
+
 ## [1.5.3] - 2017-12-07
 ### Changed
 - Added exit-code check on internal maven invocations

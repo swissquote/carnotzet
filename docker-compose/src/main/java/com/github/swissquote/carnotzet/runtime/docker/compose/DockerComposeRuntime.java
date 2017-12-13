@@ -197,8 +197,13 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	private void ensureNetworkCommunicationIsPossible() {
+		String shell = System.getenv("SHELL");
+		if (shell == null || shell.isEmpty()){
+			shell = "/bin/bash";
+		}
+
 		String buildContainerId =
-				runCommandAndCaptureOutput("/bin/sh", "-c", "docker ps | grep $(hostname) | grep -v k8s_POD | cut -d ' ' -f 1");
+				runCommandAndCaptureOutput(shell, "-c", "docker ps | grep $(hostname) | grep -v k8s_POD | cut -d ' ' -f 1");
 
 		if (Strings.isNullOrEmpty(buildContainerId)) {
 			// we are probably not running inside a container, networking should be fine
@@ -208,7 +213,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		log.debug("Execution from inside a container detected! Attempting to configure container networking to allow communication.");
 
 		String networkMode =
-				runCommandAndCaptureOutput("/bin/sh", "-c", "docker inspect -f '{{.HostConfig.NetworkMode}}' " + buildContainerId);
+				runCommandAndCaptureOutput(shell, "-c", "docker inspect -f '{{.HostConfig.NetworkMode}}' " + buildContainerId);
 
 		String containerToConnect = buildContainerId;
 
@@ -218,7 +223,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			log.debug("Detected a shared container network stack.");
 		}
 		log.debug("attaching container [" + containerToConnect + "] to network [" + getDockerNetworkName() + "]");
-		runCommand("/bin/sh", "-c", "docker network connect " + getDockerNetworkName() + " " + containerToConnect);
+		runCommand(shell, "-c", "docker network connect " + getDockerNetworkName() + " " + containerToConnect);
 	}
 
 	private String getDockerComposeProjectName() {

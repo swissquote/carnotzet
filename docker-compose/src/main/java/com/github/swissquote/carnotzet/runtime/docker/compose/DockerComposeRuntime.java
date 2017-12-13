@@ -198,7 +198,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	private void ensureNetworkCommunicationIsPossible() {
 		String shell = System.getenv("SHELL");
-		if (shell == null || shell.isEmpty()){
+		if (shell == null || shell.isEmpty()) {
 			shell = "/bin/bash";
 		}
 

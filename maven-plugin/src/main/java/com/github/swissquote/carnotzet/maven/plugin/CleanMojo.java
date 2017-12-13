@@ -14,7 +14,11 @@ public class CleanMojo extends AbstractZetMojo {
 
 	@Override
 	public void executeInternal() throws MojoExecutionException, MojoFailureException {
-		getRuntime().clean();
+		if (getService() == null) {
+			getRuntime().clean();
+		} else {
+			getRuntime().clean(getService());
+		}
 	}
 
 }

@@ -25,7 +25,14 @@ public class DockerConfig {
 	private Map<String, Auth> auths = new HashMap<>();
 
 	public String getAuthFor(String registry) {
-		return auths.get(registry).getAuth();
+		Auth auth = auths.get(registry);
+		if (auth == null) {
+			auth = auths.get("https://" + registry);
+		}
+		if (auth == null) {
+			return null;
+		}
+		return auth.getAuth();
 	}
 
 	public static DockerConfig fromEnv() {

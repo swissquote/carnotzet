@@ -251,7 +251,7 @@ public class Carnotzet {
 		try {
 			Files.walk(toMount).forEach((p) -> {
 				if (p.toFile().isFile()) {
-					result.put(p.toString(), "/" + toMount.relativize(p).toString().replaceAll("\\\\", "/"));
+					result.put(p.toAbsolutePath().toString(), "/" + toMount.relativize(p).toString().replaceAll("\\\\", "/"));
 				}
 			});
 		}

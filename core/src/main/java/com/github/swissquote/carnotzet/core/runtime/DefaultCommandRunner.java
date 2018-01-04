@@ -72,7 +72,7 @@ public final class DefaultCommandRunner implements CommandRunner {
 	}
 
 	public String runCommandAndCaptureOutput(File directoryForRunning, String... command) {
-
+		log.debug("Running command [{}]", Joiner.on(" ").join(command));
 		ProcessBuilder pb = new ProcessBuilder(command);
 		pb.directory(directoryForRunning);
 		try {
@@ -80,6 +80,10 @@ public final class DefaultCommandRunner implements CommandRunner {
 			p.waitFor();
 			String stdOut = getInputAsString(p.getInputStream());
 			String stdErr = getInputAsString(p.getErrorStream());
+			if (p.exitValue() != 0) {
+				throw new RuntimeException("External command [" + Joiner.on(" ").join(command) + "] exited with [" + p.exitValue()
+						+ "], stdout: " + stdOut + System.lineSeparator() + "stderr: " + stdErr);
+			}
 			return stdOut.trim() + stdErr.trim();
 		}
 		catch (InterruptedException | IOException e) {

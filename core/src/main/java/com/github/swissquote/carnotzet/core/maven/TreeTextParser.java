@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Parses the text ouptut of "mvn dependency:tree -Dverbose" into a java object tree.

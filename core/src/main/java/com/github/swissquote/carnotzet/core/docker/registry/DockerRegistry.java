@@ -1,6 +1,8 @@
 package com.github.swissquote.carnotzet.core.docker.registry;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,10 +20,15 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.jaxrs.cfg.Annotations;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
+import com.github.swissquote.carnotzet.core.CarnotzetModule;
+import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
+import com.github.swissquote.carnotzet.core.runtime.api.PullPolicy;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
+@Slf4j
 public class DockerRegistry {
 
 	public static final DockerRegistry INSTANCE = new DockerRegistry();
@@ -77,6 +84,62 @@ public class DockerRegistry {
 			proxyClients.put(imageRef.getRegistryUrl(), WebResourceFactory.newResource(RegistryEndpoints.class, webTarget));
 		}
 		return proxyClients.get(imageRef.getRegistryUrl());
+	}
+
+	/**
+	 * @param module
+	 * @param policy
+	 */
+	public static void pullImage(CarnotzetModule module, PullPolicy policy) {
+
+		String imageName = module.getImageName();
+		if (imageName == null) {
+			// This module has no image. There is nothing to pull in any case
+			return;
+		}
+
+		// fetch metadata if the policy needs it to take its decision
+		Instant localTimestamp = null;
+		if (policy.requiresLocalMetadata()) {
+			localTimestamp = getLocalImageTimestamp(imageName);
+		}
+
+		ImageMetaData registryImageMetadata = null;
+		if (policy.requiresRegistryMetadata()) {
+			registryImageMetadata = getRegistryImageMetadata(imageName);
+		}
+
+		// pull if needed
+		if (policy.shouldPullImage(module, localTimestamp, registryImageMetadata)) {
+			DefaultCommandRunner.INSTANCE.runCommand("docker", "pull", imageName);
+		}
+	}
+
+	// Return null if the image is not found on the remote registry
+	private static ImageMetaData getRegistryImageMetadata(String imageName) {
+		// Call docker registry to ask for image details.
+		try {
+			return DockerRegistry.INSTANCE.getImageMetaData(new ImageRef(imageName));
+		}
+		catch (CarnotzetDefinitionException cde) {
+			log.debug("Could not determine metadata of registry image [" + imageName + "]", cde);
+			return null;
+		}
+	}
+
+	/**
+	 * @return null if the image doesn't exist on the docker host
+	 */
+	private static Instant getLocalImageTimestamp(String imageName) {
+		// Use docker inspect
+		try {
+			String isoDatetime = DefaultCommandRunner.INSTANCE.runCommandAndCaptureOutput("docker", "inspect", "-f", "{{.Created}}", imageName);
+			return Instant.from(DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(isoDatetime));
+		}
+		catch (RuntimeException e) {
+			log.debug("Could not determine timestamp of local image [" + imageName + "], assuming it doesn't exist on the local docker host", e);
+			return null;
+		}
 	}
 
 }

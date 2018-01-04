@@ -5,9 +5,7 @@ import static java.util.stream.Collectors.toList;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.time.DateTimeException;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,11 +24,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 
 import com.github.swissquote.carnotzet.core.Carnotzet;
-import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
 import com.github.swissquote.carnotzet.core.docker.registry.DockerRegistry;
-import com.github.swissquote.carnotzet.core.docker.registry.ImageMetaData;
-import com.github.swissquote.carnotzet.core.docker.registry.ImageRef;
 import com.github.swissquote.carnotzet.core.runtime.CommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.api.Container;
@@ -329,50 +324,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		CarnotzetModule serviceModule = carnotzet.getModule(service)
 				.orElseThrow(() -> new IllegalArgumentException("No such service: " + service));
 
-		String imageName = serviceModule.getImageName();
-		if (imageName == null) {
-			// This module has no image. There is nothing to pull in any case
-			return;
-		}
-
-		// fetch metadata if the policy needs it to take its decision
-		Instant localTimestamp = null;
-		if (policy.requiresLocalMetadata()) {
-			localTimestamp = getLocalImageTimestamp(imageName);
-		}
-		ImageMetaData registryImageMetadata = null;
-		if (policy.requiresRegistryMetadata()) {
-			registryImageMetadata = getRegistryImageMetadata(imageName);
-		}
-
-		// pull if needed
-		if (policy.shouldPullImage(serviceModule, localTimestamp, registryImageMetadata)) {
-			ensureDockerComposeFileIsPresent();
-			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "pull", service);
-		}
-	}
-
-	private Instant getLocalImageTimestamp(String imageName) {
-		// Use docker inspect
-		String isoDatetime = runCommandAndCaptureOutput("docker", "inspect", "-f", "{{.Created}}", imageName);
-		try {
-			return Instant.from(DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(isoDatetime));
-		}
-		catch (DateTimeException e) {
-			log.debug("Could not determine timestamp of local image [" + imageName + "], it probably doesn't exist", e);
-			return null;
-		}
-	}
-
-	private ImageMetaData getRegistryImageMetadata(String imageName) {
-		// Call docker registry to ask for image details.
-		try {
-			return DockerRegistry.INSTANCE.getImageMetaData(new ImageRef(imageName));
-		}
-		catch (CarnotzetDefinitionException cde) {
-			log.debug("Could not determine metadata of registry image [" + imageName + "]", cde);
-			return null;
-		}
+		DockerRegistry.pullImage(serviceModule, policy);
 	}
 
 	@Override

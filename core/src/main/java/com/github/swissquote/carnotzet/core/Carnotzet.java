@@ -67,7 +67,7 @@ public class Carnotzet {
 		log.debug("Creating new carnotzet with config [{}]", config);
 		this.config = config;
 
-		String filterPattern = "(.*)-carnotzet";
+		String filterPattern = CarnotzetConfig.DEFAULT_MODULE_FILTER_PATTERN;
 		if (config.getModuleFilterPattern() != null) {
 			filterPattern = config.getModuleFilterPattern();
 		}
@@ -77,7 +77,7 @@ public class Carnotzet {
 		}
 
 		if (config.getClassifierIncludePattern() == null) {
-			this.classifierIncludePattern = Pattern.compile(".*carnotzet");
+			this.classifierIncludePattern = Pattern.compile(CarnotzetConfig.DEFAULT_CLASSIFIER_INCLUDE_PATTERN);
 		} else {
 			this.classifierIncludePattern = Pattern.compile(config.getClassifierIncludePattern());
 		}
@@ -93,13 +93,13 @@ public class Carnotzet {
 		if (config.getDefaultDockerRegistry() != null) {
 			this.defaultContainerRegistry = config.getDefaultDockerRegistry();
 		} else {
-			this.defaultContainerRegistry = "docker.io";
+			this.defaultContainerRegistry = CarnotzetConfig.DEFAULT_DOCKER_REGISTRY;
 		}
 
 		if (config.getPropFileNames() != null) {
 			this.propFileNames = config.getPropFileNames();
 		} else {
-			this.propFileNames = Arrays.asList("carnotzet.properties");
+			this.propFileNames = CarnotzetConfig.DEFAULT_PROP_FILE_NAMES;
 		}
 
 		if (config.getFailOnDependencyCycle() != null) {

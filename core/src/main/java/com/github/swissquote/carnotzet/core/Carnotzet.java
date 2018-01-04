@@ -4,14 +4,12 @@ import static java.nio.file.Files.exists;
 import static java.nio.file.Files.walk;
 import static java.util.stream.Collectors.toList;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +21,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.SystemUtils;
 
 import com.github.swissquote.carnotzet.core.maven.CarnotzetModuleCoordinates;
 import com.github.swissquote.carnotzet.core.maven.MavenDependencyResolver;
@@ -115,8 +115,10 @@ public class Carnotzet {
 	public List<CarnotzetModule> getModules() {
 		if (modules == null) {
 			modules = resolver.resolve(config.getTopLevelModuleId(), failOnDependencyCycle);
-			resourceManager.extractResources(modules);
-			resourceManager.resolveResources(modules);
+			if (SystemUtils.IS_OS_LINUX || !getResourcesFolder().resolve("expanded-jars").toFile().exists()) {
+				resourceManager.extractResources(modules);
+				resourceManager.resolveResources(modules);
+			}
 			log.debug("configuring modules");
 			modules = configureModules(modules);
 
@@ -249,8 +251,7 @@ public class Carnotzet {
 		try {
 			Files.walk(toMount).forEach((p) -> {
 				if (p.toFile().isFile()) {
-					result.put(p.toString(),
-							new File(p.toString().substring(p.toString().indexOf("/files/") + "files/".length())).getAbsolutePath());
+					result.put(p.toString(), "/" + toMount.relativize(p).toString().replaceAll("\\\\", "/"));
 				}
 			});
 		}
@@ -268,6 +269,10 @@ public class Carnotzet {
 	}
 
 	public String getModuleName(CarnotzetModuleCoordinates module) {
+		return getModuleName(module, moduleFilterPattern, classifierIncludePattern);
+	}
+
+	public static String getModuleName(CarnotzetModuleCoordinates module, Pattern moduleFilterPattern, Pattern classifierIncludePattern) {
 		Matcher m = moduleFilterPattern.matcher(module.getArtifactId());
 		if (m.find()) {
 			return m.group(1);

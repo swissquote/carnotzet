@@ -1,13 +1,16 @@
 package com.github.swissquote.carnotzet.maven.plugin;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.ServiceLoader;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -23,6 +26,7 @@ import com.github.swissquote.carnotzet.core.Carnotzet;
 import com.github.swissquote.carnotzet.core.CarnotzetConfig;
 import com.github.swissquote.carnotzet.core.CarnotzetExtension;
 import com.github.swissquote.carnotzet.core.maven.CarnotzetModuleCoordinates;
+import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.api.ContainerOrchestrationRuntime;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
 import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
@@ -65,6 +69,10 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	@Getter
 	private Boolean failOnDependencyCycle;
 
+	@Parameter(property = "bindLocalPorts")
+	@Getter
+	private Boolean bindLocalPorts;
+
 	@Getter
 	@Setter
 	private Carnotzet carnotzet;
@@ -89,15 +97,34 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 
 		List<CarnotzetExtension> runtimeExtensions = findRuntimeExtensions();
 
+		CarnotzetModuleCoordinates coordinates =
+				new CarnotzetModuleCoordinates(project.getGroupId(), project.getArtifactId(), project.getVersion());
+
+		if (instanceId == null) {
+			instanceId = Carnotzet.getModuleName(coordinates, Pattern.compile(CarnotzetConfig.DEFAULT_MODULE_FILTER_PATTERN),
+					Pattern.compile(CarnotzetConfig.DEFAULT_CLASSIFIER_INCLUDE_PATTERN));
+		}
+
+		Path resourcesPath = Paths.get(project.getBuild().getDirectory(), "carnotzet");
+		if (SystemUtils.IS_OS_WINDOWS) {
+			// we avoid using ${project.build.directory} because "mvn clean" when the sandbox is running would try to delete mounted files,
+			// which is not supported on Windows.
+			resourcesPath = Paths.get("/var/tmp/carnotzet_" + instanceId);
+		}
+
 		CarnotzetConfig config = CarnotzetConfig.builder()
-				.topLevelModuleId(new CarnotzetModuleCoordinates(project.getGroupId(), project.getArtifactId(), project.getVersion()))
-				.resourcesPath(Paths.get(project.getBuild().getDirectory(), "carnotzet"))
+				.topLevelModuleId(coordinates)
+				.resourcesPath(resourcesPath)
 				.topLevelModuleResourcesPath(project.getBasedir().toPath().resolve("src/main/resources"))
 				.failOnDependencyCycle(failOnDependencyCycle)
 				.extensions(runtimeExtensions)
 				.build();
+
 		carnotzet = new Carnotzet(config);
-		runtime = new DockerComposeRuntime(carnotzet, instanceId);
+		if (bindLocalPorts == null) {
+			bindLocalPorts = !SystemUtils.IS_OS_LINUX;
+		}
+		runtime = new DockerComposeRuntime(carnotzet, instanceId, DefaultCommandRunner.INSTANCE, bindLocalPorts);
 
 		executeInternal();
 

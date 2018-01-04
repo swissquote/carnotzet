@@ -33,6 +33,8 @@ public class Service {
 	@JsonProperty
 	private final Set<String> expose;
 	@JsonProperty
+	private final Set<String> ports;
+	@JsonProperty
 	//CHECKSTYLE:OFF
 	private final Set<String> extra_hosts;
 	//CHECKSTYLE:ON

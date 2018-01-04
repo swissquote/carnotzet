@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>com.github.swissquote.examples</groupId>
 		<artifactId>carnotzet-examples</artifactId>
-		<version>1.6.0</version>
+		<version>1.6.1-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>redis-carnotzet</artifactId>

@@ -42,7 +42,7 @@ public interface PullPolicy {
 		public boolean shouldPullImage(CarnotzetModule module,
 				@Nullable Instant localImageCreated,
 				@Nullable ImageMetaData registryImageMetadata) {
-			return false;
+			return localImageCreated == null;
 		}
 
 		@Override

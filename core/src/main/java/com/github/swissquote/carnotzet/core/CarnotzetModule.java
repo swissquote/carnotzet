@@ -20,6 +20,7 @@ public class CarnotzetModule {
 
 	private final CarnotzetModuleCoordinates id;
 	private final String name;
+	private final String serviceId;
 	private final String topLevelModuleName;
 	private final Map<String, String> properties;
 	private final Map<String, String> labels;

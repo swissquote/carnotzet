@@ -21,6 +21,7 @@
     <modules>
         <module>redis</module>
         <module>postgres</module>
+        <module>postgres-prod</module>
         <module>selenium-chrome</module>
         <module>voting-result</module>
         <module>voting-vote</module>

@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.7.0] - 2017-01-05
+### Added
+- Support for configuration variants, different maven artifacts that provide different configuration for the same service.
+
+## [1.6.0] - 2018-01-03
+### Added
+- Local ports of the docker host can now be bound to container ports. All ports are mapped (to random available ports)
+ by default on Windows and MacOS since there is no docker0 bridge in those environments
+### Fixed
+- Fixed Windows and MacOS compatibility bugs
+- Fixed a bug in PullPolicy.IF_LOCAL_IMAGE_ABSENT where the image would not be pulled even when it was not present locally
+### Changed
+- Added exceptions when invocation of external commands (docker / docker-compose) return non-zero exit codes
+- It is now possible to pull images from extensions (without requiring a reference to the container orchestration runtime)
+
 ## [1.5.4] - 2017-12-13
 ### Fixed
 - No longer ignore -Dservice=... in zet:clean goal of the maven plugin

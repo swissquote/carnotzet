@@ -101,6 +101,7 @@ public interface PullPolicy {
 	 *                              if requiresLocalMetadata() returned false.
 	 * @param registryImageMetadata the full metadata of the matching image on the remote registry. null if there is no such image on the
 	 *                              registry, or if requiresRegistryMetadata() returned false.
+	 * @return true if a docker pull should be done
 	 */
 	boolean shouldPullImage(@NonNull CarnotzetModule module,
 			@Nullable Instant localImageCreated,

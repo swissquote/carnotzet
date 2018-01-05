@@ -10,6 +10,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -117,6 +118,7 @@ public class Carnotzet {
 			modules = resolver.resolve(config.getTopLevelModuleId(), failOnDependencyCycle);
 			if (SystemUtils.IS_OS_LINUX || !getResourcesFolder().resolve("expanded-jars").toFile().exists()) {
 				resourceManager.extractResources(modules);
+				modules = computeServiceIds(modules);
 				resourceManager.resolveResources(modules);
 			}
 			log.debug("configuring modules");
@@ -129,8 +131,40 @@ public class Carnotzet {
 				}
 			}
 			assertNoDuplicateArtifactId(modules);
+			modules = selectModulesForUniqueServiceId(modules);
 		}
 		return modules;
+	}
+
+	private List<CarnotzetModule> computeServiceIds(List<CarnotzetModule> modules) {
+		return modules.stream().map(this::computeServiceId).collect(toList());
+	}
+
+	private CarnotzetModule computeServiceId(CarnotzetModule module) {
+		Map<String, String> ownProperties = readPropertiesFiles(resourceManager.getOwnModuleResourcesPath(module));
+		String serviceId = module.getName();
+		if (ownProperties.containsKey("service.id") && !ownProperties.get("service.id").isEmpty()) {
+			serviceId = ownProperties.get("service.id");
+		}
+		return module.toBuilder().serviceId(serviceId).build();
+	}
+
+	/**
+	 * Ensures that serviceIds are unique in the environment, keeping only the first in the list when multiple exist.
+	 */
+	private List<CarnotzetModule> selectModulesForUniqueServiceId(List<CarnotzetModule> modules) {
+		Set<String> serviceIds = new HashSet<>();
+		List<CarnotzetModule> result = new ArrayList<>();
+		for (CarnotzetModule module : modules) {
+			if (!serviceIds.contains(module.getServiceId())) {
+				result.add(module);
+				serviceIds.add(module.getServiceId());
+				log.debug("Module [{}] was selected for serviceId [{}]", module.getName(), module.getServiceId());
+			} else {
+				log.debug("Module [{}] was NOT selected for serviceId [{}]", module.getName(), module.getServiceId());
+			}
+		}
+		return result;
 	}
 
 	private void assertNoDuplicateArtifactId(List<CarnotzetModule> modules) {
@@ -149,18 +183,55 @@ public class Carnotzet {
 		return getModules().stream().filter(module -> moduleName.equals(module.getName())).findFirst();
 	}
 
+	public Optional<CarnotzetModule> getModuleByServiceId(@NonNull String serviceId) {
+		return getModules().stream().filter(module -> serviceId.equals(module.getServiceId())).findFirst();
+	}
+
 	private List<CarnotzetModule> configureModules(List<CarnotzetModule> modules) {
 		return modules.stream().map(this::configureModule).collect(toList());
 	}
 
 	private CarnotzetModule configureModule(CarnotzetModule module) {
 		CarnotzetModule.CarnotzetModuleBuilder result = module.toBuilder();
-		Map<String, String> properties = readPropertiesFiles(module);
-		result.properties(properties);
+		Map<String, String> resolvedProperties = readPropertiesFiles(getModuleResourcesPath(module));
+		result.properties(resolvedProperties);
 
-		// Default convention
-		String imageName = defaultContainerRegistry + "/" + module.getName() + ":" + module.getId().getVersion();
+		result.imageName(computeImageName(module, resolvedProperties));
 
+		if (resolvedProperties.containsKey("docker.entrypoint")) {
+			result.dockerEntrypoint(resolvedProperties.get("docker.entrypoint"));
+		}
+
+		if (resolvedProperties.containsKey("docker.cmd")) {
+			result.dockerCmd(resolvedProperties.get("docker.cmd"));
+		}
+
+		result.dockerVolumes(computeFileVolumes(module));
+		result.dockerEnvFiles(computeEnvFiles(module));
+
+		return result.build();
+	}
+
+	private Map<String, String> readPropertiesFiles(Path moduleFilesPath) {
+		Map<String, String> result = new HashMap<>();
+		for (String fileName : propFileNames) {
+			Path filePath = moduleFilesPath.resolve(fileName);
+			if (filePath.toFile().exists()) {
+				Properties props = new Properties();
+				try (InputStream in = Files.newInputStream(filePath)) {
+					props.load(in);
+					result.putAll((Map) props);
+				}
+				catch (IOException e) {
+					throw new UncheckedIOException(e);
+				}
+			}
+		}
+		return result;
+	}
+
+	public String computeImageName(CarnotzetModule module, Map<String, String> properties) {
+		String imageName = defaultContainerRegistry + "/" + module.getServiceId() + ":" + module.getId().getVersion();
 		// Allow custom image through configuration
 		if (properties.containsKey("docker.image")) {
 			imageName = properties.get("docker.image");
@@ -179,54 +250,25 @@ public class Carnotzet {
 				if (Strings.isNullOrEmpty(myModuleVersion)) {
 					// complain nicely with a list of modules
 					String modulesList = modules.stream()
-							.map(m -> m.getName())
+							.map(CarnotzetModule::getName)
 							.collect(Collectors.joining(", "));
 					throw new CarnotzetDefinitionException("Module " + myModule + " wasn't found in modules: " + modulesList);
 				}
 				imageName = matcher.replaceFirst(myModuleVersion);
 			}
 		}
-
 		// Allow configuration based disabling of docker container (config only module)
 		if ("none".equals(imageName)) {
 			imageName = null;
 		}
-		result.imageName(imageName);
-		if (properties.containsKey("docker.entrypoint")) {
-			result.dockerEntrypoint(properties.get("docker.entrypoint"));
-		}
-		if (properties.containsKey("docker.cmd")) {
-			result.dockerCmd(properties.get("docker.cmd"));
-		}
-		result.dockerVolumes(getFileVolumes(module));
-		result.dockerEnvFiles(getEnvFiles(module));
-
-		return result.build();
-	}
-
-	private Map<String, String> readPropertiesFiles(CarnotzetModule module) {
-		Map<String, String> result = new HashMap<>();
-		for (String fileName : propFileNames) {
-			Path filePath = getModuleResourcesPath(module).resolve(fileName);
-			if (filePath.toFile().exists()) {
-				Properties props = new Properties();
-				try (InputStream in = Files.newInputStream(filePath)) {
-					props.load(in);
-					result.putAll((Map) props);
-				}
-				catch (IOException e) {
-					throw new UncheckedIOException(e);
-				}
-			}
-		}
-		return result;
+		return imageName;
 	}
 
 	public Path getModuleResourcesPath(CarnotzetModule module) {
-		return resourceManager.getModuleResourcesPath(module);
+		return resourceManager.getResolvedModuleResourcesPath(module);
 	}
 
-	private Set<String> getEnvFiles(CarnotzetModule module) {
+	private Set<String> computeEnvFiles(CarnotzetModule module) {
 		Set<String> envFiles = new HashSet<>();
 		Path envFilesRoot = getModuleResourcesPath(module).resolve("env");
 		if (!exists(envFilesRoot)) {
@@ -242,7 +284,7 @@ public class Carnotzet {
 		return envFiles.isEmpty() ? null : envFiles;
 	}
 
-	private Set<String> getFileVolumes(CarnotzetModule module) {
+	private Set<String> computeFileVolumes(CarnotzetModule module) {
 		Map<String, String> result = new HashMap<>();
 		Path toMount = getModuleResourcesPath(module).resolve("files");
 		if (!Files.exists(toMount)) {

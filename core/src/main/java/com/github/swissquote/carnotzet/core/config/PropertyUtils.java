@@ -12,15 +12,11 @@ import java.util.stream.Collectors;
 
 public final class PropertyUtils {
 
-	/**
-	 * Utility classes cannot have constructors.
-	 */
+	// Utility classes have no public constructors.
 	private PropertyUtils() {
 	}
 
-	/**
-	 * Inspired by java.utils.Properties#store0, but sorts lines in lexicographical order and doesn't output comments in the file
-	 */
+	// Inspired by java.utils.Properties#store0, but sorts lines in lexicographical order and doesn't output comments in the file
 	public static void outputCleanPropFile(Properties props, Path path) throws IOException {
 		try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(path), "8859_1"))) {
 			synchronized (props) {
@@ -41,9 +37,7 @@ public final class PropertyUtils {
 		}
 	}
 
-	/**
-	 * Copied verbatim from java.util.Properties (andmade static
-	 */
+	// Copied from java.util.Properties (and made static)
 	private static String saveConvert(String theString,
 			boolean escapeSpace,
 			boolean escapeUnicode) {

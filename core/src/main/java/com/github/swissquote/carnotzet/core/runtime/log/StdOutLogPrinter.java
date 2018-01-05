@@ -65,7 +65,7 @@ public class StdOutLogPrinter extends LogListenerBase {
 	 * @param follow should printer wait for future log events or not.
 	 */
 	public StdOutLogPrinter(Carnotzet carnotzet, Integer tail, boolean follow) {
-		this(carnotzet.getModules().stream().map(CarnotzetModule::getName).sorted().collect(toList()), tail, follow);
+		this(carnotzet.getModules().stream().map(CarnotzetModule::getServiceId).sorted().collect(toList()), tail, follow);
 	}
 
 	/**

@@ -88,7 +88,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 				continue;
 			}
 			Service.ServiceBuilder serviceBuilder = Service.builder();
-			String moduleName = module.getName();
+			String serviceId = module.getServiceId();
 
 			serviceBuilder.image(module.getImageName());
 			serviceBuilder.volumes(module.getDockerVolumes());
@@ -104,12 +104,12 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			networkAliases.addAll(lookUpCustomAliases(module));
 
 			// Carnotzet semantics name
-			networkAliases.add(module.getName() + ".docker");
-			networkAliases.add(instanceId + "." + module.getName() + ".docker");
+			networkAliases.add(module.getServiceId() + ".docker");
+			networkAliases.add(instanceId + "." + module.getServiceId() + ".docker");
 
 			// Legacy compat (default dnsdock pattern)
 			networkAliases.add(module.getShortImageName() + ".docker");
-			networkAliases.add(instanceId + "_" + module.getName() + "." + module.getShortImageName() + ".docker");
+			networkAliases.add(instanceId + "_" + module.getServiceId() + "." + module.getShortImageName() + ".docker");
 
 			ContainerNetwork network = ContainerNetwork.builder().aliases(networkAliases).build();
 			networks.put("carnotzet", network);
@@ -122,12 +122,13 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			labels.put("com.dnsdock.alias", networkAliases.stream().collect(Collectors.joining(",")));
 			labels.put("carnotzet.instance.id", instanceId);
 			labels.put("carnotzet.module.name", module.getName());
+			labels.put("carnotzet.module.service.id", module.getServiceId());
 			labels.put("carnotzet.top.level.module.name", carnotzet.getTopLevelModuleName());
 
 			serviceBuilder.labels(labels);
 			serviceBuilder.extra_hosts(lookUpExtraHosts(module));
 
-			services.put(moduleName, serviceBuilder.build());
+			services.put(serviceId, serviceBuilder.build());
 		}
 
 		Network network = Network.builder().driver("bridge").build();
@@ -177,7 +178,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		computeDockerComposeFile();
 		Instant start = Instant.now();
 		carnotzet.getModules().stream().filter(this::shouldStartByDefault).forEach(m ->
-				runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d", m.getName())
+				runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d", m.getServiceId())
 		);
 		ensureNetworkCommunicationIsPossible();
 		logManager.ensureCapturingLogs(start, getContainers());
@@ -310,7 +311,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	@Override
 	public void pull(PullPolicy policy) {
 		// We need to check service by service if a newer version exists or not
-		carnotzet.getModules().forEach(module -> pull(module.getName(), policy));
+		carnotzet.getModules().forEach(module -> pull(module.getServiceId(), policy));
 	}
 
 	@Override
@@ -321,7 +322,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	@Override
 	public void pull(@NonNull String service, PullPolicy policy) {
 		// Find out the name and tag of the image we are trying to pull
-		CarnotzetModule serviceModule = carnotzet.getModule(service)
+		CarnotzetModule serviceModule = carnotzet.getModuleByServiceId(service)
 				.orElseThrow(() -> new IllegalArgumentException("No such service: " + service));
 
 		DockerRegistry.pullImage(serviceModule, policy);

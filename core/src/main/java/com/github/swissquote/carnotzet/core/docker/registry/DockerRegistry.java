@@ -86,10 +86,6 @@ public class DockerRegistry {
 		return proxyClients.get(imageRef.getRegistryUrl());
 	}
 
-	/**
-	 * @param module
-	 * @param policy
-	 */
 	public static void pullImage(CarnotzetModule module, PullPolicy policy) {
 
 		String imageName = module.getImageName();
@@ -127,9 +123,7 @@ public class DockerRegistry {
 		}
 	}
 
-	/**
-	 * @return null if the image doesn't exist on the docker host
-	 */
+	// returns null if the image doesn't exist on the docker host
 	private static Instant getLocalImageTimestamp(String imageName) {
 		// Use docker inspect
 		try {

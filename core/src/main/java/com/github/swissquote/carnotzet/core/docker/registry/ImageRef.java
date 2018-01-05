@@ -71,9 +71,7 @@ public class ImageRef {
 		return image;
 	}
 
-	/**
-	 * The image tag, or null if not set.
-	 */
+	// The image tag, or null if not set.
 	public String getTag() {
 		if (tag == null) {
 			return DEFAULT_TAG;
@@ -81,16 +79,11 @@ public class ImageRef {
 		return tag;
 	}
 
-	/**
-	 * Hostname/ip address and port of the registry.
-	 */
+	// Hostname/ip address and port of the registry.
 	public String getRegistryName() {
 		return registry;
 	}
 
-	/**
-	 * Registry URL.
-	 */
 	public String getRegistryUrl() {
 		return registryUrl;
 	}
@@ -104,9 +97,7 @@ public class ImageRef {
 				.toString();
 	}
 
-	/**
-	 * Return registry server address given first part of image.
-	 */
+	// registry server address given first part of image.
 	@VisibleForTesting
 	static String parseRegistryUrl(final String url) {
 		if ("docker.io".equals(url) || "index.docker.io".equals(url)) {

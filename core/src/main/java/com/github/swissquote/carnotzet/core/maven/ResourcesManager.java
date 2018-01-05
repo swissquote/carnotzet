@@ -48,8 +48,12 @@ public class ResourcesManager {
 		this.fileMergers = ServiceLoader.load(FileMerger.class);
 	}
 
-	public Path getModuleResourcesPath(CarnotzetModule module) {
-		return resolved.resolve(module.getName());
+	public Path getResolvedModuleResourcesPath(CarnotzetModule module) {
+		return resolved.resolve(module.getServiceId());
+	}
+
+	public Path getOwnModuleResourcesPath(CarnotzetModule module) {
+		return expandedJars.resolve(module.getName());
 	}
 
 	/**
@@ -60,6 +64,7 @@ public class ResourcesManager {
 	 * @param modules the list of modules to extract
 	 */
 	public void extractResources(List<CarnotzetModule> modules) {
+
 		try {
 			log.debug("Extracting jars resources to [{}]", resourcesRoot);
 			FileUtils.deleteDirectory(resourcesRoot.toFile());
@@ -89,6 +94,7 @@ public class ResourcesManager {
 
 	/**
 	 * Compute overrides and merges between module files in expanded jars
+	 * The serviceId of the modules must be filled.
 	 *
 	 * @param modules the list of modules to resolve , ordered from leaves to top level module
 	 */
@@ -114,8 +120,8 @@ public class ResourcesManager {
 	 */
 	private void copyOwnResources(List<CarnotzetModule> processedModules, CarnotzetModule module) throws IOException {
 		Path expandedJarPath = expandedJars.resolve(module.getName());
-		Path resolvedModulePath = resolved.resolve(module.getName());
-		if (!resolvedModulePath.toFile().mkdirs()) {
+		Path resolvedModulePath = resolved.resolve(module.getServiceId());
+		if (!resolvedModulePath.toFile().exists() && !resolvedModulePath.toFile().mkdirs()) {
 			throw new CarnotzetDefinitionException("Could not create directory " + resolvedModulePath);
 		}
 
@@ -154,7 +160,7 @@ public class ResourcesManager {
 			}
 			String mergedModuleName = mergedModulePath.toString(); // ${mergedModule}
 			processedModules.stream()
-					.filter(m -> m.getName().equals(mergedModuleName))
+					.filter(m -> m.getServiceId().equals(mergedModuleName))
 					.findFirst()
 					.ifPresent(mergedModule -> {
 						Path toMergeFile = resolved.resolve(relativePath); // ${resolved}/${mergedModule}/path/to/file
@@ -182,7 +188,7 @@ public class ResourcesManager {
 							log.debug("Created empty file [{}]", toMergeFile);
 						}
 						fileMerger.merge(toMergeFile, mergingFilePath, toMergeFile);
-						log.debug("Merged [{}] from [{}] into [{}]", mergingFilePath, mergedModule.getName(), toMergeFile);
+						log.debug("Merged [{}] from [{}] into [{}]", mergingFilePath, mergedModule.getServiceId(), toMergeFile);
 					});
 		});
 	}
@@ -209,7 +215,7 @@ public class ResourcesManager {
 			}
 			String overriddenModuleName = overriddenModulePath.toString(); // ${overridenModule}
 			processedModules.stream()
-					.filter(m -> m.getName().equals(overriddenModuleName))
+					.filter(m -> m.getServiceId().equals(overriddenModuleName))
 					.findFirst()
 					.ifPresent(overriddenModule -> {
 						Path toOverrideFile = resolved.resolve(relativePath); // ${resolved}/${overrideModule}/path/to/file
@@ -223,7 +229,7 @@ public class ResourcesManager {
 							}
 							Files.copy(overridingFilePath, toOverrideFile, StandardCopyOption.REPLACE_EXISTING);
 							log.debug("Overridden [" + toOverrideFile.getFileName() + "] "
-									+ "in [" + overriddenModule.getName() + "] "
+									+ "in [" + overriddenModule.getServiceId() + "] "
 									+ "with file from [" + module.getName() + "]");
 						}
 						catch (IOException e) {
@@ -256,7 +262,7 @@ public class ResourcesManager {
 				// Should not happen
 				return false;
 			}
-			return modules.stream().anyMatch(m -> m.getName().equals(fileName.toString()));
+			return modules.stream().anyMatch(m -> m.getServiceId().equals(fileName.toString()) || m.getName().equals(fileName.toString()));
 		};
 	}
 

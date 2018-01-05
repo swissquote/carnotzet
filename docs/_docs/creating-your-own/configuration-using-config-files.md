@@ -21,7 +21,7 @@ From the root of the resources of the module's Jar :
 - The second level of directory is "files" by convention (to distinguish with other ways to configure applications
  such as environment variables)
 - Sub-directories in "files" define the target location of the file in the application's container
- (think of the "files" folder as "/")
+ (think of the "files" folder as the root file "/" inside the container)
 
 This is best explained with an example, let's imagine we have a module named "my-app" which has it's own configuration 
 file (expected to be /conf/application.properties in the code of my-app).

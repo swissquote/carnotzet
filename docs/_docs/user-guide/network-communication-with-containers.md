@@ -7,17 +7,17 @@ url: /user-guide/network-communication-with-containers
 
 ## Network topology
 There is a dedicated docker network per environment runtime instance. 
-All services running in the same environment can communicate with each other.
+All services running in the same instance can communicate with each other.
 
 ## Hostname resolution
 To address containers running in carnotzet, you may use the following pattern :
 
 ```
-(instance_id.)module_name.docker
+(instance_id.)service_id.docker
 ```
 
 - The `instance_id` is configured in the runtime (either programmatically or using `-Dinstance=...` in the maven plugin). The default value is the top level module name
-- The `module_name` is the artifactId without trailing "-carnotzet".
+- The `service_id` is the artifactId without trailing "-carnotzet" by default, it can be overridden using the `service.id` property in `carnotzet.properties`.
 
 For example you can use the following hostnames to address the container from `redis-carnotzet` in the environment of `voting-all-carnotzet`
 ```
@@ -44,12 +44,26 @@ extra.hosts=ext-service1:172.16.1.3, ext-service2:172.16.1.4
   
 Depending on your environment, it may be resolved differently :
 
-### From your machine (your browser for example)
+### From your Linux docker host
 
-You may use DnsDock. it is a DNS server running on your machine that is "container aware" and can reads labels on containers to provide hostname resolution.
+You connect using the IP address of the container in the docker network (ie : 172.17.22.3)
+
+You may use DnsDock to make it more robust. it is a DNS server running on your machine that is "container aware" and can reads labels on containers to provide hostname resolution.
 
 For more information about how to install and configure DnsDock on your system, check this page : 
 [https://github.com/aacebedo/dnsdock](https://github.com/aacebedo/dnsdock)
+
+### From your MacOS or Windows machine
+
+There are known limitations in docker for Mac and Windows that prevent communicating directly using the container ips 
+(see https://docs.docker.com/docker-for-mac/networking/ and 
+https://stackoverflow.com/questions/41400043/docker-on-windows-how-to-connect-to-container-from-host-using-container-ip)
+
+As a workaround to those limitations, carnotzet automatically binds all exposed ports in containers to random (or configurable) ports 
+on localhost.
+
+You should use localhost + the mapped ports to communicate with the containers. You can use mvn zet:ps to list the mapped ports.
+
 
 ### From another application running in the same Carnotzet Environment
 

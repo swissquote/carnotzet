@@ -63,7 +63,7 @@ public class ExamplesTest {
 		runtime.registerLogListener(logEvents);
 
 		// print the environment logs in the test console, with consistent colors
-		List<String> moduleNames = carnotzet.getModules().stream().map(CarnotzetModule::getName).collect(Collectors.toList());
+		List<String> moduleNames = carnotzet.getModules().stream().map(CarnotzetModule::getServiceId).collect(Collectors.toList());
 		runtime.registerLogListener(new StdOutLogPrinter(moduleNames, 1000, true));
 		runtime.start();
 

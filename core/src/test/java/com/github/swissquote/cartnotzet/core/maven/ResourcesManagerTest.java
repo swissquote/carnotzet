@@ -36,9 +36,9 @@ public class ResourcesManagerTest {
 		FileUtils.copyDirectory(example, resources.toFile());
 		ResourcesManager manager = new ResourcesManager(resources, null);
 		List<CarnotzetModule> modules = Arrays.asList(
-				CarnotzetModule.builder().name("service3").build(),
-				CarnotzetModule.builder().name("service2").build(),
-				CarnotzetModule.builder().name("service1").build()
+				CarnotzetModule.builder().name("service3").serviceId("service3").build(),
+				CarnotzetModule.builder().name("service2").serviceId("service2").build(),
+				CarnotzetModule.builder().name("service1").serviceId("service1").build()
 		);
 
 		// When
@@ -69,9 +69,9 @@ public class ResourcesManagerTest {
 		FileUtils.copyDirectory(example, resources.toFile());
 		ResourcesManager manager = new ResourcesManager(resources, null);
 		List<CarnotzetModule> modules = Arrays.asList(
-				CarnotzetModule.builder().name("service3").build(),
-				CarnotzetModule.builder().name("service2").build(),
-				CarnotzetModule.builder().name("service1").build()
+				CarnotzetModule.builder().name("service3").serviceId("service3").build(),
+				CarnotzetModule.builder().name("service2").serviceId("service2").build(),
+				CarnotzetModule.builder().name("service1").serviceId("service1").build()
 		);
 
 		// When
@@ -106,8 +106,8 @@ public class ResourcesManagerTest {
 		FileUtils.copyDirectory(example, resources.toFile());
 		ResourcesManager manager = new ResourcesManager(resources, null);
 		List<CarnotzetModule> modules = Arrays.asList(
-				CarnotzetModule.builder().name("service2").build(),
-				CarnotzetModule.builder().name("service1").build()
+				CarnotzetModule.builder().name("service2").serviceId("service2").build(),
+				CarnotzetModule.builder().name("service1").serviceId("service1").build()
 		);
 
 		// When
@@ -118,6 +118,53 @@ public class ResourcesManagerTest {
 		assertTrue(resources.resolve("resolved/service2/resourcedir/from_service_2").toFile().exists());
 		assertTrue(resources.resolve("resolved/service2/resourcedir/from_service_1").toFile().exists());
 		assertTrue(resources.resolve("resolved/service2/resourcedir2/from_service_1").toFile().exists());
+
+	}
+
+	@Test
+	public void config_variant() throws IOException {
+		// Given
+		URL url = Thread.currentThread().getContextClassLoader().getResource("example_config_variant");
+		File example = new File(url.getPath());
+		Path resources = temp.newFolder().toPath();
+		FileUtils.copyDirectory(example, resources.toFile());
+		ResourcesManager manager = new ResourcesManager(resources, null);
+		List<CarnotzetModule> modules = Arrays.asList(
+				CarnotzetModule.builder().name("service2").serviceId("service2").build(),
+				CarnotzetModule.builder().name("service1-variant").serviceId("service1").build()
+		);
+
+		// When
+		manager.resolveResources(modules);
+
+		// Then
+		assertTrue(resources.resolve("resolved/service2/files/config.properties").toFile().exists());
+		assertTrue(resources.resolve("resolved/service2/files/config2.properties").toFile().exists());
+		assertTrue(resources.resolve("resolved/service1/files/config3.properties").toFile().exists());
+		assertTrue(resources.resolve("resolved/service2/files/config4.properties").toFile().exists());
+
+	}
+
+	@Test
+	public void multiple_variants_for_same_service_id() throws IOException {
+		// Given
+		URL url = Thread.currentThread().getContextClassLoader().getResource("example_multiple_variants_for_same_service_id");
+		File example = new File(url.getPath());
+		Path resources = temp.newFolder().toPath();
+		FileUtils.copyDirectory(example, resources.toFile());
+		ResourcesManager manager = new ResourcesManager(resources, null);
+		List<CarnotzetModule> modules = Arrays.asList(
+				CarnotzetModule.builder().name("service1-variant2").serviceId("service1").build(),
+				CarnotzetModule.builder().name("service1-variant1").serviceId("service1").build()
+		);
+
+		// When
+		manager.resolveResources(modules);
+
+		// Then
+		assertTrue(resources.resolve("resolved/service1/files/config.properties").toFile().exists());
+		assertTrue(resources.resolve("resolved/service1/files/config2.properties").toFile().exists());
+		assertTrue(resources.resolve("resolved/service1/files/config3.properties").toFile().exists());
 
 	}
 

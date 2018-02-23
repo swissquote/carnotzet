@@ -12,7 +12,6 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
-import org.glassfish.jersey.client.proxy.WebResourceFactory;
 import org.glassfish.jersey.jackson.JacksonFeature;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +33,7 @@ public class DockerRegistry {
 	public static final DockerRegistry INSTANCE = new DockerRegistry();
 
 	private final DockerConfig config = DockerConfig.fromEnv();
-	private final Map<String, RegistryEndpoints> proxyClients = new HashMap<>();
+	private final Map<String, WebTarget> webTargets = new HashMap<>();
 
 	public ImageMetaData getImageMetaData(ImageRef imageRef) {
 		DistributionManifestV2 di = getDistributionManifest(imageRef);
@@ -44,8 +43,14 @@ public class DockerRegistry {
 
 	private DistributionManifestV2 getDistributionManifest(ImageRef imageRef) {
 		try {
-			RegistryEndpoints registry = getRegistryClient(imageRef);
-			return registry.getDistributionManifest(imageRef.getImageName(), imageRef.getTag());
+			WebTarget registry = getRegistryWebTarget(imageRef);
+
+			return registry.path("{name}/manifests/{reference}")
+
+					.resolveTemplate("name", imageRef.getImageName(),false)
+					.resolveTemplate("reference", imageRef.getTag(), false)
+					.request("application/vnd.docker.distribution.manifest.v2+json")
+					.get(DistributionManifestV2.class);
 		}
 		catch (Exception e) {
 			throw new CarnotzetDefinitionException("Could not fetch distribution manifest of [" + imageRef + "]", e);
@@ -58,16 +63,20 @@ public class DockerRegistry {
 		}
 
 		try {
-			RegistryEndpoints registry = getRegistryClient(imageRef);
-			return registry.getImageManifest(imageRef.getImageName(), distributionManifest.getConfig().getDigest());
+			WebTarget registry = getRegistryWebTarget(imageRef);
+			return registry.path("{name}/manifests/{reference}")
+					.resolveTemplate("name", imageRef.getImageName(),false)
+					.resolveTemplate("reference", distributionManifest.getConfig().getDigest(), false)
+					.request("application/vnd.docker.container.image.v1+json")
+					.get(ContainerImageV1.class);
 		}
 		catch (Exception e) {
 			throw new CarnotzetDefinitionException("Could not fetch config manifest of image [" + imageRef + "]", e);
 		}
 	}
 
-	private RegistryEndpoints getRegistryClient(ImageRef imageRef) {
-		if (!proxyClients.containsKey(imageRef.getRegistryUrl())) {
+	private WebTarget getRegistryWebTarget(ImageRef imageRef) {
+		if (!webTargets.containsKey(imageRef.getRegistryUrl())) {
 
 			ObjectMapper mapper = new ObjectMapper();
 			mapper.registerModule(new JavaTimeModule());
@@ -81,9 +90,9 @@ public class DockerRegistry {
 				client.register(HttpAuthenticationFeature.basicBuilder().credentials(credentials[0], credentials[1]));
 			}
 			WebTarget webTarget = client.target(imageRef.getRegistryUrl());
-			proxyClients.put(imageRef.getRegistryUrl(), WebResourceFactory.newResource(RegistryEndpoints.class, webTarget));
+			webTargets.put(imageRef.getRegistryUrl(), webTarget);
 		}
-		return proxyClients.get(imageRef.getRegistryUrl());
+		return webTargets.get(imageRef.getRegistryUrl());
 	}
 
 	public static void pullImage(CarnotzetModule module, PullPolicy policy) {

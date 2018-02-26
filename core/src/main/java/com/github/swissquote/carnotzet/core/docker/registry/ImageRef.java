@@ -120,11 +120,11 @@ public class ImageRef {
 	}
 
 	public String getImageName() {
-		String[] splitted =  image.split("/");
+		String[] splitted = image.split("/");
 
 		StringJoiner joiner = new StringJoiner("/");
 		Arrays.stream(splitted)
-				.filter(token -> token.indexOf(".") < 0 )
+				.filter(token -> token.indexOf(".") < 0)
 				.forEach(token -> joiner.add(token));
 
 		return joiner.toString();

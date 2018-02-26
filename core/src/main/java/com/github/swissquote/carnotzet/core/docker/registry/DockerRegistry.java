@@ -47,7 +47,7 @@ public class DockerRegistry {
 
 			return registry.path("{name}/manifests/{reference}")
 
-					.resolveTemplate("name", imageRef.getImageName(),false)
+					.resolveTemplate("name", imageRef.getImageName(), false)
 					.resolveTemplate("reference", imageRef.getTag(), false)
 					.request("application/vnd.docker.distribution.manifest.v2+json")
 					.get(DistributionManifestV2.class);
@@ -65,7 +65,7 @@ public class DockerRegistry {
 		try {
 			WebTarget registry = getRegistryWebTarget(imageRef);
 			return registry.path("{name}/manifests/{reference}")
-					.resolveTemplate("name", imageRef.getImageName(),false)
+					.resolveTemplate("name", imageRef.getImageName(), false)
 					.resolveTemplate("reference", distributionManifest.getConfig().getDigest(), false)
 					.request("application/vnd.docker.container.image.v1+json")
 					.get(ContainerImageV1.class);

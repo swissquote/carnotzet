@@ -1,9 +1,15 @@
 package com.github.swissquote.carnotzet.core.runtime;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.SystemUtils;
 
@@ -101,25 +107,32 @@ public final class DefaultCommandRunner implements CommandRunner {
 			Thread.currentThread().interrupt();
 			throw new CarnotzetDefinitionException(e);
 		}
-
+		catch (ExecutionException e) {
+			throw new CarnotzetDefinitionException(e);
+		}
 	}
 
 	private static class StreamHoover extends Thread {
+		private CompletableFuture<String> streamFuture = new CompletableFuture<>();
 		private InputStream is;
-		private String result;
 
 		StreamHoover(InputStream is) {
 			this.is = is;
 		}
 
 		public void run() {
-			try (java.util.Scanner s = new java.util.Scanner(is, "UTF-8")) {
-				result = s.useDelimiter("\\A").hasNext() ? s.next() : "";
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+					Scanner s = new Scanner(reader)) {
+
+				streamFuture.complete(s.useDelimiter("\\A").hasNext() ? s.next() : "");
+			}
+			catch (IOException e) {
+				streamFuture.completeExceptionally(e);
 			}
 		}
 
-		public String getResult() {
-			return result;
+		public String getResult() throws ExecutionException, InterruptedException {
+			return streamFuture.get();
 		}
 	}
 

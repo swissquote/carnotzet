@@ -77,24 +77,49 @@ public final class DefaultCommandRunner implements CommandRunner {
 		pb.directory(directoryForRunning);
 		try {
 			Process p = pb.start();
+
+			StreamHoover stdoutHoover = new StreamHoover(p.getInputStream());
+			StreamHoover stderrHoover = new StreamHoover(p.getErrorStream());
+
+			stdoutHoover.start();
+			stderrHoover.start();
 			p.waitFor();
-			String stdOut = getInputAsString(p.getInputStream());
-			String stdErr = getInputAsString(p.getErrorStream());
+
+			String stdOut = stdoutHoover.getResult();
+			String stdErr = stderrHoover.getResult();
+
 			if (p.exitValue() != 0) {
 				throw new RuntimeException("External command [" + Joiner.on(" ").join(command) + "] exited with [" + p.exitValue()
 						+ "], stdout: " + stdOut + System.lineSeparator() + "stderr: " + stdErr);
 			}
 			return stdOut.trim() + stdErr.trim();
 		}
-		catch (InterruptedException | IOException e) {
-			throw new RuntimeException(e);
+		catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+		catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new CarnotzetDefinitionException(e);
 		}
 
 	}
 
-	private static String getInputAsString(InputStream is) {
-		try (java.util.Scanner s = new java.util.Scanner(is, "UTF-8")) {
-			return s.useDelimiter("\\A").hasNext() ? s.next() : "";
+	private static class StreamHoover extends Thread {
+		private InputStream is;
+		private String result;
+
+		StreamHoover(InputStream is) {
+			this.is = is;
+		}
+
+		public void run() {
+			try (java.util.Scanner s = new java.util.Scanner(is, "UTF-8")) {
+				result = s.useDelimiter("\\A").hasNext() ? s.next() : "";
+			}
+		}
+
+		public String getResult() {
+			return result;
 		}
 	}
 

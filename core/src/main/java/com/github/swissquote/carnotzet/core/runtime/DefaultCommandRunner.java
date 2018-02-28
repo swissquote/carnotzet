@@ -1,9 +1,15 @@
 package com.github.swissquote.carnotzet.core.runtime;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.SystemUtils;
 
@@ -77,24 +83,56 @@ public final class DefaultCommandRunner implements CommandRunner {
 		pb.directory(directoryForRunning);
 		try {
 			Process p = pb.start();
+
+			StreamHoover stdoutHoover = new StreamHoover(p.getInputStream());
+			StreamHoover stderrHoover = new StreamHoover(p.getErrorStream());
+
+			stdoutHoover.start();
+			stderrHoover.start();
 			p.waitFor();
-			String stdOut = getInputAsString(p.getInputStream());
-			String stdErr = getInputAsString(p.getErrorStream());
+
+			String stdOut = stdoutHoover.getResult();
+			String stdErr = stderrHoover.getResult();
+
 			if (p.exitValue() != 0) {
 				throw new RuntimeException("External command [" + Joiner.on(" ").join(command) + "] exited with [" + p.exitValue()
 						+ "], stdout: " + stdOut + System.lineSeparator() + "stderr: " + stdErr);
 			}
 			return stdOut.trim() + stdErr.trim();
 		}
-		catch (InterruptedException | IOException e) {
-			throw new RuntimeException(e);
+		catch (IOException e) {
+			throw new UncheckedIOException(e);
 		}
-
+		catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new CarnotzetDefinitionException(e);
+		}
+		catch (ExecutionException e) {
+			throw new CarnotzetDefinitionException(e);
+		}
 	}
 
-	private static String getInputAsString(InputStream is) {
-		try (java.util.Scanner s = new java.util.Scanner(is, "UTF-8")) {
-			return s.useDelimiter("\\A").hasNext() ? s.next() : "";
+	private static class StreamHoover extends Thread {
+		private CompletableFuture<String> streamFuture = new CompletableFuture<>();
+		private InputStream is;
+
+		StreamHoover(InputStream is) {
+			this.is = is;
+		}
+
+		public void run() {
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+					Scanner s = new Scanner(reader)) {
+
+				streamFuture.complete(s.useDelimiter("\\A").hasNext() ? s.next() : "");
+			}
+			catch (IOException e) {
+				streamFuture.completeExceptionally(e);
+			}
+		}
+
+		public String getResult() throws ExecutionException, InterruptedException {
+			return streamFuture.get();
 		}
 	}
 

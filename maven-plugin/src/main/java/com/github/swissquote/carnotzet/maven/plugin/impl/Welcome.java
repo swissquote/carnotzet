@@ -26,7 +26,7 @@ public final class Welcome {
 
 			WelcomePageGenerator generator = new WelcomePageGenerator(Arrays.asList(ipPlaceholderResolver));
 
-			Path moduleResources = carnotzet.getResourcesFolder().resolve("expanded-jars");
+			Path moduleResources = carnotzet.getResourcesFolder().resolve("resolved");
 			Path welcomePagePath = carnotzet.getResourcesFolder().resolve("welcome.html");
 
 			generator.buildWelcomeHtmlFile(moduleResources, welcomePagePath);

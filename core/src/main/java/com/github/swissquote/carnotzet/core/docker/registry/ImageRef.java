@@ -20,6 +20,9 @@
 
 package com.github.swissquote.carnotzet.core.docker.registry;
 
+import java.util.Arrays;
+import java.util.StringJoiner;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 
@@ -117,9 +120,13 @@ public class ImageRef {
 	}
 
 	public String getImageName() {
-		if (image.indexOf('/') > 0) {
-			return image.split("/")[1];
-		}
-		return image;
+		String[] splitted = image.split("/");
+
+		StringJoiner joiner = new StringJoiner("/");
+		Arrays.stream(splitted)
+				.filter(token -> token.indexOf(".") < 0)
+				.forEach(token -> joiner.add(token));
+
+		return joiner.toString();
 	}
 }

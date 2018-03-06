@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [1.7.0] - 2017-01-05
+## [1.7.1] - 2018-03-06
+### Fixed
+- Fixed a bug sometimes causing freezes when running external processes (eg : docker)
+- Fixed fetching docker image manifests when image name contains a "/"
+- Allow overriding of welcome.html fragments and ignore welcome.html files for excluded configuration variants.
+
+## [1.7.0] - 2018-01-05
 ### Added
 - Support for configuration variants, different maven artifacts that provide different configuration for the same service.
 

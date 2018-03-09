@@ -87,6 +87,7 @@ public final class DefaultCommandRunner implements CommandRunner {
 			p.waitFor();
 
 			String output = FileUtils.readFileToString(tmp);
+			output = output.trim();
 
 			if (p.exitValue() != 0) {
 				throw new RuntimeException("External command [" + Joiner.on(" ").join(command) + "] exited with [" + p.exitValue()

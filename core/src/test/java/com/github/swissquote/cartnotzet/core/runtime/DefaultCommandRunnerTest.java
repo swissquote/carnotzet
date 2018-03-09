@@ -33,7 +33,7 @@ public class DefaultCommandRunnerTest {
 				2, TimeUnit.SECONDS, true);
 
 		// Then
-		Assert.assertThat(actual, Is.is(expected));
+		Assert.assertThat(actual, Is.is(expected.trim()));
 	}
 
 }

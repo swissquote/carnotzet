@@ -7,12 +7,12 @@
     <parent>
         <groupId>com.github.swissquote.examples</groupId>
         <artifactId>carnotzet-examples</artifactId>
-        <version>1.7.1</version>
+        <version>1.7.2-SNAPSHOT</version>
     </parent>
 
     <groupId>com.github.swissquote.examples</groupId>
     <artifactId>postgres-prod-carnotzet</artifactId>
-    <version>1.7.1</version>
+    <version>1.7.2-SNAPSHOT</version>
 
     <dependencies>
         <dependency>

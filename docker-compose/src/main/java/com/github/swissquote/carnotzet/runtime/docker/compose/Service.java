@@ -1,13 +1,15 @@
 package com.github.swissquote.carnotzet.runtime.docker.compose;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+
 import lombok.Builder;
 import lombok.Value;
-
-import java.util.Map;
-import java.util.Set;
 
 @JsonDeserialize(builder = Service.ServiceBuilder.class)
 @Value
@@ -23,11 +25,11 @@ public class Service {
 	private final Set<String> env_file;
 	//CHECKSTYLE:ON
 	@JsonProperty
-	private final String entrypoint;
+	private final List<String> entrypoint;
 	@JsonProperty
 	private final Map<String, String> labels;
 	@JsonProperty
-	private final String command;
+	private final List<String> command;
 	@JsonProperty
 	private final Map<String, ContainerNetwork> networks;
 	@JsonProperty

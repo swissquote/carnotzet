@@ -25,6 +25,7 @@ import org.apache.commons.lang3.SystemUtils;
 
 import com.github.swissquote.carnotzet.core.Carnotzet;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
+import com.github.swissquote.carnotzet.core.docker.DockerUtils;
 import com.github.swissquote.carnotzet.core.docker.registry.DockerRegistry;
 import com.github.swissquote.carnotzet.core.runtime.CommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
@@ -92,8 +93,8 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 			serviceBuilder.image(module.getImageName());
 			serviceBuilder.volumes(module.getDockerVolumes());
-			serviceBuilder.entrypoint(module.getDockerEntrypoint());
-			serviceBuilder.command(module.getDockerCmd());
+			serviceBuilder.entrypoint(DockerUtils.parseEntrypointOrCmd(module.getDockerEntrypoint()));
+			serviceBuilder.command(DockerUtils.parseEntrypointOrCmd(module.getDockerCmd()));
 			serviceBuilder.env_file(module.getDockerEnvFiles());
 			if (shouldExposePorts) {
 				serviceBuilder.ports(getExposedPorts(module.getImageName(), module.getProperties()));

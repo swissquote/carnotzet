@@ -26,7 +26,9 @@ public class CarnotzetModule {
 	private final Map<String, String> labels;
 	private final String imageName;
 	private final Set<String> dockerVolumes;
+	// supports shell and exec formats (same as Dockerfile's ENTRYPOINT)
 	private final String dockerEntrypoint;
+	// supports shell and exec formats (same as Dockerfile's CMD)
 	private final String dockerCmd;
 	private final Set<String> dockerEnvFiles;
 	private final Path jarPath;
@@ -35,4 +37,5 @@ public class CarnotzetModule {
 		String withoutHost = imageName.replaceFirst(".*/", "");
 		return withoutHost.replaceFirst(":.*", "");
 	}
+
 }

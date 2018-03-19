@@ -118,7 +118,7 @@ public final class ContainerStartupWrapperUtils {
 		}
 	}
 
-	private static String getFromModuleProperties(CarnotzetModule moduleToWrap, DockerExecutionItem type) {
+	public static String getFromModuleProperties(CarnotzetModule moduleToWrap, DockerExecutionItem type) {
 		switch (type) {
 			case ENTRYPOINT:
 				return moduleToWrap.getDockerEntrypoint();
@@ -129,7 +129,7 @@ public final class ContainerStartupWrapperUtils {
 		}
 	}
 
-	private static String wrapEntrypoint(CarnotzetModule moduleToWrap, String wrapperCommand, Boolean ignoreLocalImages) {
+	public static String wrapEntrypoint(CarnotzetModule moduleToWrap, String wrapperCommand, Boolean ignoreLocalImages) {
 		List<String> res = new ArrayList<>();
 		String existingEntrypoint = getImageExecutionItem(moduleToWrap, ignoreLocalImages, ENTRYPOINT);
 		if (existingEntrypoint != null) {

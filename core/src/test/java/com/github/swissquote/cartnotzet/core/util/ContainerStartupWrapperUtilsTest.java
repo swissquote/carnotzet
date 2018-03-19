@@ -20,7 +20,6 @@ import org.junit.rules.TemporaryFolder;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
 import com.github.swissquote.carnotzet.core.util.ContainerStartupWrapperUtils;
 
-// ensures that the wrapping doesn't break
 public class ContainerStartupWrapperUtilsTest {
 
 	@Rule
@@ -151,26 +150,6 @@ public class ContainerStartupWrapperUtilsTest {
 		assertThat(wrapped.getDockerEntrypoint(), is("[\"/test-wrapper_my-service.sh\",\"/container_entrypoint\",\"entrypoint_arg\"]"));
 		assertThat(wrapped.getDockerCmd(), is("[\"arg1\",\"arg2\"]"));
 		deleteDockerImage(imageName);
-	}
-
-	@Test
-	public void shell_cmd_from_registry() throws IOException {
-		deleteDockerImage("chuanwen/cowsay");
-		CarnotzetModule wrapped = getWrappedModule("chuanwen/cowsay");
-
-		// https://github.com/chuanwen/dockerfiles/blob/master/cowsay/Dockerfile
-		assertThat(wrapped.getDockerEntrypoint(), is("[\"/test-wrapper_my-service.sh\"]"));
-		assertThat(wrapped.getDockerCmd(), is("[\"/bin/sh\",\"-c\",\"/usr/games/fortune -a | /usr/games/cowsay\"]"));
-	}
-
-	@Test
-	public void exec_entrypoints_exec_cmd_from_registry() throws IOException {
-		deleteDockerImage("mryan/carnotzet-test-exec-entrypoint-exec-cmd");
-		CarnotzetModule wrapped = getWrappedModule("mryan/carnotzet-test-exec-entrypoint-exec-cmd");
-
-		// https://github.com/chuanwen/dockerfiles/blob/master/cowsay/Dockerfile
-		assertThat(wrapped.getDockerEntrypoint(), is("[\"/test-wrapper_my-service.sh\",\"echo\"]"));
-		assertThat(wrapped.getDockerCmd(), is("[\"hello world\"]"));
 	}
 
 }

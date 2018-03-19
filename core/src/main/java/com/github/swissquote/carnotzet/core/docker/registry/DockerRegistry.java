@@ -46,7 +46,6 @@ public class DockerRegistry {
 			WebTarget registry = getRegistryWebTarget(imageRef);
 
 			return registry.path("v2/{name}/manifests/{reference}")
-
 					.resolveTemplate("name", imageRef.getImageName(), false)
 					.resolveTemplate("reference", imageRef.getTag(), false)
 					.request("application/vnd.docker.distribution.manifest.v2+json")
@@ -81,6 +80,7 @@ public class DockerRegistry {
 			ObjectMapper mapper = new ObjectMapper();
 			mapper.registerModule(new JavaTimeModule());
 
+			// TODO : This client doesn't handle mandatory Oauth2 Bearer token imposed by some registries implementations (ie : docker hub)
 			Client client = ClientBuilder.newClient()
 					.register(new JacksonJaxbJsonProvider(mapper, new Annotations[] {Annotations.JACKSON}))
 					.register(JacksonFeature.class);

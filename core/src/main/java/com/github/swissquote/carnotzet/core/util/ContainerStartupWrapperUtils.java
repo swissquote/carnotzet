@@ -56,11 +56,11 @@ public final class ContainerStartupWrapperUtils {
 	public static String getFromLocalImage(String image, DockerExecutionItem type) {
 		try {
 			String inspectOutput = DefaultCommandRunner.INSTANCE.runCommandAndCaptureOutput(
-					"docker", "inspect", "-f", "{{range .Config." + type.getJsonField() + "}}{{.}}🕦{{end}}", image).trim();
+					"docker", "inspect", "-f", "{{range .Config." + type.getJsonField() + "}}{{.}}||{{end}}", image).trim();
 			if (inspectOutput.isEmpty()) {
 				return null;
 			}
-			return DockerUtils.formatExecEntrypointOrCmd(asList(inspectOutput.split("🕦")));
+			return DockerUtils.formatExecEntrypointOrCmd(asList(inspectOutput.split("\\|\\|")));
 		}
 		catch (RuntimeException e) {
 			throw new CarnotzetDefinitionException("Could not get Entrypoint for [" + image + "] on the docker host", e);

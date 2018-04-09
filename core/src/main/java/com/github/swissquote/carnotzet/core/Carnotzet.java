@@ -155,7 +155,9 @@ public class Carnotzet {
 	private List<CarnotzetModule> selectModulesForUniqueServiceId(List<CarnotzetModule> modules) {
 		Set<String> serviceIds = new HashSet<>();
 		List<CarnotzetModule> result = new ArrayList<>();
-		for (CarnotzetModule module : modules) {
+		ArrayList<CarnotzetModule> invertedTopologicalOrder = new ArrayList<>(modules);
+		Collections.reverse(invertedTopologicalOrder);
+		for (CarnotzetModule module : invertedTopologicalOrder) {
 			if (!serviceIds.contains(module.getServiceId())) {
 				result.add(module);
 				serviceIds.add(module.getServiceId());

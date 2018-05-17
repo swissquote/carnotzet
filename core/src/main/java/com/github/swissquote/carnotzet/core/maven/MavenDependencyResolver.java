@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -37,10 +38,9 @@ public class MavenDependencyResolver {
 	private final Path resourcesPath;
 
 	private final Invoker maven = new DefaultInvoker();
-
-	private Path localRepoPath;
-
 	private final TopologicalSorter topologicalSorter = new TopologicalSorter();
+	private final ConcurrentHashMap<CarnotzetModuleCoordinates, Node> dependencyTreeCache = new ConcurrentHashMap<>();
+	private Path localRepoPath;
 
 	public List<CarnotzetModule> resolve(CarnotzetModuleCoordinates topLevelModuleId, Boolean failOnCycle) {
 		log.debug("Resolving module dependencies");
@@ -55,8 +55,10 @@ public class MavenDependencyResolver {
 	}
 
 	public Node getDependenciesTree(CarnotzetModuleCoordinates topLevelModuleId) {
-		Path pomFile = getPomFile(topLevelModuleId);
-		return resolveDependencyTree(pomFile);
+		return dependencyTreeCache.computeIfAbsent(topLevelModuleId, moduleId -> {
+			Path pomFile = getPomFile(moduleId);
+			return resolveDependencyTree(pomFile);
+		});
 	}
 
 	private List<Node> filterInterestingNodes(List<Node> topology) {
@@ -260,3 +262,4 @@ public class MavenDependencyResolver {
 	}
 
 }
+

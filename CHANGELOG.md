@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.7.4] - 2018-05-18
+### Added
+- Added a utility method to expose the maven dependency tree to extensions so that they can leverage the hierarchy.
+### Fixed
+- Fixed a bug in the selection of configuration variants, the one closer to the root module is now selected.
+
+## [1.7.3] - 2018-03-21
+### Fixed
+- Fixed a bug introduced in 1.7.2 on some platform not supporting unicode characters everywhere
+
 ## [1.7.2] - 2018-03-20
 ### Added
 - Added a utility class to simplify the creation of container startup wrapper scripts in extensions

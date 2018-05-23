@@ -65,6 +65,11 @@ public class ExamplesTest {
 		// print the environment logs in the test console, with consistent colors
 		List<String> moduleNames = carnotzet.getModules().stream().map(CarnotzetModule::getServiceId).collect(Collectors.toList());
 		runtime.registerLogListener(new StdOutLogPrinter(moduleNames, 1000, true));
+		// the worker fails if the DB and redis container is not started and registered in the DNS.
+		runtime.start("postgres");
+		logEvents.waitForEntry("postgres", "ready to accept connections", 10000, 50);
+		runtime.start("redis");
+		logEvents.waitForEntry("redis", "The server is now ready to accept connections", 10000, 50);
 		runtime.start();
 
 		votingApp = "http://" + runtime.getContainer("voting-vote").getIp();

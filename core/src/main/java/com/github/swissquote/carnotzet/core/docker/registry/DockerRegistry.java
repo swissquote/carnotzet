@@ -1,11 +1,17 @@
 package com.github.swissquote.carnotzet.core.docker.registry;
 
+import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -34,66 +40,6 @@ public class DockerRegistry {
 
 	private final DockerConfig config = DockerConfig.fromEnv();
 	private final Map<String, WebTarget> webTargets = new HashMap<>();
-
-	public ImageMetaData getImageMetaData(ImageRef imageRef) {
-		DistributionManifestV2 di = getDistributionManifest(imageRef);
-		ContainerImageV1 im = getImageManifest(imageRef, di);
-		return new ImageMetaData(di, im);
-	}
-
-	private DistributionManifestV2 getDistributionManifest(ImageRef imageRef) {
-		try {
-			WebTarget registry = getRegistryWebTarget(imageRef);
-
-			return registry.path("v2/{name}/manifests/{reference}")
-					.resolveTemplate("name", imageRef.getImageName(), false)
-					.resolveTemplate("reference", imageRef.getTag(), false)
-					.request("application/vnd.docker.distribution.manifest.v2+json")
-					.get(DistributionManifestV2.class);
-		}
-		catch (Exception e) {
-			throw new CarnotzetDefinitionException("Could not fetch distribution manifest of [" + imageRef + "]", e);
-		}
-	}
-
-	private ContainerImageV1 getImageManifest(ImageRef imageRef, DistributionManifestV2 distributionManifest) {
-		if (distributionManifest.getConfig() == null || distributionManifest.getConfig().getDigest() == null) {
-			throw new CarnotzetDefinitionException("Distribution manifest of images [" + imageRef + " does not contain digest of image");
-		}
-
-		try {
-			WebTarget registry = getRegistryWebTarget(imageRef);
-			return registry.path("v2/{name}/manifests/{reference}")
-					.resolveTemplate("name", imageRef.getImageName(), false)
-					.resolveTemplate("reference", distributionManifest.getConfig().getDigest(), false)
-					.request("application/vnd.docker.container.image.v1+json")
-					.get(ContainerImageV1.class);
-		}
-		catch (Exception e) {
-			throw new CarnotzetDefinitionException("Could not fetch config manifest of image [" + imageRef + "]", e);
-		}
-	}
-
-	private WebTarget getRegistryWebTarget(ImageRef imageRef) {
-		if (!webTargets.containsKey(imageRef.getRegistryUrl())) {
-
-			ObjectMapper mapper = new ObjectMapper();
-			mapper.registerModule(new JavaTimeModule());
-
-			// TODO : This client doesn't handle mandatory Oauth2 Bearer token imposed by some registries implementations (ie : docker hub)
-			Client client = ClientBuilder.newClient()
-					.register(new JacksonJaxbJsonProvider(mapper, new Annotations[] {Annotations.JACKSON}))
-					.register(JacksonFeature.class);
-			String auth = config.getAuthFor(imageRef.getRegistryName());
-			if (auth != null) {
-				String[] credentials = new String(Base64.getDecoder().decode(auth), StandardCharsets.UTF_8).split(":");
-				client.register(HttpAuthenticationFeature.basicBuilder().credentials(credentials[0], credentials[1]));
-			}
-			WebTarget webTarget = client.target(imageRef.getRegistryUrl());
-			webTargets.put(imageRef.getRegistryUrl(), webTarget);
-		}
-		return webTargets.get(imageRef.getRegistryUrl());
-	}
 
 	public static void pullImage(CarnotzetModule module, PullPolicy policy) {
 
@@ -143,6 +89,85 @@ public class DockerRegistry {
 			log.debug("Could not determine timestamp of local image [" + imageName + "], assuming it doesn't exist on the local docker host", e);
 			return null;
 		}
+	}
+
+	public ImageMetaData getImageMetaData(ImageRef imageRef) {
+		DistributionManifestV2 di = getDistributionManifest(imageRef);
+		ContainerImageV1 im = getImageManifest(imageRef, di);
+		return new ImageMetaData(di, im);
+	}
+
+	private DistributionManifestV2 getDistributionManifest(ImageRef imageRef) {
+		try {
+			WebTarget registry = getRegistryWebTarget(imageRef);
+
+			return registry.path("v2/{name}/manifests/{reference}")
+					.resolveTemplate("name", imageRef.getImageName(), false)
+					.resolveTemplate("reference", imageRef.getTag(), false)
+					.request("application/vnd.docker.distribution.manifest.v2+json")
+					.get(DistributionManifestV2.class);
+		}
+		catch (Exception e) {
+			throw new CarnotzetDefinitionException("Could not fetch distribution manifest of [" + imageRef + "]", e);
+		}
+	}
+
+	private ContainerImageV1 getImageManifest(ImageRef imageRef, DistributionManifestV2 distributionManifest) {
+		if (distributionManifest.getConfig() == null || distributionManifest.getConfig().getDigest() == null) {
+			throw new CarnotzetDefinitionException("Distribution manifest of images [" + imageRef + " does not contain digest of image");
+		}
+
+		try {
+
+			Properties imageManifestCache = new Properties();
+			Path imageManifestCachePath = Paths.get(System.getProperty("user.home"), ".image_manifests.cache");
+			if (Files.notExists(imageManifestCachePath)) {
+				Files.createFile(imageManifestCachePath);
+			}
+			imageManifestCache.load(new FileInputStream(imageManifestCachePath.toFile()));
+
+			String imageManifestJSON = (String) imageManifestCache.get(distributionManifest.getConfig().getDigest());
+			if (imageManifestJSON == null) {
+				WebTarget registry = getRegistryWebTarget(imageRef);
+				imageManifestJSON = registry.path("v2/{name}/manifests/{reference}")
+						.resolveTemplate("name", imageRef.getImageName(), false)
+						.resolveTemplate("reference", distributionManifest.getConfig().getDigest(), false)
+						.request("application/vnd.docker.container.image.v1+json")
+						.get(String.class);
+				imageManifestCache.put(distributionManifest.getConfig().getDigest(), imageManifestJSON);
+				imageManifestCache.store(new FileWriter(imageManifestCachePath.toFile()), "image manifest cache");
+			}
+
+			ObjectMapper mapper = new ObjectMapper();
+			mapper.registerModule(new JavaTimeModule());
+			ContainerImageV1 imageManifest = mapper.readValue(imageManifestJSON, ContainerImageV1.class);
+			return imageManifest;
+
+		}
+		catch (Exception e) {
+			throw new CarnotzetDefinitionException("Could not fetch config manifest of image [" + imageRef + "]", e);
+		}
+	}
+
+	private WebTarget getRegistryWebTarget(ImageRef imageRef) {
+		if (!webTargets.containsKey(imageRef.getRegistryUrl())) {
+
+			ObjectMapper mapper = new ObjectMapper();
+			mapper.registerModule(new JavaTimeModule());
+
+			// TODO : This client doesn't handle mandatory Oauth2 Bearer token imposed by some registries implementations (ie : docker hub)
+			Client client = ClientBuilder.newClient()
+					.register(new JacksonJaxbJsonProvider(mapper, new Annotations[] {Annotations.JACKSON}))
+					.register(JacksonFeature.class);
+			String auth = config.getAuthFor(imageRef.getRegistryName());
+			if (auth != null) {
+				String[] credentials = new String(Base64.getDecoder().decode(auth), StandardCharsets.UTF_8).split(":");
+				client.register(HttpAuthenticationFeature.basicBuilder().credentials(credentials[0], credentials[1]));
+			}
+			WebTarget webTarget = client.target(imageRef.getRegistryUrl());
+			webTargets.put(imageRef.getRegistryUrl(), webTarget);
+		}
+		return webTargets.get(imageRef.getRegistryUrl());
 	}
 
 }

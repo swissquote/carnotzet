@@ -40,27 +40,22 @@ public class FileSystemCache<T> {
 		}
 	}
 
-	public void load() throws IOException {
-		try (FileInputStream cacheFileInputStream = new FileInputStream(this.cachePath.toFile())) {
-			cache.load(cacheFileInputStream);
-		}
-	}
-
 	public T computeIfAbsent(String key, Function<String, String> mappingFunction) throws IOException {
-		try (FileInputStream cacheFileInputStream = new FileInputStream(this.cachePath.toFile()); Writer out = new OutputStreamWriter(
-				new FileOutputStream(this.cachePath.toFile()), Charset.forName("UTF-8").newEncoder())) {
+		try (FileInputStream cacheFileInputStream = new FileInputStream(this.cachePath.toFile())) {
 			this.cache.load(cacheFileInputStream);
-
-			String value = (String) this.cache.get(key);
-			if (value == null) {
-				value = mappingFunction.apply(key);
-				this.cache.put(key, value);
-				this.cache.store(out, "image manifest cache");
-			}
-
-			T deserializedValue = this.jsonMapper.readValue(value, this.deserializationType);
-			return deserializedValue;
 		}
+
+		String value = (String) this.cache.get(key);
+		if (value == null) {
+			value = mappingFunction.apply(key);
+			this.cache.put(key, value);
+			try (Writer out = new OutputStreamWriter(new FileOutputStream(this.cachePath.toFile()), Charset.forName("UTF-8"))) {
+				this.cache.store(out, "Added value for key " + key);
+			}
+		}
+
+		T deserializedValue = this.jsonMapper.readValue(value, this.deserializationType);
+		return deserializedValue;
 
 	}
 }

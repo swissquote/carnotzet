@@ -1,8 +1,11 @@
 package com.github.swissquote.carnotzet.core.util;
 
 import java.io.FileInputStream;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -38,21 +41,26 @@ public class FileSystemCache<T> {
 	}
 
 	public void load() throws IOException {
-		cache.load(new FileInputStream(cachePath.toFile()));
+		try (FileInputStream cacheFileInputStream = new FileInputStream(this.cachePath.toFile())) {
+			cache.load(cacheFileInputStream);
+		}
 	}
 
 	public T computeIfAbsent(String key, Function<String, String> mappingFunction) throws IOException {
-		this.cache.load(new FileInputStream(this.cachePath.toFile()));
+		try (FileInputStream cacheFileInputStream = new FileInputStream(this.cachePath.toFile()); Writer out = new OutputStreamWriter(
+				new FileOutputStream(this.cachePath.toFile()), Charset.forName("UTF-8").newEncoder())) {
+			this.cache.load(cacheFileInputStream);
 
-		String value = (String) this.cache.get(key);
-		if(value == null)
-		{
-			value = mappingFunction.apply(key);
-			this.cache.put(key, value);
-			this.cache.store(new FileWriter(this.cachePath.toFile()), "image manifest cache");
+			String value = (String) this.cache.get(key);
+			if (value == null) {
+				value = mappingFunction.apply(key);
+				this.cache.put(key, value);
+				this.cache.store(out, "image manifest cache");
+			}
+
+			T deserializedValue = this.jsonMapper.readValue(value, this.deserializationType);
+			return deserializedValue;
 		}
 
-		T deserializedValue = this.jsonMapper.readValue(value, this.deserializationType);
-		return deserializedValue;
 	}
 }

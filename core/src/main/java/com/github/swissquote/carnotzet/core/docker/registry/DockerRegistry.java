@@ -1,17 +1,12 @@
 package com.github.swissquote.carnotzet.core.docker.registry;
 
-import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -28,6 +23,7 @@ import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
 import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.api.PullPolicy;
+import com.github.swissquote.carnotzet.core.util.FileSystemCache;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,9 +33,13 @@ import lombok.extern.slf4j.Slf4j;
 public class DockerRegistry {
 
 	public static final DockerRegistry INSTANCE = new DockerRegistry();
+	public static final String CARNOTZET_IMAGE_MANIFESTS_CACHE_FILENAME = ".carnotzet_image_manifests.cache";
 
 	private final DockerConfig config = DockerConfig.fromEnv();
 	private final Map<String, WebTarget> webTargets = new HashMap<>();
+	private final FileSystemCache<ContainerImageV1> imageManifestCache =
+			new FileSystemCache<ContainerImageV1>(Paths.get(System.getProperty("user.home"), CARNOTZET_IMAGE_MANIFESTS_CACHE_FILENAME),
+					ContainerImageV1.class);
 
 	public static void pullImage(CarnotzetModule module, PullPolicy policy) {
 
@@ -118,31 +118,16 @@ public class DockerRegistry {
 		}
 
 		try {
-
-			Properties imageManifestCache = new Properties();
-			Path imageManifestCachePath = Paths.get(System.getProperty("user.home"), ".image_manifests.cache");
-			if (Files.notExists(imageManifestCachePath)) {
-				Files.createFile(imageManifestCachePath);
-			}
-			imageManifestCache.load(new FileInputStream(imageManifestCachePath.toFile()));
-
-			String imageManifestJSON = (String) imageManifestCache.get(distributionManifest.getConfig().getDigest());
-			if (imageManifestJSON == null) {
+			return imageManifestCache.computeIfAbsent(distributionManifest.getConfig().getDigest(), digest -> {
 				WebTarget registry = getRegistryWebTarget(imageRef);
-				imageManifestJSON = registry.path("v2/{name}/manifests/{reference}")
+				WebTarget url = registry.path("v2/{name}/manifests/{reference}")
 						.resolveTemplate("name", imageRef.getImageName(), false)
-						.resolveTemplate("reference", distributionManifest.getConfig().getDigest(), false)
-						.request("application/vnd.docker.container.image.v1+json")
-						.get(String.class);
-				imageManifestCache.put(distributionManifest.getConfig().getDigest(), imageManifestJSON);
-				imageManifestCache.store(new FileWriter(imageManifestCachePath.toFile()), "image manifest cache");
-			}
-
-			ObjectMapper mapper = new ObjectMapper();
-			mapper.registerModule(new JavaTimeModule());
-			ContainerImageV1 imageManifest = mapper.readValue(imageManifestJSON, ContainerImageV1.class);
-			return imageManifest;
-
+						.resolveTemplate("reference", distributionManifest.getConfig().getDigest(), false);
+				log.info("Downloading image manifest from {} ...", url.getUri().toString());
+				String value = url.request("application/vnd.docker.container.image.v1+json").get(String.class);
+				log.info("Image manifest downloaded");
+				return value;
+			});
 		}
 		catch (Exception e) {
 			throw new CarnotzetDefinitionException("Could not fetch config manifest of image [" + imageRef + "]", e);

@@ -146,9 +146,6 @@ public final class ContainerStartupWrapperUtils {
 		private Path resourceFolder;
 		private String wrapperName = "wrapper";
 
-		//		@Getter(lazy = true)
-		//		private final ImageMetaData imageMetaData = DockerRegistry.INSTANCE.getImageMetaData(new ImageRef(moduleToWrap.getImageName()));
-
 		// Local images may not be available for target runtime environment (ie : cloud)
 		private Boolean ignoreLocalImages = false;
 

@@ -14,6 +14,7 @@ import java.util.function.Function;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -40,6 +41,7 @@ public class FileSystemCache<T> {
 		}
 	}
 
+	@SuppressFBWarnings(value = "OBL_UNSATISFIED_OBLIGATION", justification = "https://github.com/spotbugs/spotbugs/issues/432")
 	public T computeIfAbsent(String key, Function<String, String> mappingFunction) throws IOException {
 		try (FileInputStream cacheFileInputStream = new FileInputStream(this.cachePath.toFile())) {
 			this.cache.load(cacheFileInputStream);
@@ -54,8 +56,6 @@ public class FileSystemCache<T> {
 			}
 		}
 
-		T deserializedValue = this.jsonMapper.readValue(value, this.deserializationType);
-		return deserializedValue;
-
+		return this.jsonMapper.readValue(value, this.deserializationType);
 	}
 }

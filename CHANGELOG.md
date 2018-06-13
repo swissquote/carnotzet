@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.7.5] - 2018-06-13
+### Changed
+- Added an internal cache for docker image manifests to avoid useless downloads from registry
+
 ## [1.7.4] - 2018-05-18
 ### Added
 - Added a utility method to expose the maven dependency tree to extensions so that they can leverage the hierarchy.

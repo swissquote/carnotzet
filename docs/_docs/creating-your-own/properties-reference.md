@@ -26,11 +26,17 @@ but doesn't add any service to the environment.
 
 docker.entrypoint
 =================
-Override the entrypoint of the docker image
+Override the entrypoint of the docker image, has to be a JSON array.
+
+example : `docker.entrypoint = ["executable", "param1", "param2"]`
 
 docker.cmd
 ==========
-Override the command of the docker image
+Override the command of the docker image, has to be a JSON array.
+
+examples :
+- `docker.cmd = ["executable", "param1", "param2"]` (exec form, this is the preferred form)
+- `docker.cmd = ["param1","param2"]` (as default parameters to entrypoint)
 
 start.by.default
 ================

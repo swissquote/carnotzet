@@ -44,6 +44,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
+	private static final Pattern IP_ADDRESS_PATTERN = Pattern.compile(
+			"^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
+
 	private final Carnotzet carnotzet;
 
 	private final String instanceId;
@@ -245,18 +248,25 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 					runCommandAndCaptureOutput("/bin/bash", "-c", "docker inspect -f '{{.HostConfig.NetworkMode}}' " + containerToConnect);
 
 			if (parentNetworkMode.equals("none")) {
+				// Parent network is most likely managed by a CNI plugin.
+				// For DNS to work, it needs to be exposed by a service named carnotzet-dns.
 				Container dnsContainer = getContainer("carnotzet-dns");
 				if (dnsContainer == null) {
 					log.warn("Infrastructure container has NetworkMode [none] and there is no [carnotzet-dns] service in the environment, "
 							+ "name resolution of [*.docker] will not work from this container");
 					return;
 				}
+				String dnsIp = dnsContainer.getIp();
+				if (dnsIp == null || !IP_ADDRESS_PATTERN.matcher(dnsIp).matches()) {
+					log.warn("Infrastructure container has NetworkMode [none] and could not get IP of [carnotzet-dns] service, "
+							+ "name resolution of [*.docker] will not work from this container");
+					return;
+				}
 				log.debug("Adding nameserver [{}] to the container's /etc/resolv.conf", dnsContainer.getIp());
-				RandomAccessFile f = null;
 				try {
-					f = new RandomAccessFile(new File("/etc/resolv.conf"), "rw");
+					RandomAccessFile f = new RandomAccessFile(new File("/etc/resolv.conf"), "rw");
 					f.seek(0); // to the beginning
-					f.write(("nameserver " + dnsContainer.getIp()).getBytes());
+					f.write(("nameserver " + dnsIp).getBytes(StandardCharsets.US_ASCII));
 					f.close();
 				}
 				catch (IOException e) {

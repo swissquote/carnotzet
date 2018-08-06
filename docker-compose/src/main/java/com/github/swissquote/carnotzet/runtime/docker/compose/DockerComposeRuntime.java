@@ -247,7 +247,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			String parentNetworkMode =
 					runCommandAndCaptureOutput("/bin/bash", "-c", "docker inspect -f '{{.HostConfig.NetworkMode}}' " + containerToConnect);
 
-			if (parentNetworkMode.equals("none")) {
+			if ("none".equals(parentNetworkMode)) {
 				// Parent network is most likely managed by a CNI plugin.
 				// For DNS to work, it needs to be exposed by a service named carnotzet-dns.
 				Container dnsContainer = getContainer("carnotzet-dns");

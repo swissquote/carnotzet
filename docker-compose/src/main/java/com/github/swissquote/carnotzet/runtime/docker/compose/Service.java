@@ -20,10 +20,12 @@ public class Service {
 	private final String image;
 	@JsonProperty
 	private final Set<String> volumes;
-	@JsonProperty
 	//CHECKSTYLE:OFF
+	@JsonProperty
 	private final Set<String> env_file;
 	//CHECKSTYLE:ON
+	@JsonProperty
+	private final Map<String, String> environment;
 	@JsonProperty
 	private final List<String> entrypoint;
 	@JsonProperty

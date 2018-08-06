@@ -2,7 +2,9 @@ package com.github.swissquote.carnotzet.runtime.docker.compose;
 
 import static java.util.stream.Collectors.toList;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -95,6 +97,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			serviceBuilder.volumes(module.getDockerVolumes());
 			serviceBuilder.entrypoint(DockerUtils.parseEntrypointOrCmd(module.getDockerEntrypoint()));
 			serviceBuilder.command(DockerUtils.parseEntrypointOrCmd(module.getDockerCmd()));
+			serviceBuilder.environment(module.getEnv());
 			serviceBuilder.env_file(module.getDockerEnvFiles());
 			if (shouldExposePorts) {
 				serviceBuilder.ports(getExposedPorts(module.getImageName(), module.getProperties()));
@@ -237,9 +240,37 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		if (networkMode.startsWith("container:")) {
 			containerToConnect = networkMode.replace("container:", "");
 			log.debug("Detected a shared container network stack.");
+
+			String parentNetworkMode =
+					runCommandAndCaptureOutput("/bin/bash", "-c", "docker inspect -f '{{.HostConfig.NetworkMode}}' " + containerToConnect);
+
+			if (parentNetworkMode.equals("none")) {
+				Container dnsContainer = getContainer("carnotzet-dns");
+				if (dnsContainer == null) {
+					log.warn("Infrastructure container has NetworkMode [none] and there is no [carnotzet-dns] service in the environment, "
+							+ "name resolution of [*.docker] will not work from this container");
+					return;
+				}
+				log.debug("Adding nameserver [{}] to the container's /etc/resolv.conf", dnsContainer.getIp());
+				RandomAccessFile f = null;
+				try {
+					f = new RandomAccessFile(new File("/etc/resolv.conf"), "rw");
+					f.seek(0); // to the beginning
+					f.write(("nameserver " + dnsContainer.getIp()).getBytes());
+					f.close();
+				}
+				catch (IOException e) {
+					log.warn("Failed to add nameserver to /etc/resolv.conf, name resolution of [*.docker] will not work from this container", e);
+				}
+
+				return;
+			}
+
 		}
+
 		log.debug("attaching container [" + containerToConnect + "] to network [" + getDockerNetworkName() + "]");
 		runCommand("/bin/bash", "-c", "docker network connect " + getDockerNetworkName() + " " + containerToConnect);
+
 	}
 
 	private String getDockerComposeProjectName() {

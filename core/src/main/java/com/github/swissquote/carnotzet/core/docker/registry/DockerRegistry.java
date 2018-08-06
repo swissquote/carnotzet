@@ -12,6 +12,8 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.glassfish.jersey.jackson.JacksonFeature;
 
@@ -140,8 +142,11 @@ public class DockerRegistry {
 			ObjectMapper mapper = new ObjectMapper();
 			mapper.registerModule(new JavaTimeModule());
 
+			ClientConfig clientCOnfig = new ClientConfig();
+			clientCOnfig.connectorProvider(new HttpUrlConnectorProvider());
+
 			// TODO : This client doesn't handle mandatory Oauth2 Bearer token imposed by some registries implementations (ie : docker hub)
-			Client client = ClientBuilder.newClient()
+			Client client = ClientBuilder.newClient(clientCOnfig)
 					.register(new JacksonJaxbJsonProvider(mapper, new Annotations[] {Annotations.JACKSON}))
 					.register(JacksonFeature.class);
 			String auth = config.getAuthFor(imageRef.getRegistryName());

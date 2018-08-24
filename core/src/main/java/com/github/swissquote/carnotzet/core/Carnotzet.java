@@ -166,6 +166,7 @@ public class Carnotzet {
 				log.debug("Module [{}] was NOT selected for serviceId [{}]", module.getName(), module.getServiceId());
 			}
 		}
+		Collections.reverse(result); // helps some runtimes pull the images in topological order which is usually better
 		return result;
 	}
 

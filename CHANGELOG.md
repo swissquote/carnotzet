@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.7.7] - 2018-10-02
+### Changed
+- Reorder modules in generated docker-compose yml file to improve startup performance in large environments
+### Fixed
+- Windows compatiblity bugfix (npe)
+
+
 ## [1.7.6] - 2018-08-06
 ### Added
 - Support for advanced DNS use case where current process is running inside a container using CNI

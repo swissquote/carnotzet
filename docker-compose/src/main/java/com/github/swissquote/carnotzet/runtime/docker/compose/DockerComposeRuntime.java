@@ -2,9 +2,7 @@ package com.github.swissquote.carnotzet.runtime.docker.compose;
 
 import static java.util.stream.Collectors.toList;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -233,55 +231,11 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			return;
 		}
 
-		log.debug("Execution from inside a container detected! Attempting to configure container networking to allow communication.");
-
-		String networkMode =
-				runCommandAndCaptureOutput("/bin/bash", "-c", "docker inspect -f '{{.HostConfig.NetworkMode}}' " + buildContainerId);
-
-		String containerToConnect = buildContainerId;
-
-		// shared network stack
-		if (networkMode.startsWith("container:")) {
-			containerToConnect = networkMode.replace("container:", "");
-			log.debug("Detected a shared container network stack.");
-
-			String parentNetworkMode =
-					runCommandAndCaptureOutput("/bin/bash", "-c", "docker inspect -f '{{.HostConfig.NetworkMode}}' " + containerToConnect);
-
-			if ("none".equals(parentNetworkMode)) {
-				// Parent network is most likely managed by a CNI plugin.
-				// For DNS to work, it needs to be exposed by a service named carnotzet-dns.
-				Container dnsContainer = getContainer("carnotzet-dns");
-				if (dnsContainer == null) {
-					log.warn("Infrastructure container has NetworkMode [none] and there is no [carnotzet-dns] service in the environment, "
-							+ "name resolution of [*.docker] will not work from this container");
-					return;
-				}
-				String dnsIp = dnsContainer.getIp();
-				if (dnsIp == null || !IP_ADDRESS_PATTERN.matcher(dnsIp).matches()) {
-					log.warn("Infrastructure container has NetworkMode [none] and could not get IP of [carnotzet-dns] service, "
-							+ "name resolution of [*.docker] will not work from this container");
-					return;
-				}
-				log.debug("Adding nameserver [{}] to the container's /etc/resolv.conf", dnsContainer.getIp());
-				try {
-					RandomAccessFile f = new RandomAccessFile(new File("/etc/resolv.conf"), "rw");
-					f.seek(0); // to the beginning
-					f.write(("nameserver " + dnsIp).getBytes(StandardCharsets.US_ASCII));
-					f.close();
-				}
-				catch (IOException e) {
-					log.warn("Failed to add nameserver to /etc/resolv.conf, name resolution of [*.docker] will not work from this container", e);
-				}
-
-				return;
-			}
-
+		if (carnotzet.getConfig().getAttachToCarnotzetNetwork() == null || carnotzet.getConfig().getAttachToCarnotzetNetwork()) {
+			log.debug("Execution from inside a container detected! Attempting to configure container networking to allow communication.");
+			log.debug("attaching container [" + buildContainerId + "] to network [" + getDockerNetworkName() + "]");
+			runCommand("/bin/bash", "-c", "docker network connect " + getDockerNetworkName() + " " + buildContainerId);
 		}
-
-		log.debug("attaching container [" + containerToConnect + "] to network [" + getDockerNetworkName() + "]");
-		runCommand("/bin/bash", "-c", "docker network connect " + getDockerNetworkName() + " " + containerToConnect);
-
 	}
 
 	private String getDockerComposeProjectName() {

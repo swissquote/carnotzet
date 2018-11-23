@@ -75,4 +75,9 @@ public class CarnotzetConfig {
 	 */
 	private final Boolean failOnDependencyCycle;
 
+	/**
+	 * When running carnotzet inside a container, indicates whether to connect it to the docker-compose network to allow communication.<br>
+	 * defaults to true.
+	 */
+	private final Boolean attachToCarnotzetNetwork;
 }

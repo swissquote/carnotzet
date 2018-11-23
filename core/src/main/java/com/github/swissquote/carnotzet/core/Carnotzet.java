@@ -64,6 +64,8 @@ public class Carnotzet {
 
 	private final Boolean failOnDependencyCycle;
 
+	private final Boolean attachToCarnotzetNetwork;
+
 	public Carnotzet(CarnotzetConfig config) {
 		log.debug("Creating new carnotzet with config [{}]", config);
 		this.config = config;
@@ -107,6 +109,12 @@ public class Carnotzet {
 			this.failOnDependencyCycle = config.getFailOnDependencyCycle();
 		} else {
 			this.failOnDependencyCycle = true;
+		}
+
+		if (config.getAttachToCarnotzetNetwork() != null) {
+			this.attachToCarnotzetNetwork = config.getAttachToCarnotzetNetwork();
+		} else {
+			this.attachToCarnotzetNetwork = true;
 		}
 
 		resolver = new MavenDependencyResolver(this::getModuleName, resourcesPath.resolve("maven"));

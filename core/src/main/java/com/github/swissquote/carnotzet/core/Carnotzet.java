@@ -217,6 +217,7 @@ public class Carnotzet {
 
 		result.dockerVolumes(computeFileVolumes(module));
 		result.dockerEnvFiles(computeEnvFiles(module));
+		result.dockerShmSize(resolvedProperties.get("docker.shm_size"));
 
 		return result.build();
 	}

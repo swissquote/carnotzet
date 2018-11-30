@@ -100,6 +100,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			serviceBuilder.volumes(module.getDockerVolumes());
 			serviceBuilder.entrypoint(DockerUtils.parseEntrypointOrCmd(module.getDockerEntrypoint()));
 			serviceBuilder.command(DockerUtils.parseEntrypointOrCmd(module.getDockerCmd()));
+			serviceBuilder.shm_size(module.getDockerShmSize());
 			serviceBuilder.environment(module.getEnv());
 			serviceBuilder.env_file(module.getDockerEnvFiles());
 			if (shouldExposePorts) {

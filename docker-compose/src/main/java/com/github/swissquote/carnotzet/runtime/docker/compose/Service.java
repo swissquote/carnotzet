@@ -39,6 +39,12 @@ public class Service {
 	@JsonProperty
 	private final Set<String> ports;
 	@JsonProperty
+	private final String user;
+	@JsonProperty
+	//CHECKSTYLE:OFF
+	private final String shm_size;
+	//CHECKSTYLE:ON
+	@JsonProperty
 	//CHECKSTYLE:OFF
 	private final Set<String> extra_hosts;
 	//CHECKSTYLE:ON

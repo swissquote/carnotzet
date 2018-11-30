@@ -35,6 +35,7 @@ public class CarnotzetModule {
 	private final String dockerEntrypoint;
 	// supports shell and exec formats (same as Dockerfile's CMD)
 	private final String dockerCmd;
+	private final String dockerShmSize;
 	@Builder.Default
 	private final Map<String, String> env = new HashMap<>();
 	@Builder.Default

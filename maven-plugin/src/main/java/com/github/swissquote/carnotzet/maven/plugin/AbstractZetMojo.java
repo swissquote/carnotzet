@@ -73,6 +73,10 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	@Getter
 	private Boolean attachToCarnotzetNetwork;
 
+	@Parameter(property = "supportLegacyDnsNames")
+	@Getter
+	private Boolean supportLegacyDnsNames;
+
 	@Parameter(property = "bindLocalPorts")
 	@Getter
 	private Boolean bindLocalPorts;
@@ -122,6 +126,7 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 				.topLevelModuleResourcesPath(project.getBasedir().toPath().resolve("src/main/resources"))
 				.failOnDependencyCycle(failOnDependencyCycle)
 				.attachToCarnotzetNetwork(attachToCarnotzetNetwork)
+				.supportLegacyDnsNames(supportLegacyDnsNames)
 				.extensions(runtimeExtensions)
 				.build();
 

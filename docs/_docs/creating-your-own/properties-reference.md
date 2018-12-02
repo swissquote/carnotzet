@@ -34,6 +34,10 @@ docker.cmd
 ==========
 Override the command of the docker image, has to be a JSON array.
 
+docker.shm_size
+===============
+The size of the /dev/shm in the container.
+
 examples :
 - `docker.cmd = ["executable", "param1", "param2"]` (exec form, this is the preferred form)
 - `docker.cmd = ["param1","param2"]` (as default parameters to entrypoint)

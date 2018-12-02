@@ -2,6 +2,7 @@ package com.swissquote.github.carnotzet.e2e.test;
 
 import static com.github.swissquote.carnotzet.core.maven.CarnotzetModuleCoordinates.fromPom;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.openqa.selenium.By.className;
@@ -16,6 +17,8 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -35,6 +38,7 @@ import com.github.swissquote.carnotzet.core.Carnotzet;
 import com.github.swissquote.carnotzet.core.CarnotzetConfig;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
 import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
+import com.github.swissquote.carnotzet.core.runtime.api.ExecResult;
 import com.github.swissquote.carnotzet.core.runtime.log.LogEvents;
 import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
 import com.github.swissquote.carnotzet.runtime.docker.compose.DockerComposeRuntime;
@@ -132,6 +136,24 @@ public class ExamplesTest {
 		String commandResult = DefaultCommandRunner.INSTANCE
 				.runCommandAndCaptureOutput("docker", "exec", "-t", runtime.getContainer("redis").getId(), "env");
 		assertTrue(commandResult.contains("CARNOTZET_TEST=test_value"));
+	}
+
+	@Test
+	public void test_exec() {
+		ExecResult res = runtime.exec("redis", 1, TimeUnit.SECONDS, "echo", "this is a test");
+		assertEquals(0, res.getExitCode());
+		assertEquals("this is a test\n", res.getOutput());
+	}
+
+	@Test
+	public void test_exec_timeout() {
+		try {
+			runtime.exec("redis", 1, TimeUnit.MILLISECONDS, "sleep", "2");
+		}
+		catch (RuntimeException e) {
+			assertEquals(TimeoutException.class, e.getCause().getClass());
+		}
+
 	}
 
 	private void vote(String choice, String voterId) throws MalformedURLException {

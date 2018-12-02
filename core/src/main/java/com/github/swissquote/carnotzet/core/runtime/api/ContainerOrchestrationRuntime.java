@@ -1,6 +1,7 @@
 package com.github.swissquote.carnotzet.core.runtime.api;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
 
@@ -89,6 +90,11 @@ public interface ContainerOrchestrationRuntime {
 	 * @param policy  decides whether an image must be pulled or not
 	 */
 	void pull(String service, PullPolicy policy);
+
+	/**
+	 * Executes a command in a service container
+	 */
+	ExecResult exec(String service, int timeout, TimeUnit timeoutUnit, String... command);
 
 	/**
 	 * List containers managed by this

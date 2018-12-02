@@ -16,12 +16,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.zeroturnaround.exec.ProcessExecutor;
+import org.zeroturnaround.exec.ProcessResult;
 
 import com.github.swissquote.carnotzet.core.Carnotzet;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
@@ -31,6 +35,7 @@ import com.github.swissquote.carnotzet.core.runtime.CommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.api.Container;
 import com.github.swissquote.carnotzet.core.runtime.api.ContainerOrchestrationRuntime;
+import com.github.swissquote.carnotzet.core.runtime.api.ExecResult;
 import com.github.swissquote.carnotzet.core.runtime.api.PullPolicy;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
 import com.google.common.base.Strings;
@@ -365,6 +370,24 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	public void registerLogListener(LogListener listener) {
 		ensureDockerComposeFileIsPresent();
 		logManager.registerLogListener(listener, getContainers());
+	}
+
+	@Override
+	public ExecResult exec(String serviceName, int timeout, TimeUnit timeoutUnit, String... command) {
+		Container container = getContainer(serviceName);
+		List<String> fullCommand = new ArrayList<>(Arrays.asList("docker", "exec", container.getId()));
+		fullCommand.addAll(Arrays.asList(command));
+		try {
+			ProcessResult pr = new ProcessExecutor()
+					.command(fullCommand)
+					.readOutput(true)
+					.timeout(timeout, timeoutUnit)
+					.execute();
+			return new ExecResult(pr.getExitValue(), pr.getOutput().getUTF8());
+		}
+		catch (IOException | InterruptedException | TimeoutException e) {
+			throw new RuntimeException("Failed to execute " + Arrays.toString(command) + " in container [" + serviceName + "]", e);
+		}
 	}
 
 	@Override

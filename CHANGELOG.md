@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [1.7.8] - 2018-12-02
 ### Added
 - Docker-compose : added option to disable automatic docker network attach to the carnotzet network when running inside a container.
+- DNS : added option to disable support for legacy DNS names
 - Runtime : added support for "exec"
 
 ## [1.7.7] - 2018-10-02

@@ -80,4 +80,11 @@ public class CarnotzetConfig {
 	 * defaults to true.
 	 */
 	private final Boolean attachToCarnotzetNetwork;
+
+	/**
+	 * Enable or disable support for legacy DNS names (container_name.)image_name.docker<br>
+	 * Support is enabled by default (true)
+	 */
+	private final Boolean supportLegacyDnsNames;
+
 }

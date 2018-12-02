@@ -67,6 +67,9 @@ public class Carnotzet {
 	@Getter
 	private final Boolean attachToCarnotzetNetwork;
 
+	@Getter
+	private final Boolean supportLegacyDnsNames;
+
 	public Carnotzet(CarnotzetConfig config) {
 		log.debug("Creating new carnotzet with config [{}]", config);
 		this.config = config;
@@ -116,6 +119,12 @@ public class Carnotzet {
 			this.attachToCarnotzetNetwork = config.getAttachToCarnotzetNetwork();
 		} else {
 			this.attachToCarnotzetNetwork = true;
+		}
+
+		if (config.getSupportLegacyDnsNames() != null) {
+			this.supportLegacyDnsNames = config.getSupportLegacyDnsNames();
+		} else {
+			this.supportLegacyDnsNames = true;
 		}
 
 		resolver = new MavenDependencyResolver(this::getModuleName, resourcesPath.resolve("maven"));

@@ -94,3 +94,6 @@ redis.docker
 # or
 app1_redis_1.redis.docker # Disambiguates between redis instances in other environments
 ```
+
+If this deprecated pattern is causing conflicts in the DNS names that you use, 
+you can disable this feature when you configure the environment.

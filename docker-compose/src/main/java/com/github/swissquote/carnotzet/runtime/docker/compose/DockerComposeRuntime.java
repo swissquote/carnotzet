@@ -119,7 +119,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			networkAliases.add(instanceId + "." + module.getServiceId() + ".docker");
 
 			// Legacy compat (default dnsdock pattern)
-			if (carnotzet.getSupportLegacyDnsNames()){
+			if (carnotzet.getSupportLegacyDnsNames()) {
 				networkAliases.add(module.getShortImageName() + ".docker");
 				networkAliases.add(instanceId + "_" + module.getServiceId() + "." + module.getShortImageName() + ".docker");
 			}

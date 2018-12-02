@@ -64,6 +64,7 @@ public class Carnotzet {
 
 	private final Boolean failOnDependencyCycle;
 
+	@Getter
 	private final Boolean attachToCarnotzetNetwork;
 
 	public Carnotzet(CarnotzetConfig config) {

@@ -228,15 +228,15 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			return;
 		}
 
-		String buildContainerId =
-				runCommandAndCaptureOutput("/bin/bash", "-c", "docker ps | grep $(hostname) | grep -v k8s_POD | cut -d ' ' -f 1");
+		if (carnotzet.getAttachToCarnotzetNetwork()) {
+			String buildContainerId =
+					runCommandAndCaptureOutput("/bin/bash", "-c", "docker ps | grep $(hostname) | grep -v k8s_POD | cut -d ' ' -f 1");
 
-		if (Strings.isNullOrEmpty(buildContainerId)) {
-			// we are probably not running inside a container, networking should be fine
-			return;
-		}
+			if (Strings.isNullOrEmpty(buildContainerId)) {
+				// we are probably not running inside a container, networking should be fine
+				return;
+			}
 
-		if (carnotzet.getConfig().getAttachToCarnotzetNetwork() == null || carnotzet.getConfig().getAttachToCarnotzetNetwork()) {
 			log.debug("Execution from inside a container detected! Attempting to configure container networking to allow communication.");
 			log.debug("attaching container [" + buildContainerId + "] to network [" + getDockerNetworkName() + "]");
 			runCommand("/bin/bash", "-c", "docker network connect " + getDockerNetworkName() + " " + buildContainerId);

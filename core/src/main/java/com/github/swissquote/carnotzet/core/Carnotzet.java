@@ -134,17 +134,15 @@ public class Carnotzet {
 	public List<CarnotzetModule> getModules() {
 		if (modules == null) {
 			modules = resolver.resolve(config.getTopLevelModuleId(), failOnDependencyCycle);
-			if (SystemUtils.IS_OS_LINUX || !getResourcesFolder().resolve("expanded-jars").toFile().exists()) {
+			if (!SystemUtils.IS_OS_WINDOWS || !getResourcesFolder().resolve("expanded-jars").toFile().exists()) {
 				log.debug("extracting resources");
 				resourceManager.extractResources(modules);
 			}
 			log.debug("computing service ids");
 			modules = computeServiceIds(modules);
-
-			if (SystemUtils.IS_OS_LINUX || !getResourcesFolder().resolve("resolved").toFile().exists()) {
+			if (!SystemUtils.IS_OS_WINDOWS || !getResourcesFolder().resolve("resolved").toFile().exists()) {
 				resourceManager.resolveResources(modules);
 			}
-
 			log.debug("configuring modules");
 			modules = configureModules(modules);
 

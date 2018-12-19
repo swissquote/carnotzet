@@ -30,7 +30,7 @@ public final class PropertyUtils {
 					 */
 					val = saveConvert(val, false, true);
 					bw.write(key + "=" + val);
-					bw.newLine();
+					bw.write('\n');
 				}
 			}
 			bw.flush();

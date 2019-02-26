@@ -1,4 +1,4 @@
-package com.github.swissquote.cartnotzet.core.util;
+package com.github.swissquote.carnotzet.core.util;
 
 import static com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner.INSTANCE;
 import static org.apache.commons.io.FileUtils.writeStringToFile;
@@ -18,7 +18,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
-import com.github.swissquote.carnotzet.core.util.ContainerStartupWrapperUtils;
 
 public class ContainerStartupWrapperUtilsTest {
 

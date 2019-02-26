@@ -1,7 +1,6 @@
-package com.github.swissquote.cartnotzet.core.runtime;
+package com.github.swissquote.carnotzet.core.runtime;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
@@ -9,7 +8,6 @@ import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
 import com.google.common.util.concurrent.SimpleTimeLimiter;
 
 public class DefaultCommandRunnerTest {

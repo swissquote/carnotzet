@@ -1,10 +1,8 @@
-package com.github.swissquote.cartnotzet.core.docker.registry;
+package com.github.swissquote.carnotzet.core.docker.registry;
 
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-
-import com.github.swissquote.carnotzet.core.docker.registry.ImageRef;
 
 public class ImageRefTest {
 

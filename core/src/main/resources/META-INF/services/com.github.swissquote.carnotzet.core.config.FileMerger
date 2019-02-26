@@ -1,1 +1,2 @@
+com.github.swissquote.carnotzet.core.config.JsonMerger
 com.github.swissquote.carnotzet.core.config.PropertiesAndEnvFileMerger

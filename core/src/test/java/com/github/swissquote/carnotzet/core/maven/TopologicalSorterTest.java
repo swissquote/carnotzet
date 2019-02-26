@@ -1,4 +1,4 @@
-package com.github.swissquote.cartnotzet.core.maven;
+package com.github.swissquote.carnotzet.core.maven;
 
 import static org.junit.Assert.fail;
 
@@ -10,8 +10,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
-import com.github.swissquote.carnotzet.core.maven.Node;
-import com.github.swissquote.carnotzet.core.maven.TopologicalSorter;
 
 public class TopologicalSorterTest {
 

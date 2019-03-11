@@ -48,7 +48,7 @@ public final class Shell {
 		for (Container container : containers) {
 			options.put(i, container);
 			log.info(String.format("%2d", i) + " : " + container.getServiceName());
-			i++;
+			i = i + 1;
 		}
 		log.info("");
 		try {

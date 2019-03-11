@@ -235,6 +235,10 @@ public class Carnotzet {
 		result.dockerEnvFiles(computeEnvFiles(module));
 		result.dockerShmSize(resolvedProperties.get("docker.shm_size"));
 
+		if (resolvedProperties.containsKey("replicas")) {
+			result.replicas(Integer.parseInt(resolvedProperties.get("replicas")));
+		}
+
 		return result.build();
 	}
 

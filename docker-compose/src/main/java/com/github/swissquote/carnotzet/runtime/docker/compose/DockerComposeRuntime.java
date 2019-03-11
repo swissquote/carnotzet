@@ -191,7 +191,8 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		computeDockerComposeFile();
 		Instant start = Instant.now();
 		carnotzet.getModules().stream().filter(this::shouldStartByDefault).forEach(m ->
-				runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d", m.getServiceId())
+				runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d",
+						"--scale", m.getServiceId() + "=" + m.getReplicas(), m.getServiceId())
 		);
 		ensureNetworkCommunicationIsPossible();
 		logManager.ensureCapturingLogs(start, getContainers());

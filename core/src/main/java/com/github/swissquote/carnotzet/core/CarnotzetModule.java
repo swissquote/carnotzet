@@ -41,6 +41,8 @@ public class CarnotzetModule {
 	@Builder.Default
 	private final Set<String> dockerEnvFiles = new HashSet<>();
 	private final Path jarPath;
+	@Builder.Default
+	private final Integer replicas = 1;
 
 	public String getShortImageName() {
 		String withoutHost = imageName.replaceFirst(".*/", "");

@@ -104,6 +104,15 @@ It can be done by creating a file `src/main/resources/{a-dependency}/carnotzet.p
 
 At the moment, Carnotzet only knows how to merge `.properties` files, if you need to merge other file types, you may implement the `FileMerger` SPI to add support for your file type.
 
+If you want to support merging JSON files, you need to include the `carnotezt-file-merger-json` jar in your classpath : 
+```
+<dependency>
+	<groupId>com.github.swissquote</groupId>
+	<artifactId>carnotzet-file-merger-json</artifactId>
+	<version>${carnotzet.version}</version>
+</dependency>
+```
+
 ### Override and merging resolution algorithm
 
 Carnotzet resolves file overrides and merges using the standard maven dependency conflict resolution mechanism. This means that when the same file is overridden in multiple modules, the override that applies is always the one that resides in the module whose dependency path to the current module is the shortest.

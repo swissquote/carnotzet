@@ -1,0 +1,14 @@
+{
+  "firstName": "John",
+  "lastName": "Smith",
+  "age": 25,
+  "phoneNumber": [
+    {
+      "type": "home",
+      "number": "212 555-1234"
+    }
+  ],
+  "gender": {
+    "type": "male"
+  }
+}

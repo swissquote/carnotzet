@@ -1,4 +1,4 @@
-package com.github.swissquote.carnotzet.core.config;
+package com.github.swissquote.carnotzet.file.merger.json;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.swissquote.carnotzet.core.config.FileMerger;
 
 /**
  * Know how to merge json files

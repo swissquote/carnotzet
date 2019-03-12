@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.7.9] - 2019-03-11
+### Added
+- A new maven module `carnotzet-file-merger-json` was created to support merging json configuration files.
+- Added support for `replicas=n` in carnotzet.properties to scale each individual service in the environment.
+### Changed
+- Jackson dependency version bumped to 2.9.8
+- Upgraded spotbugs dependency and configuration to support building with jdk-11
+
 ## [1.7.8] - 2018-12-02
 ### Added
 - Docker-compose : added option to disable automatic docker network attach to the carnotzet network when running inside a container.

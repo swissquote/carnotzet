@@ -17,6 +17,7 @@
 	<modules>
 		<module>code-quality</module>
 		<module>core</module>
+		<module>file-merger-json</module>
 		<module>examples</module>
 		<module>maven-plugin</module>
 		<module>docker-compose</module>

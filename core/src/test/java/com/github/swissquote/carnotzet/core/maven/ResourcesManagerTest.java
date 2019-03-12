@@ -97,10 +97,6 @@ public class ResourcesManagerTest {
 		service3carnotzet2.load(Files.newInputStream(resources.resolve("resolved/service3/files/injected/from/service1/injected.properties")));
 		assertThat(service3carnotzet2.getProperty("injected.from.service1"), is("service1value"));
 
-		ObjectMapper mapper = new ObjectMapper();
-		JsonNode service3datadesired = mapper.readTree(resources.resolve("desired/service3/files/data.json").toFile());
-		JsonNode service3dataresolved = mapper.readTree(resources.resolve("resolved/service3/files/data.json").toFile());
-		assertThat(service3dataresolved.equals(service3datadesired), is(true));
 	}
 
 	@Test

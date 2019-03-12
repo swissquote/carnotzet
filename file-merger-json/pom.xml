@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.github.swissquote</groupId>
         <artifactId>carnotzet</artifactId>
-        <version>1.7.9-SNAPSHOT</version>
+        <version>1.7.9</version>
     </parent>
 
     <artifactId>carnotzet-file-merger-json</artifactId>
@@ -25,5 +25,21 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <artifactId>maven-javadoc-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>

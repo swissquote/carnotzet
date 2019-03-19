@@ -118,3 +118,46 @@ If you want to support merging JSON files, you need to include the `carnotezt-fi
 Carnotzet resolves file overrides and merges using the standard maven dependency conflict resolution mechanism. This means that when the same file is overridden in multiple modules, the override that applies is always the one that resides in the module whose dependency path to the current module is the shortest.
 
 See [this article](http://guntherpopp.blogspot.ch/2011/02/understanding-maven-dependency.html) for more details on the algorithm maven uses.
+
+## Example : using an external data image
+A good example of this use case is to create a sandbox using an external data image.
+Let's take back our example we use to explain [dependencies]({{ site.baseurl }}{% link _docs/creating-your-own/dependencies.md %}).
+Let's say that this time, we don't want to have a mysql database for "app2", but we want to share the "postgres" database of "app1".
+
+```
++------+
+| app2 +
++-+----+          
+  |               
+  |               
++-+----+          
+| app1 +----+     
++--+---+    |     
+   |        |
+   |        |
++--+----+   |    +----------+
+| redis |   +----+ postgres |
++-------+        +----------+
+```
+Fist of all "app2-carnotzet" should have a dependency set to "app1-carnotzet"
+```xml
+<dependencies>
+    <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>app1-carnotzet</artifactId>
+        <version>1</version>
+    </dependency>
+</dependencies>
+```
+Then, we override the configuration of the postgres image.
+```
+src/
+└── main/
+    └── resources/
+        └── postgres/  
+            └── carnotzet.properties
+```
+Finally, in this "carnotzet.properties", we override the "docker.image" to force the postres of "app1".
+```
+docker.image=my-registry.my-org/app1/postgres:${app1.version}
+```

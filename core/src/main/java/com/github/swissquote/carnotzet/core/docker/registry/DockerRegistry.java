@@ -2,12 +2,14 @@ package com.github.swissquote.carnotzet.core.docker.registry;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
@@ -29,6 +31,8 @@ import com.github.swissquote.carnotzet.core.util.FileSystemCache;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -36,12 +40,16 @@ public class DockerRegistry {
 
 	public static final DockerRegistry INSTANCE = new DockerRegistry();
 	public static final String CARNOTZET_IMAGE_MANIFESTS_CACHE_FILENAME = ".carnotzet_image_manifests.cache";
+	public static final String CARNOTZET_MANIFEST_DOWNLOAD_RETRIES = "manifest.download.retry.number";
+	public static final String CARNOTZET_MANIFEST_RETRY_DELAY_SECONDS = "manifest.download.retry.delay";
 
 	private final DockerConfig config = DockerConfig.fromEnv();
 	private final Map<String, WebTarget> webTargets = new HashMap<>();
 	private final FileSystemCache<ContainerImageV1> imageManifestCache =
 			new FileSystemCache<ContainerImageV1>(Paths.get(System.getProperty("user.home"), CARNOTZET_IMAGE_MANIFESTS_CACHE_FILENAME),
 					ContainerImageV1.class);
+
+
 
 	public static void pullImage(CarnotzetModule module, PullPolicy policy) {
 
@@ -120,21 +128,29 @@ public class DockerRegistry {
 		}
 
 		try {
-			return imageManifestCache.computeIfAbsent(distributionManifest.getConfig().getDigest(), digest -> {
-				WebTarget registry = getRegistryWebTarget(imageRef);
-				WebTarget url = registry.path("v2/{name}/manifests/{reference}")
-						.resolveTemplate("name", imageRef.getImageName(), false)
-						.resolveTemplate("reference", distributionManifest.getConfig().getDigest(), false);
-				log.info("Downloading image manifest from {} ...", url.getUri().toString());
-				String value = url.request("application/vnd.docker.container.image.v1+json").get(String.class);
-				log.info("Image manifest downloaded");
-				return value;
-			});
+			return imageManifestCache.computeIfAbsent(distributionManifest.getConfig().getDigest(), digest ->
+																				downloadImageManifestAsString(digest, imageRef));
 		}
 		catch (Exception e) {
 			throw new CarnotzetDefinitionException("Could not fetch config manifest of image [" + imageRef + "]", e);
 		}
 	}
+
+	private String downloadImageManifestAsString(String digest, ImageRef imageRef) {
+		WebTarget registry = getRegistryWebTarget(imageRef);
+		WebTarget url = registry.path("v2/{name}/manifests/{reference}")
+				.resolveTemplate("name", imageRef.getImageName(), false)
+				.resolveTemplate("reference", digest, false);
+		log.info("Downloading image manifest from {} ...", url.getUri().toString());
+		RetryPolicy<Object> retryPolicy = new RetryPolicy<>()
+				.handle(WebApplicationException.class)
+				.withDelay(Duration.ofSeconds(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_RETRY_DELAY_SECONDS,"1"))))
+				.withMaxRetries(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_DOWNLOAD_RETRIES,"0")));
+		String value = Failsafe.with(retryPolicy).get( () ->  url.request("application/vnd.docker.container.image.v1+json").get(String.class));
+		log.info("Image manifest downloaded");
+		return value;
+	}
+
 
 	private WebTarget getRegistryWebTarget(ImageRef imageRef) {
 		if (!webTargets.containsKey(imageRef.getRegistryUrl())) {

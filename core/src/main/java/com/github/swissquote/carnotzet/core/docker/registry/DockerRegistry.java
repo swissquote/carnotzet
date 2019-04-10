@@ -144,9 +144,9 @@ public class DockerRegistry {
 		log.info("Downloading image manifest from {} ...", url.getUri().toString());
 		RetryPolicy<Object> retryPolicy = new RetryPolicy<>()
 				.handle(WebApplicationException.class)
-				.withDelay(Duration.ofSeconds(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_RETRY_DELAY_SECONDS,"1"))))
-				.withMaxRetries(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_DOWNLOAD_RETRIES,"0")));
-		String value = Failsafe.with(retryPolicy).get( () ->  url.request("application/vnd.docker.container.image.v1+json").get(String.class));
+				.withDelay(Duration.ofSeconds(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_RETRY_DELAY_SECONDS, "1"))))
+				.withMaxRetries(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_DOWNLOAD_RETRIES, "0")));
+		String value = Failsafe.with(retryPolicy).get(() ->  url.request("application/vnd.docker.container.image.v1+json").get(String.class));
 		log.info("Image manifest downloaded");
 		return value;
 	}

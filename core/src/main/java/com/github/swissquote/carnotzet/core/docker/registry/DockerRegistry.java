@@ -9,6 +9,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+//import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -40,8 +41,8 @@ public class DockerRegistry {
 
 	public static final DockerRegistry INSTANCE = new DockerRegistry();
 	public static final String CARNOTZET_IMAGE_MANIFESTS_CACHE_FILENAME = ".carnotzet_image_manifests.cache";
-	public static final String CARNOTZET_MANIFEST_DOWNLOAD_RETRIES = "manifest.download.retry.number";
-	public static final String CARNOTZET_MANIFEST_RETRY_DELAY_SECONDS = "manifest.download.retry.delay";
+	public static final String CARNOTZET_MANIFEST_DOWNLOAD_RETRIES = "manifest.download.retries.number.max";
+	public static final String CARNOTZET_MANIFEST_RETRY_DELAY_SECONDS = "manifest.download.retries.delay.secs";
 
 	private final DockerConfig config = DockerConfig.fromEnv();
 	private final Map<String, WebTarget> webTargets = new HashMap<>();
@@ -142,11 +143,20 @@ public class DockerRegistry {
 				.resolveTemplate("name", imageRef.getImageName(), false)
 				.resolveTemplate("reference", digest, false);
 		log.info("Downloading image manifest from {} ...", url.getUri().toString());
+
 		RetryPolicy<Object> retryPolicy = new RetryPolicy<>()
 				.handle(WebApplicationException.class)
 				.withDelay(Duration.ofSeconds(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_RETRY_DELAY_SECONDS, "1"))))
-				.withMaxRetries(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_DOWNLOAD_RETRIES, "0")));
-		String value = Failsafe.with(retryPolicy).get(() ->  url.request("application/vnd.docker.container.image.v1+json").get(String.class));
+				.withMaxRetries(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_DOWNLOAD_RETRIES, "0")))
+				.onRetry((o) -> log.info("Download attempt failed: {} : Retrying... ", o.getLastFailure().toString()))
+				.onFailure((o) -> {
+						log.error("Download failed: {} ", o.getFailure().toString());
+						throw new IllegalStateException(o.getFailure());
+											});
+		String value = Failsafe.with(retryPolicy).get(() ->
+					url.request("application/vnd.docker.container.image.v1+json").get(String.class)
+		);
+
 		log.info("Image manifest downloaded");
 		return value;
 	}

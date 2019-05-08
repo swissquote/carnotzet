@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.7.10] - 2019-05-08
+### Added
+- Added support for retries when downloading manifests from docker registries
+
 ## [1.7.9] - 2019-03-11
 ### Added
 - A new maven module `carnotzet-file-merger-json` was created to support merging json configuration files.

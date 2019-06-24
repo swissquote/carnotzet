@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.8.0] - 2019-06-21
+### Added
+- Added support for "carnotzet.min.version" in carnotzet.properties. An error is thrown if the version of carnotzet detected at runtime is lower
+than the version required by one of the modules. This will help introduction of new features in the future.
+
 ## [1.7.10] - 2019-05-08
 ### Added
 - Added support for retries when downloading manifests from docker registries

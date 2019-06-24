@@ -93,6 +93,12 @@ public interface ContainerOrchestrationRuntime {
 
 	/**
 	 * Executes a command in a service container
+	 *
+	 * @param service the name of the service in which's container to execute the command
+	 * @param timeout maximum execution time allowed
+	 * @param timeoutUnit Time unit for the timeout
+	 * @param command The command to execute
+	 * @return The execution result
 	 */
 	ExecResult exec(String service, int timeout, TimeUnit timeoutUnit, String... command);
 

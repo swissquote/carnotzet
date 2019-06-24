@@ -73,3 +73,13 @@ maven artifacts. See [configuration variants]({{ site.baseurl }}{% link _docs/cr
 Default : the first capture group of the moduleFilterPattern in CarnotzetConfig. The default pattern is `(.*)-carnotzet`. Example : artifactID `redis-carnotzet` -> `redis`
 
 Note: This property cannot be overridden hierarchically because it determines the folder names that must be used to override configuration.
+
+replicas
+================
+Allows to start multiple instances for a given service
+
+carnotzet.min.version
+=====================
+The minimum version of carnotzet that this module requires, see the changelog to see which version added which feature. 
+Starting from carnotzet 1.8.0, an exception will be thrown if any module depends on a feature introduced in a later version 
+than the one detected at runtime. Prompting users to upgrade.

@@ -216,13 +216,16 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	@Override
-	public void start(String service) {
+	public void start(String services) {
 		log.debug("Forcing update of docker-compose.yml before start");
 		computeDockerComposeFile();
-		Instant start = Instant.now();
-		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d", service);
-		ensureNetworkCommunicationIsPossible();
-		logManager.ensureCapturingLogs(start, Collections.singletonList(getContainer(service)));
+		for (CarnotzetModule carnotzetModule : resolveModules(services)) {
+			String service = carnotzetModule.getName();
+			Instant start = Instant.now();
+			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d", service);
+			ensureNetworkCommunicationIsPossible();
+			logManager.ensureCapturingLogs(start, Collections.singletonList(getContainer(service)));
+		}
 	}
 
 	private void ensureNetworkCommunicationIsPossible() {
@@ -266,9 +269,12 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	@Override
-	public void stop(String service) {
+	public void stop(String services) {
 		ensureDockerComposeFileIsPresent();
-		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "stop", service);
+		for (CarnotzetModule carnotzetModule : resolveModules(services)) {
+			String service = carnotzetModule.getName();
+			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "stop", service);
+		}
 	}
 
 	@Override
@@ -320,17 +326,15 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	@Override
-	public void pull(@NonNull String service) {
-		pull(service, PullPolicy.ALWAYS);
+	public void pull(@NonNull String services) {
+		pull(services, PullPolicy.ALWAYS);
 	}
 
 	@Override
-	public void pull(@NonNull String service, PullPolicy policy) {
-		// Find out the name and tag of the image we are trying to pull
-		CarnotzetModule serviceModule = carnotzet.getModuleByServiceId(service)
-				.orElseThrow(() -> new IllegalArgumentException("No such service: " + service));
-
-		DockerRegistry.pullImage(serviceModule, policy);
+	public void pull(@NonNull String services, PullPolicy policy) {
+		for (CarnotzetModule serviceModule : resolveModules(services)) {
+			DockerRegistry.pullImage(serviceModule, policy);
+		}
 	}
 
 	@Override
@@ -420,8 +424,11 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		computeDockerComposeFile();
 	}
 
-	public void clean(String service) {
-		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "rm", "-f", service);
+	public void clean(String services) {
+		for (CarnotzetModule carnotzetModule : resolveModules(services)) {
+			String service = carnotzetModule.getName();
+			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "rm", "-f", service);
+		}
 	}
 
 	private final static Pattern PORT_PATTERN = Pattern.compile(".*?(\\d*\\/\\w*)");
@@ -468,5 +475,20 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		}
 
 		return result;
+	}
+
+	private Set<CarnotzetModule> resolveModules(String services) {
+		Set<CarnotzetModule> myModules = new HashSet<>();
+		for (String service : services.split(",")) {
+			for (CarnotzetModule module : carnotzet.getModules()) {
+				if (module.getServiceId().matches(service)) {
+					myModules.add(module);
+				}
+			}
+		}
+		if (myModules.isEmpty()) {
+			throw new RuntimeException("service [" + services + "] not found");
+		}
+		return myModules;
 	}
 }

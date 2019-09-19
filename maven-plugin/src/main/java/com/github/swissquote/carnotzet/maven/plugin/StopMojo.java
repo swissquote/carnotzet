@@ -12,7 +12,8 @@ import com.github.swissquote.carnotzet.maven.plugin.impl.Utils;
 
 /**
  * Stop all containers<br>
- * if -Dservice=... is passed, ony the chose service will be stopped
+ * if -Dservice=... is passed, ony the chosen service will be stopped
+ * a comma-separated list of regexp is also supported
  */
 @Mojo(name = "stop", defaultPhase = LifecyclePhase.NONE, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class StopMojo extends AbstractZetMojo {

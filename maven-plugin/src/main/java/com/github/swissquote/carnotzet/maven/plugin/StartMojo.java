@@ -8,7 +8,8 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /**
  * Start a carnotzet (in background)<br>
- * if -Dservice=... is passed, ony the chose service will be started
+ * if -Dservice=... is passed, ony the chosen service will be started
+ * a comma-separated list of regexp is also supported
  */
 @Mojo(name = "start", defaultPhase = LifecyclePhase.NONE, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class StartMojo extends AbstractZetMojo {

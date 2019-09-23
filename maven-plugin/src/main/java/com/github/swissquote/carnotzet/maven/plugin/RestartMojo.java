@@ -8,7 +8,8 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /**
  * restart all services for this carnotzet
- * if -Dservice=... is passed, ony the chose service will be restarted
+ * if -Dservice=... is passed, ony the chosen service will be restarted
+ * a comma-separated list of regexp is also supported
  */
 @Mojo(name = "restart", defaultPhase = LifecyclePhase.NONE, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class RestartMojo extends AbstractZetMojo {

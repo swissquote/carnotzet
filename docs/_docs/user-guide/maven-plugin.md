@@ -71,8 +71,9 @@ zet:pull
   supported policies are (always|ifNotPresent|ifNewer)
 
 zet:restart
-  restart all services for this carnotzet if -Dservice=... is passed, ony the
-  chose service will be restarted
+  restart all services for this carnotzet
+  if -Dservice=... is passed, ony the chosen service will be restarted
+  a comma-separated list of regexp is also supported 
 
 zet:run
   Start the environment, tail the log and wait for interrupt, stops the
@@ -83,11 +84,13 @@ zet:shell
 
 zet:start
   Start a carnotzet (in background)
-  if -Dservice=... is passed, ony the chose service will be started
+  if -Dservice=... is passed, ony the chosen service will be started
+  a comma-separated list of regexp is also supported 
 
 zet:stop
   Stop all containers
-  if -Dservice=... is passed, ony the chose service will be stopped
+  if -Dservice=... is passed, ony the chosen service will be stopped
+  a comma-separated list of regexp is also supported 
 
 zet:welcome
   Generate and display a welcome page

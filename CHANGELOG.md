@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - Added support for "carnotzet.min.version" in carnotzet.properties. An error is thrown if the version of carnotzet detected at runtime is lower
 than the version required by one of the modules. This will help introduction of new features in the future.
+- Added support for regex when filtering with "-Dservice=..."
 
 ## [1.7.10] - 2019-05-08
 ### Added

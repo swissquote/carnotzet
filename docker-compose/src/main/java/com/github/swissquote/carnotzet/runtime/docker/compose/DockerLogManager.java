@@ -77,7 +77,7 @@ import lombok.extern.slf4j.Slf4j;
 			Flowable<String> stdOutLines = flowableInputStreamScanner(dockerCliProcess.getInputStream()).subscribeOn(Schedulers.newThread());
 			Flowable<String> stdErrLines = flowableInputStreamScanner(dockerCliProcess.getErrorStream()).subscribeOn(Schedulers.newThread());
 			Flowable<String> allLines = stdOutLines.mergeWith(stdErrLines);
-			Flowable<LogEvent> allEvents = allLines.map(s -> new LogEvent(container.getServiceName(), container.getNumber(), s));
+			Flowable<LogEvent> allEvents = allLines.map(s -> new LogEvent(container.getServiceName(), container.getReplicaNumber(), s));
 			allEvents.subscribe(listener::accept, Throwable::printStackTrace, () -> captureStreams.remove(key));
 			captureStreams.put(key, allEvents);
 		}

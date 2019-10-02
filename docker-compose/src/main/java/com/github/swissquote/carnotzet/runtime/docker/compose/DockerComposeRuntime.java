@@ -369,7 +369,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 				.map(desc -> desc.split(":"))
 				.map(parts -> new Container(parts[0], parts[1], parts[2].equals("true"), Integer.parseInt(parts[3]),
 						parts.length > 4 ? parts[4] : null))
-				.sorted(Comparator.comparing(Container::getServiceName).thenComparing(Container::getNumber))
+				.sorted(Comparator.comparing(Container::getServiceName).thenComparing(Container::getReplicaNumber))
 				.collect(toList());
 
 	}
@@ -386,7 +386,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	@Override
 	public Container getContainer(String serviceName, int number) {
-		return getContainers().stream().filter(c -> c.getServiceName().equals(serviceName) && c.getNumber() == number).findFirst()
+		return getContainers().stream().filter(c -> c.getServiceName().equals(serviceName) && c.getReplicaNumber() == number).findFirst()
 				.orElse(null);
 	}
 

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.8.1] - 2019-10-02
+### Added
+- Added java API methods to better work with services having multiple replicas
+### Fixed
+- Different replicas now have different prefixes in the logs of the StdOut logger
+
 ## [1.8.0] - 2019-06-21
 ### Added
 - Added support for "carnotzet.min.version" in carnotzet.properties. An error is thrown if the version of carnotzet detected at runtime is lower

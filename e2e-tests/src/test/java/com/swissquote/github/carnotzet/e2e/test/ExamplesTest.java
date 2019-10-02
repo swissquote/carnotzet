@@ -16,6 +16,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -48,7 +49,8 @@ public class ExamplesTest {
 	private static WebDriver driver;
 	private static DockerComposeRuntime runtime;
 	private static String votingApp;
-	private static String resultApp;
+	private static String resultApp1;
+	private static String resultApp2;
 
 	@BeforeClass
 	public static void setup() throws Throwable {
@@ -76,12 +78,14 @@ public class ExamplesTest {
 		runtime.start();
 
 		votingApp = "http://" + runtime.getContainer("voting-vote").getIp();
-		resultApp = "http://" + runtime.getContainer("voting-result").getIp();
+		resultApp1 = "http://" + runtime.getContainer("voting-result", 1).getIp();
+		resultApp2 = "http://" + runtime.getContainer("voting-result", 2).getIp();
 
 		driver = createBrowserSession();
 
 		// wait for apps to become ready
-		logEvents.waitForEntry("voting-result", "Connected to db", 10000, 50);
+		logEvents.waitForEntry("voting-result", 1, "Connected to db", 10000, 50);
+		logEvents.waitForEntry("voting-result", 2, "Connected to db", 10000, 50);
 		logEvents.waitForEntry("voting-worker", "Connected to db", 10000, 50);
 		logEvents.waitForEntry("voting-worker", "Connecting to redis", 10000, 50);
 	}
@@ -105,22 +109,22 @@ public class ExamplesTest {
 	@Test
 	public void test_result_app_is_updated_on_new_votes() throws IOException, InterruptedException {
 		vote("a", "voter_1");
-		assertResultPage("100.0%", "0.0%", "1 vote");
+		assertResultPages("100.0%", "0.0%", "1 vote");
 
 		vote("b", "voter_2");
-		assertResultPage("50.0%", "50.0%", "2 votes");
+		assertResultPages("50.0%", "50.0%", "2 votes");
 
 		vote("b", "voter_3");
-		assertResultPage("33.0%", "67.0%", "3 votes");
+		assertResultPages("33.0%", "67.0%", "3 votes");
 	}
 
 	@Test
 	public void test_user_can_change_his_vote() throws IOException, InterruptedException {
 		vote("a", "voter_1");
-		assertResultPage("100.0%", "0.0%", "1 vote");
+		assertResultPages("100.0%", "0.0%", "1 vote");
 
 		vote("b", "voter_1");
-		assertResultPage("0.0%", "100.0%", "1 vote");
+		assertResultPages("0.0%", "100.0%", "1 vote");
 	}
 
 	@Test
@@ -161,14 +165,21 @@ public class ExamplesTest {
 		driver.findElement(className(choice)).click();
 	}
 
-	private void assertResultPage(String catsPercent, String dogsPercent, String numVotes) throws InterruptedException {
-		driver.get(resultApp);
-		Thread.sleep(1000); // let some time for the page to update from DB polling.
-		String displayedPercentForCats = driver.findElement(className("cats")).findElement(className("stat")).getText();
-		String displayedPercentForDogs = driver.findElement(className("dogs")).findElement(className("stat")).getText();
-		assertThat(displayedPercentForCats, is(catsPercent));
-		assertThat(displayedPercentForDogs, is(dogsPercent));
-		assertThat(driver.findElement(id("result")).getText(), is(numVotes));
+	private void assertResultPages(String catsPercent, String dogsPercent, String numVotes) {
+		Arrays.asList(resultApp1, resultApp2).forEach(resultApp -> {
+			driver.get(resultApp1);
+			try {
+				Thread.sleep(1000); // let some time for the page to update from DB polling.
+			}
+			catch (InterruptedException e) {
+				//
+			}
+			String displayedPercentForCats = driver.findElement(className("cats")).findElement(className("stat")).getText();
+			String displayedPercentForDogs = driver.findElement(className("dogs")).findElement(className("stat")).getText();
+			assertThat(displayedPercentForCats, is(catsPercent));
+			assertThat(displayedPercentForDogs, is(dogsPercent));
+			assertThat(driver.findElement(id("result")).getText(), is(numVotes));
+		});
 	}
 
 	private static WebDriver createBrowserSession() throws MalformedURLException {

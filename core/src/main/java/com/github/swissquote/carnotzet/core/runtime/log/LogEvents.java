@@ -47,19 +47,24 @@ public class LogEvents extends LogListenerBase {
 		this.events.clear();
 	}
 
-	public boolean hasEntry(String service, String content) {
+	public boolean hasEntry(String containerId, String content) {
 		return getEvents().stream()
-				.filter(event -> event.getService().equals(service))
+				.filter(event -> event.getService().equals(containerId))
 				.map(LogEvent::getLogEntry)
 				.anyMatch(entry -> entry.contains(content));
 	}
 
 	public void waitForEntry(String service, String content, long timeoutMillis, int checkIntervalMillis) {
-		System.out.println("Waiting at most [" + timeoutMillis + "ms] until [" + content + "] appears in the logs of [" + service + "]");
+		waitForEntry(service, 1, content, timeoutMillis, checkIntervalMillis);
+	}
+
+	public void waitForEntry(String service, int replicaNumber, String content, long timeoutMillis, int checkIntervalMillis) {
+		String containerId = service + "_" + replicaNumber;
+		System.out.println("Waiting at most [" + timeoutMillis + "ms] until [" + content + "] appears in the logs of [" + containerId + "]");
 		long startTime = System.currentTimeMillis();
 		while (System.currentTimeMillis() < timeoutMillis + startTime) {
-			if (hasEntry(service, content)) {
-				System.out.println("Log entry [" + content + "] seen in logs of service [" + service + "] after [" + (System.currentTimeMillis()
+			if (hasEntry(containerId, content)) {
+				System.out.println("Log entry [" + content + "] seen in logs [" + containerId + "] after [" + (System.currentTimeMillis()
 						- startTime) + "ms]");
 				return;
 			}
@@ -70,7 +75,7 @@ public class LogEvents extends LogListenerBase {
 				throw new RuntimeException(e);
 			}
 		}
-		throw new RuntimeException("Did not to read [" + content + "] in logs of service [" + service + "] after [" + timeoutMillis + "ms].");
+		throw new RuntimeException("Did not to read [" + content + "] in logs of [" + containerId + "] after [" + timeoutMillis + "ms].");
 	}
 
 	@Override

@@ -103,19 +103,39 @@ public interface ContainerOrchestrationRuntime {
 	ExecResult exec(String service, int timeout, TimeUnit timeoutUnit, String... command);
 
 	/**
-	 * List containers managed by this
-	 *
+	 * List containers in the environment
+	 * <p>
+	 * If a service has multiple replicas, all containers will be returned
 	 * @return the list of all containers for this environment
 	 */
 	List<Container> getContainers();
 
 	/**
-	 * get details about a specific container
+	 * get details about a specific container in the environment
+	 * <p>
+	 * equivalent to getContainer(servicename, 1)
 	 *
 	 * @param serviceName in the environment
 	 * @return details about the container
 	 */
 	Container getContainer(String serviceName);
+
+	/**
+	 * get all replica containers for a given service
+	 *
+	 * @param serviceName in the environment
+	 * @return details about the container
+	 */
+	List<Container> getContainers(String serviceName);
+
+	/**
+	 * get details about a specific container
+	 *
+	 * @param serviceName in the environment
+	 * @param number the replica number
+	 * @return details about the container
+	 */
+	Container getContainer(String serviceName, int number);
 
 	/**
 	 * Register a listener for log events.

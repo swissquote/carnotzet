@@ -352,18 +352,24 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			template.append("{{ index .Config.Labels \"com.docker.compose.service\" }}:");
 		}
 		template.append("{{ index .State.Running}}:");
+		if (SystemUtils.IS_OS_WINDOWS) {
+			template.append("{{ index .Config.Labels \\\"com.docker.compose.container-number\\\" }}:");
+		} else {
+			template.append("{{ index .Config.Labels \"com.docker.compose.container-number\" }}:");
+		}
 		template.append("{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}:");
 		List<String> args = new ArrayList<>(Arrays.asList("docker", "inspect", "-f", template.toString()));
 
 		args.addAll(Arrays.asList(commandOutput.split(" ")));
-		commandOutput = runCommandAndCaptureOutput(args.toArray(new String[args.size()]));
+		commandOutput = runCommandAndCaptureOutput(args.toArray(new String[0]));
 		log.debug("docker inspect output : " + commandOutput);
 		log.debug("split docker inspect output : " + Arrays.asList(commandOutput.split("\n")));
 		return Arrays.stream(commandOutput.split("\n"))
 				.filter(desc -> !desc.trim().isEmpty())
 				.map(desc -> desc.split(":"))
-				.map(parts -> new Container(parts[0], parts[1], parts[2].equals("true"), parts.length > 3 ? parts[3] : null))
-				.sorted(Comparator.comparing(Container::getServiceName))
+				.map(parts -> new Container(parts[0], parts[1], parts[2].equals("true"), Integer.parseInt(parts[3]),
+						parts.length > 4 ? parts[4] : null))
+				.sorted(Comparator.comparing(Container::getServiceName).thenComparing(Container::getNumber))
 				.collect(toList());
 
 	}
@@ -371,6 +377,17 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	@Override
 	public Container getContainer(String serviceName) {
 		return getContainers().stream().filter(c -> c.getServiceName().equals(serviceName)).findFirst().orElse(null);
+	}
+
+	@Override
+	public List<Container> getContainers(String serviceName) {
+		return getContainers().stream().filter(c -> c.getServiceName().equals(serviceName)).collect(toList());
+	}
+
+	@Override
+	public Container getContainer(String serviceName, int number) {
+		return getContainers().stream().filter(c -> c.getServiceName().equals(serviceName) && c.getNumber() == number).findFirst()
+				.orElse(null);
 	}
 
 	@Override

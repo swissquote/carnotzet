@@ -10,5 +10,6 @@ public class Container {
 	private final String id;
 	private final String serviceName;
 	private final boolean running;
-	private final String ip;
+	private final int number; // Starts from 1, aka replica number
+	private final String ip; // only present when container is running
 }

@@ -26,12 +26,11 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Possible improvements to this class include :
- * - reorder previous log events by timestamp when outputting previous log events (may be tricky to implement)
- * - Expose "since" in the api of ListenerBase to allow users to define it.
+ * Possible improvements to this class include : - reorder previous log events by timestamp when outputting previous log events (may be tricky to
+ * implement) - Expose "since" in the api of ListenerBase to allow users to define it.
  */
 @Slf4j
-/* package */ class DockerLogManager {
+		/* package */ class DockerLogManager {
 
 	@Value
 	private static final class ContainerListener {
@@ -78,7 +77,7 @@ import lombok.extern.slf4j.Slf4j;
 			Flowable<String> stdOutLines = flowableInputStreamScanner(dockerCliProcess.getInputStream()).subscribeOn(Schedulers.newThread());
 			Flowable<String> stdErrLines = flowableInputStreamScanner(dockerCliProcess.getErrorStream()).subscribeOn(Schedulers.newThread());
 			Flowable<String> allLines = stdOutLines.mergeWith(stdErrLines);
-			Flowable<LogEvent> allEvents = allLines.map(s -> new LogEvent(container.getServiceName(), s));
+			Flowable<LogEvent> allEvents = allLines.map(s -> new LogEvent(container.getServiceName() + "_" + container.getNumber(), s));
 			allEvents.subscribe(listener::accept, Throwable::printStackTrace, () -> captureStreams.remove(key));
 			captureStreams.put(key, allEvents);
 		}

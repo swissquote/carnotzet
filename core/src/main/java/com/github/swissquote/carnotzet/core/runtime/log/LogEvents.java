@@ -30,6 +30,7 @@ public class LogEvents extends LogListenerBase {
 
 	/**
 	 * Consumes log events received
+	 *
 	 * @return all received events
 	 */
 	public List<LogEvent> consumeEvents() {
@@ -47,9 +48,14 @@ public class LogEvents extends LogListenerBase {
 		this.events.clear();
 	}
 
-	public boolean hasEntry(String containerId, String content) {
+	public boolean hasEntry(String service, String content) {
+		return hasEntry(service, 1, content);
+	}
+
+	public boolean hasEntry(String service, int replicaNumber, String content) {
 		return getEvents().stream()
-				.filter(event -> event.getService().equals(containerId))
+				.filter(event -> event.getService().equals(service))
+				.filter(event -> event.getReplicaNumber() == replicaNumber)
 				.map(LogEvent::getLogEntry)
 				.anyMatch(entry -> entry.contains(content));
 	}
@@ -63,7 +69,7 @@ public class LogEvents extends LogListenerBase {
 		System.out.println("Waiting at most [" + timeoutMillis + "ms] until [" + content + "] appears in the logs of [" + containerId + "]");
 		long startTime = System.currentTimeMillis();
 		while (System.currentTimeMillis() < timeoutMillis + startTime) {
-			if (hasEntry(containerId, content)) {
+			if (hasEntry(service, replicaNumber, content)) {
 				System.out.println("Log entry [" + content + "] seen in logs [" + containerId + "] after [" + (System.currentTimeMillis()
 						- startTime) + "ms]");
 				return;

@@ -10,14 +10,15 @@ import java.util.Map;
 
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
+
 import com.github.swissquote.carnotzet.core.Carnotzet;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
 
 import lombok.Setter;
 
 /**
- * Prints logs to the system default output, using different colors for different services,
- * very similar to what docker-compose does, but supports pre-processing log entries and other container orchestrators
+ * Prints logs to the system default output, using different colors for different services, very similar to what docker-compose does, but
+ * supports pre-processing log entries and other container orchestrators
  */
 public class StdOutLogPrinter extends LogListenerBase {
 
@@ -41,17 +42,18 @@ public class StdOutLogPrinter extends LogListenerBase {
 	}
 
 	/**
-	 * colors will be based on the order of received log entries and may differ from one execution to the other.
-	 * You can make the order predictable if you know all the services in advance, using the appropriate constructor
+	 * colors will be based on the order of received log entries and may differ from one execution to the other. You can make the order
+	 * predictable if you know all the services in advance, using the appropriate constructor
 	 */
 	public StdOutLogPrinter() {
 		super();
 	}
 
 	/**
-	 * colors will be based on the order of received log entries and may differ from one execution to the other.
-	 * You can make the order predictable if you know all the services in advance, using the appropriate constructor
-	 * @param tail number of pre-existing log events to print
+	 * colors will be based on the order of received log entries and may differ from one execution to the other. You can make the order
+	 * predictable if you know all the services in advance, using the appropriate constructor
+	 *
+	 * @param tail   number of pre-existing log events to print
 	 * @param follow should printer wait for future log events or not.
 	 */
 	public StdOutLogPrinter(Integer tail, boolean follow) {
@@ -60,9 +62,10 @@ public class StdOutLogPrinter extends LogListenerBase {
 
 	/**
 	 * Provides a reproducible color order for services in a carnotzet environment.
+	 *
 	 * @param carnotzet used to get the same colors every time
-	 * @param tail number of pre-existing log events to print
-	 * @param follow should printer wait for future log events or not.
+	 * @param tail      number of pre-existing log events to print
+	 * @param follow    should printer wait for future log events or not.
 	 */
 	public StdOutLogPrinter(Carnotzet carnotzet, Integer tail, boolean follow) {
 		this(carnotzet.getModules().stream().map(CarnotzetModule::getServiceId).sorted().collect(toList()), tail, follow);
@@ -70,9 +73,10 @@ public class StdOutLogPrinter extends LogListenerBase {
 
 	/**
 	 * Provides a reproducible color order for services in a carnotzet environment.
+	 *
 	 * @param services used to get the same colors every time
-	 * @param tail number of pre-existing log events to print
-	 * @param follow should printer wait for future log events or not.
+	 * @param tail     number of pre-existing log events to print
+	 * @param follow   should printer wait for future log events or not.
 	 */
 	public StdOutLogPrinter(List<String> services, Integer tail, boolean follow) {
 		super(tail, follow);
@@ -85,16 +89,20 @@ public class StdOutLogPrinter extends LogListenerBase {
 
 	@Override
 	public void acceptInternal(LogEvent event) {
+		String displayedName = event.getService();
+		if (event.getReplicaNumber() > 1) {
+			displayedName += "_" + event.getReplicaNumber();
+		}
+		if (displayedName.length() > this.longestServiceName) {
+			longestServiceName = displayedName.length();
+		}
 		Ansi.Color color = serviceColors.computeIfAbsent(event.getService(), (service) -> {
-			if (service.length() > this.longestServiceName) {
-				longestServiceName = service.length();
-			}
 			int colorIndex = serviceColors.size() % UNICORN_RAINBOW_MAGIC.size();
 			return UNICORN_RAINBOW_MAGIC.get(colorIndex);
 		});
 		System.out.println(ansi().
 				fg(color)
-				.a(padServiceName(event.getService()))
+				.a(padServiceName(displayedName))
 				.a(" | ")
 				.reset()
 				.a(event.getLogEntry()));

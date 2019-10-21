@@ -220,7 +220,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		log.debug("Forcing update of docker-compose.yml before start");
 		computeDockerComposeFile();
 		for (CarnotzetModule carnotzetModule : resolveModules(services)) {
-			String service = carnotzetModule.getName();
+			String service = carnotzetModule.getServiceId();
 			Instant start = Instant.now();
 			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d", service);
 			ensureNetworkCommunicationIsPossible();
@@ -272,7 +272,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	public void stop(String services) {
 		ensureDockerComposeFileIsPresent();
 		for (CarnotzetModule carnotzetModule : resolveModules(services)) {
-			String service = carnotzetModule.getName();
+			String service = carnotzetModule.getServiceId();
 			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "stop", service);
 		}
 	}
@@ -443,7 +443,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	public void clean(String services) {
 		for (CarnotzetModule carnotzetModule : resolveModules(services)) {
-			String service = carnotzetModule.getName();
+			String service = carnotzetModule.getServiceId();
 			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "rm", "-f", service);
 		}
 	}

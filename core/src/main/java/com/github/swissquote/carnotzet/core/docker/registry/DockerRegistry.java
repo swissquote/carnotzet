@@ -139,7 +139,7 @@ public class DockerRegistry {
 
 	private String downloadImageManifestAsString(String digest, ImageRef imageRef) {
 		WebTarget registry = getRegistryWebTarget(imageRef);
-		WebTarget url = registry.path("v2/{name}/manifests/{reference}")
+		WebTarget url = registry.path("v2/{name}/blobs/{reference}")
 				.resolveTemplate("name", imageRef.getImageName(), false)
 				.resolveTemplate("reference", digest, false);
 		log.info("Downloading image manifest from {} ...", url.getUri().toString());

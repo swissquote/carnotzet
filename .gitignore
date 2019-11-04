@@ -40,4 +40,3 @@ npm-debug.log*
 
 # Releases
 *.asc
-/deploy-central.sh

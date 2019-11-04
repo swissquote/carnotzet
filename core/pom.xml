@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>com.github.swissquote</groupId>
 		<artifactId>carnotzet</artifactId>
-		<version>1.8.1-SNAPSHOT</version>
+		<version>1.8.1</version>
 	</parent>
 
 	<artifactId>carnotzet-core</artifactId>

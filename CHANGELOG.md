@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added java API methods to better work with services having multiple replicas
 ### Fixed
 - Different replicas now have different prefixes in the logs of the StdOut logger
+- URL to download docker image config from docker registry fixed to use /blobs instead of /manifests.
 
 ## [1.8.0] - 2019-06-21
 ### Added

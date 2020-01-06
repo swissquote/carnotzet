@@ -1,6 +1,6 @@
 {
   "devDependencies": {
-    "uglify-js": "^2.6.1"
+    "uglify-js": "2.8.21"
   },
   "scripts": {
     "uglify": "uglifyjs assets/js/_main.js -c -m -o assets/js/main.min.js",

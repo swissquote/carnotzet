@@ -65,7 +65,6 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.version>3.6.2</maven.version>
-		<jersey.version>2.25.1</jersey.version>
 		<jackson.version>2.10.1</jackson.version>
 	</properties>
 

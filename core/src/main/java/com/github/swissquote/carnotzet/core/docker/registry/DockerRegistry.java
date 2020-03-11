@@ -9,21 +9,18 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-//import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.HttpUrlConnectorProvider;
-import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
-import org.glassfish.jersey.jackson.JacksonFeature;
+import org.jboss.resteasy.client.jaxrs.BasicAuthentication;
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.plugins.providers.RegisterBuiltin;
+import org.jboss.resteasy.plugins.providers.jackson.ResteasyJackson2Provider;
+import org.jboss.resteasy.spi.ResteasyProviderFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.jaxrs.cfg.Annotations;
-import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
 import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
@@ -34,6 +31,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+
+//import javax.ws.rs.NotFoundException;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -50,7 +49,11 @@ public class DockerRegistry {
 			new FileSystemCache<ContainerImageV1>(Paths.get(System.getProperty("user.home"), CARNOTZET_IMAGE_MANIFESTS_CACHE_FILENAME),
 					ContainerImageV1.class);
 
-
+	static {
+		ResteasyProviderFactory instance = ResteasyProviderFactory.getInstance();
+		RegisterBuiltin.register(instance);
+		instance.registerProvider(ResteasyJackson2Provider.class);
+	}
 
 	public static void pullImage(CarnotzetModule module, PullPolicy policy) {
 
@@ -130,7 +133,7 @@ public class DockerRegistry {
 
 		try {
 			return imageManifestCache.computeIfAbsent(distributionManifest.getConfig().getDigest(), digest ->
-																				downloadImageManifestAsString(digest, imageRef));
+					downloadImageManifestAsString(digest, imageRef));
 		}
 		catch (Exception e) {
 			throw new CarnotzetDefinitionException("Could not fetch config manifest of image [" + imageRef + "]", e);
@@ -150,37 +153,27 @@ public class DockerRegistry {
 				.withMaxRetries(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_DOWNLOAD_RETRIES, "0")))
 				.onRetry((o) -> log.info("Download attempt failed: {} : Retrying... ", o.getLastFailure().toString()))
 				.onFailure((o) -> {
-						log.error("Download failed: {} ", o.getFailure().toString());
-						throw new IllegalStateException(o.getFailure());
-											});
+					log.error("Download failed: {} ", o.getFailure().toString());
+					throw new IllegalStateException(o.getFailure());
+				});
 		String value = Failsafe.with(retryPolicy).get(() ->
-					url.request("application/vnd.docker.container.image.v1+json").get(String.class)
+				url.request("application/vnd.docker.container.image.v1+json").get(String.class)
 		);
 
 		log.info("Image manifest downloaded");
 		return value;
 	}
 
-
 	private WebTarget getRegistryWebTarget(ImageRef imageRef) {
 		if (!webTargets.containsKey(imageRef.getRegistryUrl())) {
-
 			ObjectMapper mapper = new ObjectMapper();
 			mapper.registerModule(new JavaTimeModule());
-
-			ClientConfig clientCOnfig = new ClientConfig();
-			clientCOnfig.connectorProvider(new HttpUrlConnectorProvider());
-
 			// TODO : This client doesn't handle mandatory Oauth2 Bearer token imposed by some registries implementations (ie : docker hub)
-			Client client = ClientBuilder.newClient(clientCOnfig)
-					.register(new JacksonJaxbJsonProvider(mapper, new Annotations[] {Annotations.JACKSON}))
-					.register(JacksonFeature.class);
+			ResteasyClient client = new ResteasyClientBuilder().build();
 			String auth = config.getAuthFor(imageRef.getRegistryName());
-			if (auth != null) {
-				String[] credentials = new String(Base64.getDecoder().decode(auth), StandardCharsets.UTF_8).split(":");
-				client.register(HttpAuthenticationFeature.basicBuilder().credentials(credentials[0], credentials[1]));
-			}
+			String[] credentials = new String(Base64.getDecoder().decode(auth), StandardCharsets.UTF_8).split(":");
 			WebTarget webTarget = client.target(imageRef.getRegistryUrl());
+			webTarget.register(new BasicAuthentication(credentials[0], credentials[1]));
 			webTargets.put(imageRef.getRegistryUrl(), webTarget);
 		}
 		return webTargets.get(imageRef.getRegistryUrl());

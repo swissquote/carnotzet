@@ -3,9 +3,11 @@ package com.github.swissquote.carnotzet.core.runtime;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.concurrent.TimeoutException;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.SystemUtils;
+import org.zeroturnaround.exec.ProcessExecutor;
+import org.zeroturnaround.exec.ProcessResult;
+import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
 
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.google.common.base.Joiner;
@@ -36,20 +38,23 @@ public final class DefaultCommandRunner implements CommandRunner {
 
 	public int runCommand(Boolean inheritIo, File directoryForRunning, String... command) {
 		log.debug("Running command [{}]", Joiner.on(" ").join(command));
-		ProcessBuilder pb = new ProcessBuilder(command);
-		pb.directory(directoryForRunning);
+		ProcessExecutor pe = new ProcessExecutor()
+				.command(command)
+				.directory(directoryForRunning);
+
+		// by default, zt-exec pumps the logs to a nullOutputStream, so we don't need to pump or redirect to a file
+
 		if (inheritIo) {
-			pb.inheritIO();
-		} else {
-			File sink = getOsSpecificSink();
-			pb.redirectError(sink);
-			pb.redirectOutput(sink);
+			// we forward output lines to SLF4J by default, writing to stdout can cause issue
+			// (for example writing from a forked JVM when running in surefire produces error messages)
+			pe = pe.redirectOutput(Slf4jStream.of(log).asInfo());
+			pe = pe.redirectError(Slf4jStream.of(log).asInfo());
 		}
+
 		try {
-			Process p = pb.start();
-			p.waitFor();
+			ProcessResult processResult = pe.execute();
 			log.debug("Command completed : [{}]", Joiner.on(" ").join(command));
-			return p.exitValue();
+			return processResult.getExitValue();
 		}
 		catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
@@ -58,13 +63,9 @@ public final class DefaultCommandRunner implements CommandRunner {
 		catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
-	}
-
-	private File getOsSpecificSink() {
-		if (SystemUtils.IS_OS_WINDOWS) {
-			return new File("NUL");
+		catch (TimeoutException e) {
+			throw new CarnotzetDefinitionException(e);
 		}
-		return new File("/dev/null");
 	}
 
 	public String runCommandAndCaptureOutput(String... command) {
@@ -73,29 +74,22 @@ public final class DefaultCommandRunner implements CommandRunner {
 
 	public String runCommandAndCaptureOutput(File directoryForRunning, String... command) {
 		log.debug("Running command [{}]", Joiner.on(" ").join(command));
-		ProcessBuilder pb = new ProcessBuilder(command);
-		pb.directory(directoryForRunning);
+
+		ProcessExecutor pe = new ProcessExecutor()
+				.command(command)
+				.redirectErrorStream(true)
+				.directory(directoryForRunning)
+				.readOutput(true);
 		try {
-			// we use a temp file to avoid having to manage a thread to read the process output.
-			// reading the output while the process is running is mandatory in cases where
-			// it outputs more than 4k of data (OS buffer size for pipes). Otherwise the process will freeze.
-			// http://java-monitor.com/forum/showthread.php?t=4067
-			final File tmp = File.createTempFile("carnotzet-cmd-out", null);
-			tmp.deleteOnExit();
-			pb.redirectErrorStream(true).redirectOutput(tmp);
-			Process p = pb.start();
-			p.waitFor();
-
-			String output = FileUtils.readFileToString(tmp);
-			output = output.trim();
-
-			if (p.exitValue() != 0) {
-				throw new RuntimeException("External command [" + Joiner.on(" ").join(command) + "] exited with [" + p.exitValue()
+			ProcessResult processResult = pe.execute();
+			String output = processResult.outputUTF8().trim();
+			if (processResult.getExitValue() != 0) {
+				throw new RuntimeException("External command [" + Joiner.on(" ").join(command) + "] exited with [" + processResult.getExitValue()
 						+ "], output: " + output);
 			}
 			return output;
 		}
-		catch (InterruptedException | IOException e) {
+		catch (InterruptedException | IOException | TimeoutException e) {
 			throw new RuntimeException(e);
 		}
 

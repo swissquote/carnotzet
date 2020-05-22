@@ -9,7 +9,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-//import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -19,11 +18,11 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.jackson.internal.jackson.jaxrs.cfg.Annotations;
+import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.jaxrs.cfg.Annotations;
-import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
 import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
@@ -49,8 +48,6 @@ public class DockerRegistry {
 	private final FileSystemCache<ContainerImageV1> imageManifestCache =
 			new FileSystemCache<ContainerImageV1>(Paths.get(System.getProperty("user.home"), CARNOTZET_IMAGE_MANIFESTS_CACHE_FILENAME),
 					ContainerImageV1.class);
-
-
 
 	public static void pullImage(CarnotzetModule module, PullPolicy policy) {
 
@@ -97,7 +94,8 @@ public class DockerRegistry {
 			return Instant.from(DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(isoDatetime));
 		}
 		catch (RuntimeException e) {
-			log.debug("Could not determine timestamp of local image [" + imageName + "], assuming it doesn't exist on the local docker host", e);
+			log.debug("Could not determine timestamp of local image [" + imageName + "], assuming it doesn't exist on the local docker host",
+					e);
 			return null;
 		}
 	}
@@ -130,7 +128,7 @@ public class DockerRegistry {
 
 		try {
 			return imageManifestCache.computeIfAbsent(distributionManifest.getConfig().getDigest(), digest ->
-																				downloadImageManifestAsString(digest, imageRef));
+					downloadImageManifestAsString(digest, imageRef));
 		}
 		catch (Exception e) {
 			throw new CarnotzetDefinitionException("Could not fetch config manifest of image [" + imageRef + "]", e);
@@ -150,17 +148,16 @@ public class DockerRegistry {
 				.withMaxRetries(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_DOWNLOAD_RETRIES, "0")))
 				.onRetry((o) -> log.info("Download attempt failed: {} : Retrying... ", o.getLastFailure().toString()))
 				.onFailure((o) -> {
-						log.error("Download failed: {} ", o.getFailure().toString());
-						throw new IllegalStateException(o.getFailure());
-											});
+					log.error("Download failed: {} ", o.getFailure().toString());
+					throw new IllegalStateException(o.getFailure());
+				});
 		String value = Failsafe.with(retryPolicy).get(() ->
-					url.request("application/vnd.docker.container.image.v1+json").get(String.class)
+				url.request("application/vnd.docker.container.image.v1+json").get(String.class)
 		);
 
 		log.info("Image manifest downloaded");
 		return value;
 	}
-
 
 	private WebTarget getRegistryWebTarget(ImageRef imageRef) {
 		if (!webTargets.containsKey(imageRef.getRegistryUrl())) {

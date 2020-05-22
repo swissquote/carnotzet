@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VERSION=1.8.3
+VERSION=1.8.4
 
 # parent pom
 mvn gpg:sign-and-deploy-file \

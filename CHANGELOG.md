@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [1.8.3] - 2020-05-22
+## [1.8.4] - 2020-05-22
 ### Changed
 - Jersey (2.25.1) and Jackson (2.10.1) dependencies versions bumped to Jersey (2.29.1) and Jackson (2.10.4)
 - Using Jackson and Jersey BOMs

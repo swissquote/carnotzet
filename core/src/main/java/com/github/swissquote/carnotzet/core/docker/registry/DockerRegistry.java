@@ -1,26 +1,25 @@
 package com.github.swissquote.carnotzet.core.docker.registry;
 
+import static java.util.stream.Collectors.joining;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.HttpUrlConnectorProvider;
-import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
-import org.glassfish.jersey.jackson.JacksonFeature;
-import org.glassfish.jersey.jackson.internal.jackson.jaxrs.cfg.Annotations;
-import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
@@ -29,6 +28,7 @@ import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.api.PullPolicy;
 import com.github.swissquote.carnotzet.core.util.FileSystemCache;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
@@ -43,8 +43,9 @@ public class DockerRegistry {
 	public static final String CARNOTZET_MANIFEST_DOWNLOAD_RETRIES = "manifest.download.retries.number.max";
 	public static final String CARNOTZET_MANIFEST_RETRY_DELAY_SECONDS = "manifest.download.retries.delay.secs";
 
+	private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+
 	private final DockerConfig config = DockerConfig.fromEnv();
-	private final Map<String, WebTarget> webTargets = new HashMap<>();
 	private final FileSystemCache<ContainerImageV1> imageManifestCache =
 			new FileSystemCache<ContainerImageV1>(Paths.get(System.getProperty("user.home"), CARNOTZET_IMAGE_MANIFESTS_CACHE_FILENAME),
 					ContainerImageV1.class);
@@ -108,24 +109,88 @@ public class DockerRegistry {
 
 	private DistributionManifestV2 getDistributionManifest(ImageRef imageRef) {
 		try {
-			WebTarget registry = getRegistryWebTarget(imageRef);
-
-			return registry.path("v2/{name}/manifests/{reference}")
-					.resolveTemplate("name", imageRef.getImageName(), false)
-					.resolveTemplate("reference", imageRef.getTag(), false)
-					.request("application/vnd.docker.distribution.manifest.v2+json")
-					.get(DistributionManifestV2.class);
+			URL distributionManifestUrl =
+					new URL(imageRef.getRegistryUrl() + "/v2/" + imageRef.getImageName() + "/manifests/" + imageRef.getTag());
+			String responseBody = downloadWithoutRetry(distributionManifestUrl, "application/vnd.docker.distribution.manifest.v2+json",
+					config.getAuthFor(imageRef.getRegistryName()));
+			return objectMapper.readValue(responseBody, DistributionManifestV2.class);
 		}
-		catch (Exception e) {
+		catch (RuntimeException | JsonProcessingException | MalformedURLException e) {
 			throw new CarnotzetDefinitionException("Could not fetch distribution manifest of [" + imageRef + "]", e);
 		}
+	}
+
+	private String downloadWithRetry(URL url, String accept, String auth) throws IOException {
+		RetryPolicy<Object> retryPolicy = new RetryPolicy<>()
+				.handle(Exception.class)
+				.withDelay(Duration.ofSeconds(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_RETRY_DELAY_SECONDS, "1"))))
+				.withMaxRetries(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_DOWNLOAD_RETRIES, "0")))
+				.onRetry((o) -> log.info("Download attempt failed: {} : Retrying... ", o.getLastFailure().toString()))
+				.onFailure((o) -> {
+					log.error("Download failed: {} ", o.getFailure().toString());
+					throw new IllegalStateException(o.getFailure());
+				});
+		return Failsafe.with(retryPolicy).get(() -> downloadWithoutRetry(url, accept, auth));
+	}
+
+	private String downloadWithoutRetry(URL url, String accept, String auth) {
+		try {
+			String oldValue = System.getProperty("java.net.useSystemProxies");
+			System.setProperty("java.net.useSystemProxies", "true"); // default is false...
+			Proxy proxy = ProxySelector.getDefault().select(url.toURI()).get(0);
+			if (oldValue != null) {
+				System.setProperty("java.net.useSystemProxies", oldValue);
+			} else {
+				System.getProperties().remove("java.net.useSystemProxies");
+			}
+			log.debug("Using proxy: [{}]", proxy);
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
+			try {
+				connection.setRequestMethod("GET");
+				connection.setRequestProperty("Accept", accept);
+				if (auth != null) {
+					connection.setRequestProperty("Authorization", "Basic " + auth);
+				}
+				connection.setConnectTimeout(1000);
+				connection.setReadTimeout(5000);
+				connection.connect();
+				int responseCode = connection.getResponseCode();
+				String responseBody = readInputStreamToString(connection);
+				if (responseCode < 200 || responseCode >= 400) {
+					throw new CarnotzetDefinitionException("Received response code [" + responseCode + "] with body: [" + responseBody + "]");
+				}
+				log.debug("Received response code [{}] from [{}]", responseCode, url);
+				return responseBody;
+			}
+			finally {
+				connection.disconnect();
+			}
+		}
+		catch (IOException | URISyntaxException e) {
+			throw new CarnotzetDefinitionException("Could not download from [" + url + "]", e);
+		}
+
+	}
+
+	private String readInputStreamToString(@NonNull HttpURLConnection connection) throws IOException {
+		InputStream inputStream = connection.getInputStream();
+		InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+		BufferedReader bufferedReader = new BufferedReader(reader);
+		try {
+			return bufferedReader.lines().collect(joining("\n"));
+		}
+		finally {
+			bufferedReader.close();
+			reader.close();
+			inputStream.close();
+		}
+
 	}
 
 	private ContainerImageV1 getImageManifest(ImageRef imageRef, DistributionManifestV2 distributionManifest) {
 		if (distributionManifest.getConfig() == null || distributionManifest.getConfig().getDigest() == null) {
 			throw new CarnotzetDefinitionException("Distribution manifest of images [" + imageRef + " does not contain digest of image");
 		}
-
 		try {
 			return imageManifestCache.computeIfAbsent(distributionManifest.getConfig().getDigest(), digest ->
 					downloadImageManifestAsString(digest, imageRef));
@@ -136,51 +201,17 @@ public class DockerRegistry {
 	}
 
 	private String downloadImageManifestAsString(String digest, ImageRef imageRef) {
-		WebTarget registry = getRegistryWebTarget(imageRef);
-		WebTarget url = registry.path("v2/{name}/blobs/{reference}")
-				.resolveTemplate("name", imageRef.getImageName(), false)
-				.resolveTemplate("reference", digest, false);
-		log.info("Downloading image manifest from {} ...", url.getUri().toString());
-
-		RetryPolicy<Object> retryPolicy = new RetryPolicy<>()
-				.handle(WebApplicationException.class)
-				.withDelay(Duration.ofSeconds(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_RETRY_DELAY_SECONDS, "1"))))
-				.withMaxRetries(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_DOWNLOAD_RETRIES, "0")))
-				.onRetry((o) -> log.info("Download attempt failed: {} : Retrying... ", o.getLastFailure().toString()))
-				.onFailure((o) -> {
-					log.error("Download failed: {} ", o.getFailure().toString());
-					throw new IllegalStateException(o.getFailure());
-				});
-		String value = Failsafe.with(retryPolicy).get(() ->
-				url.request("application/vnd.docker.container.image.v1+json").get(String.class)
-		);
-
-		log.info("Image manifest downloaded");
-		return value;
-	}
-
-	private WebTarget getRegistryWebTarget(ImageRef imageRef) {
-		if (!webTargets.containsKey(imageRef.getRegistryUrl())) {
-
-			ObjectMapper mapper = new ObjectMapper();
-			mapper.registerModule(new JavaTimeModule());
-
-			ClientConfig clientCOnfig = new ClientConfig();
-			clientCOnfig.connectorProvider(new HttpUrlConnectorProvider());
-
-			// TODO : This client doesn't handle mandatory Oauth2 Bearer token imposed by some registries implementations (ie : docker hub)
-			Client client = ClientBuilder.newClient(clientCOnfig)
-					.register(new JacksonJaxbJsonProvider(mapper, new Annotations[] {Annotations.JACKSON}))
-					.register(JacksonFeature.class);
-			String auth = config.getAuthFor(imageRef.getRegistryName());
-			if (auth != null) {
-				String[] credentials = new String(Base64.getDecoder().decode(auth), StandardCharsets.UTF_8).split(":");
-				client.register(HttpAuthenticationFeature.basicBuilder().credentials(credentials[0], credentials[1]));
-			}
-			WebTarget webTarget = client.target(imageRef.getRegistryUrl());
-			webTargets.put(imageRef.getRegistryUrl(), webTarget);
+		try {
+			URL imageManifestUrl = new URL(imageRef.getRegistryUrl() + "/v2/" + imageRef.getImageName() + "/blobs/" + digest);
+			log.info("Downloading image manifest from {} ...", imageManifestUrl);
+			String result = downloadWithRetry(imageManifestUrl, "application/vnd.docker.container.image.v1+json",
+					config.getAuthFor(imageRef.getRegistryName()));
+			log.info("Image manifest downloaded");
+			return result;
 		}
-		return webTargets.get(imageRef.getRegistryUrl());
+		catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
 	}
 
 }

@@ -29,13 +29,14 @@ import com.google.common.base.MoreObjects;
 public class ImageRef {
 
 	private static final String DEFAULT_REGISTRY = "docker.io";
-	private static final String DEFAULT_REGISTRY_URL = "https://index.docker.io/v1/";
+	private static final String DEFAULT_REGISTRY_URL = "https://index.docker.io";
 	private static final String DEFAULT_TAG = "latest";
 
 	private final String registryUrl;
 	private final String registry;
 	private final String image;
 	private final String tag;
+
 
 	public ImageRef(final String image) {
 		final int lastAt = image.lastIndexOf('@');

@@ -64,8 +64,8 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.version>3.6.3</maven.version>
-		<jackson.version>2.11.3</jackson.version>
+		<maven.version>3.8.1</maven.version>
+		<jackson.version>2.12.3</jackson.version>
 	</properties>
 
 	<build>
@@ -97,7 +97,7 @@
 				<plugin>
 					<groupId>com.github.spotbugs</groupId>
 					<artifactId>spotbugs-maven-plugin</artifactId>
-					<version>4.1.3</version>
+					<version>4.2.3</version>
 					<configuration>
 						<effort>Max</effort>
 						<threshold>Low</threshold>
@@ -146,7 +146,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-javadoc-plugin</artifactId>
-					<version>3.2.0</version>
+					<version>3.3.0</version>
 					<executions>
 						<execution>
 							<id>attach-javadocs</id>
@@ -195,7 +195,7 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.16</version>
+			<version>1.18.20</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

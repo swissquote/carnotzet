@@ -36,6 +36,10 @@ docs:
       - title: "Network communication with containers"
         url: /user-guide/network-communication-with-containers
 
+
+  - title: "Extension points"
+    url: /extending-behavior/extension-points
+
 main:
   - title: "Technical blog"
     url: https://medium.com/swissquote-engineering

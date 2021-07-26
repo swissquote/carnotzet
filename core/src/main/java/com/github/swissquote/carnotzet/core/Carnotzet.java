@@ -33,6 +33,7 @@ import com.google.common.base.Strings;
 
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -53,6 +54,7 @@ public class Carnotzet {
 	@Getter
 	private final Pattern classifierIncludePattern;
 
+	@Setter
 	private List<CarnotzetModule> modules;
 
 	private final MavenDependencyResolver resolver;
@@ -398,5 +400,6 @@ public class Carnotzet {
 		// nothing matches. Nothing to do
 		return null;
 	}
+
 
 }

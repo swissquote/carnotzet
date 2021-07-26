@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+			xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -14,11 +14,11 @@
 	<description>Example carnotzet module for redis https://redis.io/</description>
 
 	<!--<dependencies>-->
-		<!--<dependency>-->
-			<!--<groupId>com.github.swissquote.examples</groupId>-->
-			<!--<artifactId>voting-worker-carnotzet</artifactId>-->
-			<!--<version>1.5.0</version>-->
-		<!--</dependency>-->
+	<!--<dependency>-->
+	<!--<groupId>com.github.swissquote.examples</groupId>-->
+	<!--<artifactId>voting-worker-carnotzet</artifactId>-->
+	<!--<version>1.5.0</version>-->
+	<!--</dependency>-->
 	<!--</dependencies>-->
 
 	<build>
@@ -39,11 +39,27 @@
 							</properties>
 						</extension>
 					</extensions>
+					<runtimeExtensions>
+						<extension>
+							<factoryClass>com.github.swissquote.carnotzet.runtime.extension.ContainerIpsDumpExtensionFactory</factoryClass>
+							<properties>
+								<property>
+									<name>message.text</name>
+									<value>Hello Carnotzet Runtime</value>
+								</property>
+							</properties>
+						</extension>
+					</runtimeExtensions>
 				</configuration>
 				<dependencies>
 					<dependency>
 						<groupId>com.github.swissquote.examples</groupId>
 						<artifactId>hello-extension</artifactId>
+						<version>${project.parent.version}</version>
+					</dependency>
+					<dependency>
+						<groupId>com.github.swissquote.examples</groupId>
+						<artifactId>hello-runtime-extension</artifactId>
 						<version>${project.parent.version}</version>
 					</dependency>
 				</dependencies>

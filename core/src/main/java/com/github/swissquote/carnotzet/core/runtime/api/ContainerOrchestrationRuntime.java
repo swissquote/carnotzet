@@ -61,9 +61,8 @@ public interface ContainerOrchestrationRuntime {
 	void shell(Container container);
 
 	/**
-	 * Pulls all docker images used in this environment. If there is any local image with a tag that matches the pulled images, the local
-	 * tag will be overridden and point to the freshly pushed images.
-	 * Equivalent to calling pull(PullPolicy.ALWAYS).
+	 * Pulls all docker images used in this environment. If there is any local image with a tag that matches the pulled images, the local tag
+	 * will be overridden and point to the freshly pushed images. Equivalent to calling pull(PullPolicy.ALWAYS).
 	 */
 	void pull();
 
@@ -75,9 +74,8 @@ public interface ContainerOrchestrationRuntime {
 	void pull(PullPolicy policy);
 
 	/**
-	 * Pulls a single docker image used in this environment. If there is any local image with a tag that matches the pulled image, the local
-	 * tag will be overridden and point to the freshly pushed image.
-	 * Equivalent to calling pull(service, PullPolicy.ALWAYS).
+	 * Pulls a single docker image used in this environment. If there is any local image with a tag that matches the pulled image, the local tag
+	 * will be overridden and point to the freshly pushed image. Equivalent to calling pull(service, PullPolicy.ALWAYS).
 	 *
 	 * @param service the name of the service whose docker image to be pulled
 	 */
@@ -94,10 +92,10 @@ public interface ContainerOrchestrationRuntime {
 	/**
 	 * Executes a command in a service container
 	 *
-	 * @param service the name of the service in which's container to execute the command
-	 * @param timeout maximum execution time allowed
+	 * @param service     the name of the service in which's container to execute the command
+	 * @param timeout     maximum execution time allowed
 	 * @param timeoutUnit Time unit for the timeout
-	 * @param command The command to execute
+	 * @param command     The command to execute
 	 * @return The execution result
 	 */
 	ExecResult exec(String service, int timeout, TimeUnit timeoutUnit, String... command);
@@ -106,6 +104,7 @@ public interface ContainerOrchestrationRuntime {
 	 * List containers in the environment
 	 * <p>
 	 * If a service has multiple replicas, all containers will be returned
+	 *
 	 * @return the list of all containers for this environment
 	 */
 	List<Container> getContainers();
@@ -132,18 +131,23 @@ public interface ContainerOrchestrationRuntime {
 	 * get details about a specific container
 	 *
 	 * @param serviceName in the environment
-	 * @param number the replica number
+	 * @param number      the replica number
 	 * @return details about the container
 	 */
 	Container getContainer(String serviceName, int number);
 
 	/**
-	 * Register a listener for log events.
-	 * log event will be sent asynchronously to the listener.
-	 * Can be called before or after start()
+	 * Register a listener for log events. log event will be sent asynchronously to the listener. Can be called before or after start()
 	 *
 	 * @param listener to register
 	 */
 	void registerLogListener(LogListener listener);
+
+	/**
+	 * Returns the instance id of this runtime
+	 */
+	default String getInstanceId() {
+		throw new UnsupportedOperationException("getInstanceId is not implemented");
+	}
 
 }

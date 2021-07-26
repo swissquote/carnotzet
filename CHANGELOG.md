@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Jersey (2.25.1) and Jackson (2.10.1) dependencies versions bumped to Jersey (2.29.1) and Jackson (2.10.4)
 - Using Jackson and Jersey BOMs
+- Internally use zt-exec instead of ProcessBuilder
 - Minor refactoring
 
 ## [1.8.2] - 2020-04-30

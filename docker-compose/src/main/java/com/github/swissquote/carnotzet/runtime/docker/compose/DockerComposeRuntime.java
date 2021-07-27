@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -22,6 +23,7 @@ import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -40,6 +42,7 @@ import com.github.swissquote.carnotzet.core.runtime.api.ContainerOrchestrationRu
 import com.github.swissquote.carnotzet.core.runtime.api.ExecResult;
 import com.github.swissquote.carnotzet.core.runtime.api.PullPolicy;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
+import com.github.swissquote.carnotzet.core.runtime.spi.ContainerOrchestrationRuntimeDefaultExtensionsProvider;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 
@@ -75,7 +78,15 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId, CommandRunner commandRunner, Boolean shouldExposePorts) {
-		this(carnotzet, instanceId, commandRunner, shouldExposePorts, new ArrayList<>());
+		this(carnotzet, instanceId, commandRunner, shouldExposePorts, getDefaultRuntimeExtensions());
+	}
+
+	private static List<ContainerOrchestrationRuntimeExtension> getDefaultRuntimeExtensions() {
+		ServiceLoader<ContainerOrchestrationRuntimeDefaultExtensionsProvider> loader =
+				ServiceLoader.load(ContainerOrchestrationRuntimeDefaultExtensionsProvider.class);
+		return StreamSupport.stream(loader.spliterator(), false)
+				.map(ContainerOrchestrationRuntimeDefaultExtensionsProvider::getDefaultExtension)
+				.collect(Collectors.toList());
 	}
 
 	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId, CommandRunner commandRunner, Boolean shouldExposePorts,

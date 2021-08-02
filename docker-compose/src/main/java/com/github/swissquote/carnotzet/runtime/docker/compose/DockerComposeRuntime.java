@@ -15,12 +15,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -35,9 +38,11 @@ import com.github.swissquote.carnotzet.core.runtime.CommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.api.Container;
 import com.github.swissquote.carnotzet.core.runtime.api.ContainerOrchestrationRuntime;
+import com.github.swissquote.carnotzet.core.runtime.api.ContainerOrchestrationRuntimeExtension;
 import com.github.swissquote.carnotzet.core.runtime.api.ExecResult;
 import com.github.swissquote.carnotzet.core.runtime.api.PullPolicy;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
+import com.github.swissquote.carnotzet.core.runtime.spi.ContainerOrchestrationRuntimeDefaultExtensionsProvider;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 
@@ -50,7 +55,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	private static final Pattern IP_ADDRESS_PATTERN = Pattern.compile(
 			"^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
 
-	private final Carnotzet carnotzet;
+	private Carnotzet carnotzet;
 
 	private final String instanceId;
 
@@ -59,6 +64,8 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	private final CommandRunner commandRunner;
 
 	private final Boolean shouldExposePorts;
+
+	private final List<ContainerOrchestrationRuntimeExtension> extensions;
 
 	public DockerComposeRuntime(Carnotzet carnotzet) {
 		this(carnotzet, carnotzet.getTopLevelModuleName());
@@ -71,6 +78,19 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId, CommandRunner commandRunner, Boolean shouldExposePorts) {
+		this(carnotzet, instanceId, commandRunner, shouldExposePorts, getDefaultRuntimeExtensions());
+	}
+
+	private static List<ContainerOrchestrationRuntimeExtension> getDefaultRuntimeExtensions() {
+		ServiceLoader<ContainerOrchestrationRuntimeDefaultExtensionsProvider> loader =
+				ServiceLoader.load(ContainerOrchestrationRuntimeDefaultExtensionsProvider.class);
+		return StreamSupport.stream(loader.spliterator(), false)
+				.map(ContainerOrchestrationRuntimeDefaultExtensionsProvider::getDefaultExtension)
+				.collect(Collectors.toList());
+	}
+
+	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId, CommandRunner commandRunner, Boolean shouldExposePorts,
+			List<ContainerOrchestrationRuntimeExtension> extensions) {
 		this.carnotzet = carnotzet;
 		if (instanceId != null) {
 			this.instanceId = instanceId;
@@ -80,6 +100,8 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		this.logManager = new DockerLogManager();
 		this.commandRunner = commandRunner;
 		this.shouldExposePorts = shouldExposePorts;
+		this.extensions = extensions;
+
 	}
 
 	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId) {
@@ -101,8 +123,8 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 			serviceBuilder.image(module.getImageName());
 			serviceBuilder.volumes(module.getDockerVolumes());
-			serviceBuilder.entrypoint(DockerUtils.parseEntrypointOrCmd(module.getDockerEntrypoint()));
-			serviceBuilder.command(DockerUtils.parseEntrypointOrCmd(module.getDockerCmd()));
+			serviceBuilder.entrypoint(escapeEnvVars(DockerUtils.parseEntrypointOrCmd(module.getDockerEntrypoint())));
+			serviceBuilder.command(escapeEnvVars(DockerUtils.parseEntrypointOrCmd(module.getDockerCmd())));
 			serviceBuilder.shm_size(module.getDockerShmSize());
 			serviceBuilder.environment(module.getEnv());
 			serviceBuilder.env_file(module.getDockerEnvFiles());
@@ -161,6 +183,18 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		log.debug(String.format("End build compose file for module %s", carnotzet.getConfig().getTopLevelModuleId()));
 	}
 
+	/**
+	 * If the entrypoint or command uses environment variables that are present inside the container, we don't want docker-compose to try to
+	 * interpolate them when docker-compose is run (the docker-compose process is run outside of the container and those variables don't exist).
+	 * <b>https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution</b>
+	 */
+	private List<String> escapeEnvVars(List<String> cmdOrEntryPoint) {
+		if (cmdOrEntryPoint == null) {
+			return null;
+		}
+		return cmdOrEntryPoint.stream().map(s -> s.replaceAll("\\$", "\\$\\$")).collect(Collectors.toList());
+	}
+
 	private Collection<String> lookUpCustomAliases(CarnotzetModule m) {
 		Set<String> result = new HashSet<>();
 		if (m.getProperties() != null && m.getProperties().containsKey("network.aliases")) {
@@ -185,17 +219,49 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		return result;
 	}
 
+	private void invokeAllExtensions(BiFunction<ContainerOrchestrationRuntimeExtension, CarnotzetModule, CarnotzetModule> consumer) {
+		List<CarnotzetModule> modules = new ArrayList<>();
+		for (CarnotzetModule m : carnotzet.getModules()) {
+			CarnotzetModule modified = m;
+			for (ContainerOrchestrationRuntimeExtension extension : extensions) {
+				modified = consumer.apply(extension, modified);
+			}
+			modules.add(modified);
+		}
+
+		carnotzet.setModules(modules);
+	}
+
+	private void invokeAllExtensions(BiFunction<ContainerOrchestrationRuntimeExtension, CarnotzetModule, CarnotzetModule> consumer,
+			CarnotzetModule module) {
+		CarnotzetModule modified = module;
+		for (ContainerOrchestrationRuntimeExtension extension : extensions) {
+			modified = consumer.apply(extension, modified);
+		}
+		List<CarnotzetModule> modules = new ArrayList<>();
+		for (CarnotzetModule m : carnotzet.getModules()) {
+			if (m.getId().equals(modified.getId())) {
+				modules.add(modified);
+			} else {
+				modules.add(m);
+			}
+		}
+		carnotzet.setModules(modules);
+	}
+
 	@Override
 	public void start() {
+		Instant start = Instant.now();
+		invokeAllExtensions((e, m) -> e.beforeStart(m, this, this.carnotzet));
 		log.debug("Forcing update of docker-compose.yml before start");
 		computeDockerComposeFile();
-		Instant start = Instant.now();
 		carnotzet.getModules().stream().filter(this::shouldStartByDefault).forEach(m ->
 				runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d",
 						"--scale", m.getServiceId() + "=" + m.getReplicas(), m.getServiceId())
 		);
 		ensureNetworkCommunicationIsPossible();
 		logManager.ensureCapturingLogs(start, getContainers());
+		invokeAllExtensions((e, m) -> e.afterStart(m, this, this.carnotzet));
 	}
 
 	private boolean shouldStartByDefault(CarnotzetModule m) {
@@ -221,10 +287,12 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		computeDockerComposeFile();
 		for (CarnotzetModule carnotzetModule : resolveModules(services)) {
 			String service = carnotzetModule.getServiceId();
+			invokeAllExtensions((e, m) -> e.beforeStart(m, this, this.carnotzet), carnotzetModule);
 			Instant start = Instant.now();
 			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d", service);
 			ensureNetworkCommunicationIsPossible();
 			logManager.ensureCapturingLogs(start, Collections.singletonList(getContainer(service)));
+			invokeAllExtensions((e, m) -> e.afterStart(m, this, this.carnotzet), carnotzetModule);
 		}
 	}
 
@@ -264,16 +332,20 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	@Override
 	public void stop() {
+		invokeAllExtensions((e, m) -> e.beforeStop(m, this, this.carnotzet));
 		ensureDockerComposeFileIsPresent();
 		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "stop");
+		invokeAllExtensions((e, m) -> e.afterStop(m, this, this.carnotzet));
 	}
 
 	@Override
 	public void stop(String services) {
-		ensureDockerComposeFileIsPresent();
 		for (CarnotzetModule carnotzetModule : resolveModules(services)) {
 			String service = carnotzetModule.getServiceId();
+			invokeAllExtensions((e, m) -> e.beforeStop(m, this, this.carnotzet), carnotzetModule);
+			ensureDockerComposeFileIsPresent();
 			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "stop", service);
+			invokeAllExtensions((e, m) -> e.afterStop(m, this, this.carnotzet), carnotzetModule);
 		}
 	}
 
@@ -285,6 +357,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	@Override
 	public void clean() {
+		invokeAllExtensions((e, m) -> e.beforeClean(m, this, this.carnotzet));
 		ensureDockerComposeFileIsPresent();
 		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "rm", "-f");
 		// The resources folder cannot be deleted while the sandbox is running on windows.
@@ -297,6 +370,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 				throw new UncheckedIOException(e);
 			}
 		}
+		invokeAllExtensions((e, m) -> e.afterClean(m, this, this.carnotzet));
 	}
 
 	@Override
@@ -321,8 +395,10 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	@Override
 	public void pull(PullPolicy policy) {
+		invokeAllExtensions((e, m) -> e.beforePull(m, this, this.carnotzet));
 		// We need to check service by service if a newer version exists or not
 		carnotzet.getModules().forEach(module -> pull(module.getServiceId(), policy));
+		invokeAllExtensions((e, m) -> e.afterPull(m, this, this.carnotzet));
 	}
 
 	@Override
@@ -333,7 +409,9 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	@Override
 	public void pull(@NonNull String services, PullPolicy policy) {
 		for (CarnotzetModule serviceModule : resolveModules(services)) {
+			invokeAllExtensions((e, m) -> e.beforePull(m, this, this.carnotzet), serviceModule);
 			DockerRegistry.pullImage(serviceModule, policy);
+			invokeAllExtensions((e, m) -> e.afterPull(m, this, this.carnotzet), serviceModule);
 		}
 	}
 
@@ -443,8 +521,10 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	public void clean(String services) {
 		for (CarnotzetModule carnotzetModule : resolveModules(services)) {
+			invokeAllExtensions((e, m) -> e.beforeClean(m, this, this.carnotzet), carnotzetModule);
 			String service = carnotzetModule.getServiceId();
 			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "rm", "-f", service);
+			invokeAllExtensions((e, m) -> e.afterClean(m, this, this.carnotzet), carnotzetModule);
 		}
 	}
 
@@ -507,5 +587,10 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			throw new RuntimeException("service [" + services + "] not found");
 		}
 		return myModules;
+	}
+
+	@Override
+	public String getInstanceId() {
+		return instanceId;
 	}
 }

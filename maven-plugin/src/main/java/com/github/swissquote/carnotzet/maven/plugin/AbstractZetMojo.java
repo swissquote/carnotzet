@@ -28,10 +28,13 @@ import com.github.swissquote.carnotzet.core.CarnotzetExtension;
 import com.github.swissquote.carnotzet.core.maven.CarnotzetModuleCoordinates;
 import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
 import com.github.swissquote.carnotzet.core.runtime.api.ContainerOrchestrationRuntime;
+import com.github.swissquote.carnotzet.core.runtime.api.ContainerOrchestrationRuntimeExtension;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
 import com.github.swissquote.carnotzet.core.runtime.log.StdOutLogPrinter;
 import com.github.swissquote.carnotzet.maven.plugin.impl.Utils;
 import com.github.swissquote.carnotzet.maven.plugin.spi.CarnotzetExtensionsFactory;
+import com.github.swissquote.carnotzet.maven.plugin.spi.ContainerOrchestrationRuntimeExtensionsFactory;
+import com.github.swissquote.carnotzet.maven.plugin.spi.ExtensionFactory;
 import com.github.swissquote.carnotzet.runtime.docker.compose.DockerComposeRuntime;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -92,6 +95,13 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	@Getter
 	private List<ExtensionConfiguration> extensions;
 
+	/**
+	 * The list of configuration objects for container runtime extensions
+	 */
+	@Parameter(property = "runtimeExtensions", readonly = true)
+	@Getter
+	private List<ExtensionConfiguration> runtimeExtensions;
+
 	@Getter
 	@Setter
 	private ContainerOrchestrationRuntime runtime;
@@ -102,8 +112,6 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	@Override
 	public void execute() throws MojoFailureException, MojoExecutionException {
 		SLF4JBridgeHandler.install();
-
-		List<CarnotzetExtension> runtimeExtensions = findRuntimeExtensions();
 
 		CarnotzetModuleCoordinates coordinates =
 				new CarnotzetModuleCoordinates(project.getGroupId(), project.getArtifactId(), project.getVersion());
@@ -120,6 +128,11 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 			resourcesPath = Paths.get("/var/tmp/carnotzet_" + instanceId);
 		}
 
+		List<CarnotzetExtension> extensions = findDynamicExtensions(this.extensions, CarnotzetExtensionsFactory.class);
+
+		List<ContainerOrchestrationRuntimeExtension> runtimeExtensions =
+				findDynamicExtensions(this.runtimeExtensions, ContainerOrchestrationRuntimeExtensionsFactory.class);
+
 		CarnotzetConfig config = CarnotzetConfig.builder()
 				.topLevelModuleId(coordinates)
 				.resourcesPath(resourcesPath)
@@ -127,38 +140,42 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 				.failOnDependencyCycle(failOnDependencyCycle)
 				.attachToCarnotzetNetwork(attachToCarnotzetNetwork)
 				.supportLegacyDnsNames(supportLegacyDnsNames)
-				.extensions(runtimeExtensions)
+				.extensions(extensions)
 				.build();
 
 		carnotzet = new Carnotzet(config);
 		if (bindLocalPorts == null) {
 			bindLocalPorts = !SystemUtils.IS_OS_LINUX;
 		}
-		runtime = new DockerComposeRuntime(carnotzet, instanceId, DefaultCommandRunner.INSTANCE, bindLocalPorts);
+
+		runtime = new DockerComposeRuntime(carnotzet, instanceId, DefaultCommandRunner.INSTANCE, bindLocalPorts, runtimeExtensions);
 
 		executeInternal();
 
 		SLF4JBridgeHandler.uninstall();
 	}
 
-	protected List<CarnotzetExtension> findRuntimeExtensions() {
-		List<CarnotzetExtensionsFactory> factories = new ArrayList<>(0);
-		ServiceLoader.load(CarnotzetExtensionsFactory.class).iterator().forEachRemaining(factories::add);
+	protected <F extends ExtensionFactory<E>, E> List<E> findDynamicExtensions(List<ExtensionConfiguration> extensionsConfigurations,
+			Class<F> factoryClass) {
+		List<F> factories = new ArrayList<>(0);
+		ServiceLoader.load(factoryClass).iterator().forEachRemaining(factories::add);
 
 		return factories.stream()
-				.map(factory -> factory.create(findExtensionFactoryProperties(factory)))
+				.map(factory -> factory.create(findExtensionFactoryProperties(extensionsConfigurations, factory)))
 				.collect(Collectors.toList());
 	}
 
-	private Properties findExtensionFactoryProperties(CarnotzetExtensionsFactory factory) {
-		return getExtensionFactoryConfig(factory).map(ExtensionConfiguration::getProperties).orElseGet(() -> {
+	private <F extends ExtensionFactory<?>> Properties findExtensionFactoryProperties(List<ExtensionConfiguration> extensionConfigurations,
+			F factory) {
+		return getExtensionFactoryConfig(extensionConfigurations, factory).map(ExtensionConfiguration::getProperties).orElseGet(() -> {
 			getLog().info("No properties found for " + factory.getClass().getName());
 			return new Properties();
 		});
 	}
 
-	private Optional<ExtensionConfiguration> getExtensionFactoryConfig(CarnotzetExtensionsFactory factory) {
-		return extensions.stream().filter(extConfig -> extConfig.isFor(factory.getClass())).findFirst();
+	private <F extends ExtensionFactory<?>> Optional<ExtensionConfiguration> getExtensionFactoryConfig(
+			List<ExtensionConfiguration> extensionConfigurations, F factory) {
+		return extensionConfigurations.stream().filter(extConfig -> extConfig.isFor(factory.getClass())).findFirst();
 	}
 
 	public abstract void executeInternal() throws MojoExecutionException, MojoFailureException;

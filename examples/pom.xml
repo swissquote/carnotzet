@@ -28,6 +28,7 @@
         <module>voting-worker</module>
         <module>voting-all</module>
         <module>hello-extension</module>
+		  <module>hello-runtime-extension</module>
     </modules>
 
 </project>

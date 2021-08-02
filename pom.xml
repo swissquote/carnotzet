@@ -156,6 +156,7 @@
 						</execution>
 					</executions>
 					<configuration>
+						<doclint>none</doclint>
 						<source>8</source>
 					</configuration>
 				</plugin>

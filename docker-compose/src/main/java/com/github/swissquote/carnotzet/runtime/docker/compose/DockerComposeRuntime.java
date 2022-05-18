@@ -46,7 +46,6 @@ import com.github.swissquote.carnotzet.core.runtime.spi.ContainerOrchestrationRu
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 
-import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 

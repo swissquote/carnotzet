@@ -150,4 +150,6 @@ public interface ContainerOrchestrationRuntime {
 		throw new UnsupportedOperationException("getInstanceId is not implemented");
 	}
 
+	List<ContainerOrchestrationRuntimeExtension> getRuntimeExtension();
+
 }

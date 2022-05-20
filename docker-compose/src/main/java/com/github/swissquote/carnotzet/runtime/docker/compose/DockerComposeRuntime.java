@@ -593,4 +593,9 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	public String getInstanceId() {
 		return instanceId;
 	}
+
+	@Override
+	public List<ContainerOrchestrationRuntimeExtension> getRuntimeExtension() {
+		return extensions;
+	}
 }

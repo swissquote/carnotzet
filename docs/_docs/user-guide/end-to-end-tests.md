@@ -18,7 +18,7 @@ voting-app environment and selenium-chrome :
 	<dependency>
 		<groupId>com.github.swissquote.examples</groupId>
 		<artifactId>selenium-chrome-carnotzet</artifactId>
-		<version>3.4.0</version>
+		<version>3.141.59</version>
 	</dependency>
 	<dependency>
 		<groupId>com.github.swissquote.examples</groupId>

@@ -284,10 +284,16 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	@Override
 	public void start(String services) {
 		log.debug("Forcing update of docker-compose.yml before start");
-		computeDockerComposeFile();
-		for (CarnotzetModule carnotzetModule : resolveModules(services)) {
-			String service = carnotzetModule.getServiceId();
+		Set<CarnotzetModule> resolvedModules = resolveModules(services);
+
+		for (CarnotzetModule carnotzetModule : resolvedModules) {
 			invokeAllExtensions((e, m) -> e.beforeStart(m, this, this.carnotzet), carnotzetModule);
+		}
+
+		computeDockerComposeFile();
+
+		for (CarnotzetModule carnotzetModule : resolvedModules) {
+			String service = carnotzetModule.getServiceId();
 			Instant start = Instant.now();
 			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d", service);
 			ensureNetworkCommunicationIsPossible();

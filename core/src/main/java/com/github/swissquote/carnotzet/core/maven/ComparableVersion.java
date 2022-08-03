@@ -13,7 +13,7 @@ import java.util.Properties;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings
-//CHECKSTYLE:OFF
+// CHECKSTYLE:OFF
 
 // Copied from https://github.com/apache/maven/blob/353d3eaa8f2be47878f584a7da398572b41d90af/maven-artifact/src/main/java/org/apache/maven/artifact/versioning/ComparableVersion.java
 
@@ -666,3 +666,5 @@ public class ComparableVersion
 		}
 	}
 }
+
+// CHECKSTYLE:ON

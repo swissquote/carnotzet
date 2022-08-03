@@ -18,6 +18,8 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,6 +44,8 @@ public class DockerRegistry {
 	public static final String CARNOTZET_IMAGE_MANIFESTS_CACHE_FILENAME = ".carnotzet_image_manifests.cache";
 	public static final String CARNOTZET_MANIFEST_DOWNLOAD_RETRIES = "manifest.download.retries.number.max";
 	public static final String CARNOTZET_MANIFEST_RETRY_DELAY_SECONDS = "manifest.download.retries.delay.secs";
+
+    private static final Map<ImageRef, ImageMetaData> IMAGE_META_DATA_CACHE = new ConcurrentHashMap<>();
 
 	private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
@@ -101,11 +105,13 @@ public class DockerRegistry {
 		}
 	}
 
-	public ImageMetaData getImageMetaData(ImageRef imageRef) {
-		DistributionManifestV2 di = getDistributionManifest(imageRef);
-		ContainerImageV1 im = getImageManifest(imageRef, di);
-		return new ImageMetaData(di, im);
-	}
+    public ImageMetaData getImageMetaData(ImageRef imageRef) {
+        return IMAGE_META_DATA_CACHE.computeIfAbsent(imageRef, ref -> {
+            DistributionManifestV2 di = getDistributionManifest(ref);
+            ContainerImageV1 im = getImageManifest(ref, di);
+            return new ImageMetaData(di, im);
+        });
+    }
 
 	private DistributionManifestV2 getDistributionManifest(ImageRef imageRef) {
 		try {

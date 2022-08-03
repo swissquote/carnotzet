@@ -35,8 +35,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 public final class ContainerStartupWrapperUtils {
 
-	// TODO : add static cache of image metadata to avoid fetching the same data from the registry multiple times
-
 	private ContainerStartupWrapperUtils() {
 	}
 

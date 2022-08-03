@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/swissquote/carnotzet.svg?branch=master)](https://travis-ci.org/swissquote/carnotzet)
+[![Build Status](https://app.travis-ci.com/swissquote/carnotzet.svg?branch=master)](https://app.travis-ci.com/swissquote/carnotzet)
 
 # Carnotzet
 Carnotzet allows you to use maven dependencies to easily share, version and re-use large modular development and testing environments.

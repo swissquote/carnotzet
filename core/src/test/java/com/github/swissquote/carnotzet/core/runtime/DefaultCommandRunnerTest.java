@@ -1,6 +1,7 @@
 package com.github.swissquote.carnotzet.core.runtime;
 
 import java.io.File;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
@@ -19,16 +20,17 @@ public class DefaultCommandRunnerTest {
 		final File tmp = File.createTempFile("carnotzet-test", null);
 		tmp.deleteOnExit();
 		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < 10000; i++){
+		for (int i = 0; i < 10000; i++) {
 			sb.append("This line is repeated a lot\n");
 		}
 		String expected = sb.toString();
 		FileUtils.write(tmp, expected);
 
 		// When
-		String actual = new SimpleTimeLimiter().callWithTimeout(
+		SimpleTimeLimiter limiter = SimpleTimeLimiter.create(Executors.newSingleThreadExecutor());
+		String actual = limiter.callWithTimeout(
 				() -> DefaultCommandRunner.INSTANCE.runCommandAndCaptureOutput("cat", tmp.getAbsolutePath()),
-				2, TimeUnit.SECONDS, true);
+				2, TimeUnit.SECONDS);
 
 		// Then
 		Assert.assertThat(actual, Is.is(expected.trim()));

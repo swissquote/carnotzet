@@ -18,8 +18,8 @@
 		<module>code-quality</module>
 		<module>core</module>
 		<module>file-merger-json</module>
-		<module>examples</module>
 		<module>maven-plugin</module>
+		<module>examples</module>
 		<module>docker-compose</module>
 		<module>e2e-tests-carnotzet</module>
 		<module>e2e-tests</module>

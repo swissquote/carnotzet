@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.8.7] - 2022-08-24
+
+### Added
+- Adding cache for image metadata
+
+### Changed
+- Update all libraries to the latest versions (except mvn invoker due to conflict)
+
+### Fixed
+- Fix checkstyle, spot bugs configuration
+
 ## [1.8.6] - 2022-05-27
 
 ### Added

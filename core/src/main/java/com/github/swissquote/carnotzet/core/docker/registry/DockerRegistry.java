@@ -106,9 +106,11 @@ public class DockerRegistry {
 	}
 
 	public ImageMetaData getImageMetaData(ImageRef imageRef) {
+		log.debug("Try to retrieve image metadata from cache for image {}", imageRef);
 		return IMAGE_META_DATA_CACHE.computeIfAbsent(imageRef, ref -> {
 			DistributionManifestV2 di = getDistributionManifest(ref);
 			ContainerImageV1 im = getImageManifest(ref, di);
+			log.debug("Cannot find image metadata in cache, retrieve data from docker registry");
 			return new ImageMetaData(di, im);
 		});
 	}

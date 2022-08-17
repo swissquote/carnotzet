@@ -3,5 +3,9 @@
     "config:base",
     "group:allNonMajor"
   ],
+  "ignoreDeps": [
+    "org.apache.maven.shared:maven-invoker"
+  ],
   "schedule": "before 9pm on Monday"
+  
 }

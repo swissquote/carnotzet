@@ -5,6 +5,8 @@ import static java.util.stream.Collectors.toList;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -154,6 +156,15 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			if (module.getLabels() != null) {
 				labels.putAll(module.getLabels());
 			}
+
+			try {
+				String hostname = InetAddress.getLocalHost().getHostName();
+				labels.put("carnotzet.instance.source", hostname);
+			}
+			catch (UnknownHostException e) {
+				log.error("Cannot determine hostname", e);
+			}
+
 			labels.put("com.dnsdock.alias", networkAliases.stream().collect(Collectors.joining(",")));
 			labels.put("carnotzet.instance.id", instanceId);
 			labels.put("carnotzet.module.name", module.getName());

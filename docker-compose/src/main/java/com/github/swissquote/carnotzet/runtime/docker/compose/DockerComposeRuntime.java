@@ -45,6 +45,7 @@ import com.github.swissquote.carnotzet.core.runtime.api.ExecResult;
 import com.github.swissquote.carnotzet.core.runtime.api.PullPolicy;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
 import com.github.swissquote.carnotzet.core.runtime.spi.ContainerOrchestrationRuntimeDefaultExtensionsProvider;
+import com.github.swissquote.carnotzet.core.util.Sha256;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 
@@ -149,7 +150,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			}
 
 			ContainerNetwork network = ContainerNetwork.builder().aliases(networkAliases).build();
-			networks.put("carnotzet", network);
+			networks.put(genNetworkName(), network);
 			serviceBuilder.networks(networks);
 
 			Map<String, String> labels = new HashMap<>();
@@ -179,7 +180,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 		Network network = Network.builder().driver("bridge").build();
 		Map<String, Network> networks = new HashMap<>();
-		networks.put("carnotzet", network);
+		networks.put(genNetworkName(), network);
 
 		DockerCompose compose = DockerCompose.builder().version("2").services(services).networks(networks).build();
 		DockerComposeGenerator generator = new DockerComposeGenerator(compose);
@@ -339,7 +340,12 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	private String getDockerNetworkName() {
-		return getDockerComposeProjectName() + "_carnotzet";
+		return getDockerComposeProjectName() + "_" + genNetworkName();
+	}
+
+	private String genNetworkName() {
+		// We use only first 12 characters of sha256 (48-bit) which has collision chance 1 of out of 10M
+		return "carnotzet_" + Sha256.getSHA(carnotzet.getResourcesFolder().toString()).substring(0, 12);
 	}
 
 	// normalize docker compose project name the same way docker-compose does (see https://github.com/docker/compose/tree/master/compose)

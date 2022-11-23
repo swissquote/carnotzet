@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.8.8] - 2022-11-23
+
+### Added
+- Add hostname as label for docker-compose
+
+### Fixed
+- Fix network docker-compose name collision 
+
+
 ## [1.8.7] - 2022-08-24
 
 ### Added

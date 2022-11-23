@@ -344,7 +344,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	private String genNetworkName() {
-		// SWEP-415: we use only first 12 character, 48-bit pre-hash which has collision chance 1 of out of 10M
+		// We use only first 12 characters of sha256 (48-bit) which has collision chance 1 of out of 10M
 		return "carnotzet_" + Sha256.getSHA(carnotzet.getResourcesFolder().toString()).substring(0, 12);
 	}
 

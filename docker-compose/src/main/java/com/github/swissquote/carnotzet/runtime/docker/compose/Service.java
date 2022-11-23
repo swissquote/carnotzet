@@ -48,6 +48,9 @@ public class Service {
 	//CHECKSTYLE:OFF
 	private final Set<String> extra_hosts;
 	//CHECKSTYLE:ON
+	@JsonProperty
+	//CHECKSTYLE:OFF
+	private final Integer pids_limit;
 
 	@JsonPOJOBuilder(withPrefix = "")
 	public static final class ServiceBuilder {

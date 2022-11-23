@@ -271,6 +271,10 @@ public class Carnotzet {
 		result.dockerEnvFiles(computeEnvFiles(module));
 		result.dockerShmSize(resolvedProperties.get("docker.shm_size"));
 
+		if (resolvedProperties.containsKey("docker.pids_limit")) {
+			result.pidsLimit(Integer.valueOf(resolvedProperties.get("docker.pids_limit")));
+		}
+
 		if (resolvedProperties.containsKey("replicas")) {
 			result.replicas(Integer.parseInt(resolvedProperties.get("replicas")));
 		}
@@ -368,7 +372,7 @@ public class Carnotzet {
 		}
 
 		return result.isEmpty() ? Collections.emptySet() : result.entrySet().stream().map(
-				entry -> String.format("%s:%s", entry.getKey(), entry.getValue()))
+						entry -> String.format("%s:%s", entry.getKey(), entry.getValue()))
 				.collect(Collectors.toSet());
 	}
 
@@ -400,6 +404,5 @@ public class Carnotzet {
 		// nothing matches. Nothing to do
 		return null;
 	}
-
 
 }

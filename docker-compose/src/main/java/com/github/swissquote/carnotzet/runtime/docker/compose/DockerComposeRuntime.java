@@ -130,6 +130,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			serviceBuilder.shm_size(module.getDockerShmSize());
 			serviceBuilder.environment(module.getEnv());
 			serviceBuilder.env_file(module.getDockerEnvFiles());
+			serviceBuilder.pids_limit(module.getPidsLimit());
 			if (shouldExposePorts) {
 				serviceBuilder.ports(getExposedPorts(module.getImageName(), module.getProperties()));
 			}
@@ -181,7 +182,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		Map<String, Network> networks = new HashMap<>();
 		networks.put("carnotzet", network);
 
-		DockerCompose compose = DockerCompose.builder().version("2").services(services).networks(networks).build();
+		DockerCompose compose = DockerCompose.builder().version("2.4").services(services).networks(networks).build();
 		DockerComposeGenerator generator = new DockerComposeGenerator(compose);
 		try {
 			Files.write(generator.generateDockerComposeFile(),

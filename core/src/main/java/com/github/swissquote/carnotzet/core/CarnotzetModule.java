@@ -43,6 +43,8 @@ public class CarnotzetModule {
 	private final Path jarPath;
 	@Builder.Default
 	private final Integer replicas = 1;
+	@Builder.Default
+	private final Integer pidsLimit = -1;
 
 	public String getShortImageName() {
 		String withoutHost = imageName.replaceFirst(".*/", "");

@@ -6,7 +6,7 @@ import java.security.MessageDigest;
 
 import lombok.SneakyThrows;
 
-public class Sha256 {
+public final class Sha256 {
 	public static final int RADIX = 16;
 	public static final int PAD = 32;
 	public static final String ALGORITHM = "SHA-256";

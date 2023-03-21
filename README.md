@@ -1,5 +1,7 @@
 [![Build Status](https://app.travis-ci.com/swissquote/carnotzet.svg?branch=master)](https://app.travis-ci.com/swissquote/carnotzet)
 
+# :exclamation: This project is not being developed anymore. 
+
 # Carnotzet
 Carnotzet allows you to use maven dependencies to easily share, version and re-use large modular development and testing environments.
 

@@ -22,5 +22,16 @@ jobs:
       with:
         java-version: ${{ matrix.java-version }}
         distribution: 'zulu'
+        cache: maven
+    - uses: stCarolas/setup-maven@v4.5
+      with:
+        maven-version: 3.8.1
     - run: mvn --batch-mode install
+    - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: Test Results
+          path: ${{ github.workspace }}/core/target/surefire-reports/TEST*.xml,${{ github.workspace }}/e2e-tests/target/surefire-reports/TEST*.xml
+          reporter: java-junit
 

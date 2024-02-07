@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.SystemUtils;
 
 import com.github.swissquote.carnotzet.core.maven.CarnotzetModuleCoordinates;
-import com.github.swissquote.carnotzet.core.maven.ComparableVersion;
 import com.github.swissquote.carnotzet.core.maven.MavenDependencyResolver;
 import com.github.swissquote.carnotzet.core.maven.ResourcesManager;
 import com.google.common.base.Strings;
@@ -70,6 +69,12 @@ public class Carnotzet {
 
 	@Getter
 	private final Boolean attachToCarnotzetNetwork;
+
+	@Getter
+	private final Boolean useExternalNetwork;
+
+	@Getter
+	private final String externalNetworkName;
 
 	@Getter
 	private final Boolean supportLegacyDnsNames;
@@ -126,6 +131,18 @@ public class Carnotzet {
 			this.attachToCarnotzetNetwork = true;
 		}
 
+		if (config.getUseExternalNetwork() != null) {
+			this.useExternalNetwork = config.getUseExternalNetwork();
+		} else {
+			this.useExternalNetwork = false;
+		}
+
+		if (config.getExternalNetworkName() != null) {
+			this.externalNetworkName = config.getExternalNetworkName();
+		} else {
+			this.externalNetworkName = CarnotzetConfig.DEFAULT_EXTERNAL_NETWORK_NAME;
+		}
+
 		if (config.getSupportLegacyDnsNames() != null) {
 			this.supportLegacyDnsNames = config.getSupportLegacyDnsNames();
 		} else {
@@ -158,7 +175,6 @@ public class Carnotzet {
 				}
 			}
 			assertNoDuplicateArtifactId(modules);
-			assertMinimalVersionOfCarnotzet(modules);
 			modules = selectModulesForUniqueServiceId(modules);
 		}
 		return modules;
@@ -208,38 +224,6 @@ public class Carnotzet {
 			}
 			seen.put(artifactId, m);
 		});
-	}
-
-	private void assertMinimalVersionOfCarnotzet(List<CarnotzetModule> modules) {
-		ComparableVersion actualVersion = getCarnotzetVersion();
-		log.debug("Version of carnotzet : {}", actualVersion);
-		for (CarnotzetModule module : modules) {
-			String minVersionForModuleStr = module.getProperties().get("carnotzet.min.version");
-			if (minVersionForModuleStr == null) {
-				continue;
-			}
-			ComparableVersion minVersionForModule = new ComparableVersion(minVersionForModuleStr);
-			log.debug("Min version of carnotzet for [{}] : {}", module.getName(), minVersionForModule);
-			log.debug("Comparison result : {}", minVersionForModule.compareTo(actualVersion));
-			if (minVersionForModule.compareTo(actualVersion) > 0) {
-				throw new CarnotzetDefinitionException("Module [" + module.getName() + "] requires features introduced "
-						+ "in carnotzet version [" + minVersionForModule + "] and you seem to be using "
-						+ "version [" + actualVersion + "]. Please upgrade your version of carnotzet and try again.");
-			}
-		}
-
-	}
-
-	private ComparableVersion getCarnotzetVersion() {
-		final Properties properties = new Properties();
-		try {
-			properties.load(this.getClass().getClassLoader().getResourceAsStream("maven.properties"));
-			String versionString = properties.getProperty("carnotzet.version");
-			return new ComparableVersion(versionString);
-		}
-		catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
 	}
 
 	public Optional<CarnotzetModule> getModule(@NonNull String moduleName) {

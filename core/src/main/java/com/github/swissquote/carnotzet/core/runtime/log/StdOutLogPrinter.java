@@ -24,7 +24,7 @@ public class StdOutLogPrinter extends LogListenerBase {
 
 	private final static List<Ansi.Color> UNICORN_RAINBOW_MAGIC = new ArrayList<>();
 
-	private Map<String, Ansi.Color> serviceColors = new HashMap<>();
+	private final Map<String, Ansi.Color> serviceColors = new HashMap<>();
 
 	private Integer longestServiceName = 0;
 

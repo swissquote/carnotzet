@@ -1,6 +1,7 @@
 package com.github.swissquote.carnotzet.runtime.extension;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -44,9 +45,11 @@ public final class ContainerIpsDumpExtension implements ContainerOrchestrationRu
 	@SneakyThrows
 	public CarnotzetModule afterStart(CarnotzetModule module, ContainerOrchestrationRuntime runtime, Carnotzet carnotzet) {
 		log.info("After start");
-		dumpDirectory.toFile().mkdirs();
+		if (!dumpDirectory.toFile().mkdirs()) {
+			log.info("Could not delete [{}]", dumpDirectory);
+		}
 		Container container = runtime.getContainer(module.getServiceId());
-		byte[] ipStrBytes = container.getIp().getBytes();
+		byte[] ipStrBytes = container.getIp().getBytes(StandardCharsets.UTF_8);
 		Files.write(dumpDirectory.resolve(module.getServiceId()), ipStrBytes);
 		return module;
 	}

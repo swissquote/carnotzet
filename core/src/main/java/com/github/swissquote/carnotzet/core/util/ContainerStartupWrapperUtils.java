@@ -22,6 +22,7 @@ import com.github.swissquote.carnotzet.core.docker.registry.ImageMetaData;
 import com.github.swissquote.carnotzet.core.docker.registry.ImageRef;
 import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -147,6 +148,7 @@ public final class ContainerStartupWrapperUtils {
 		// Local images may not be available for target runtime environment (ie : cloud)
 		private Boolean ignoreLocalImages = false;
 
+		@SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
 		public StartupWrapper(@NonNull CarnotzetModule moduleToWrap) {
 			this.moduleToWrap = moduleToWrap;
 		}

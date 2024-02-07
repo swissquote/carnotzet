@@ -13,6 +13,7 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,6 +25,7 @@ public class WelcomePageGenerator {
 	private final String after;
 	private final List<WelcomePagePostProcessor> postProcessors;
 
+	@SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
 	public WelcomePageGenerator() {
 
 		try {
@@ -37,6 +39,7 @@ public class WelcomePageGenerator {
 		this.postProcessors = Collections.emptyList();
 	}
 
+	@SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
 	public WelcomePageGenerator(List<WelcomePagePostProcessor> postProcessors) {
 		try {
 			this.before = Resources.toString(Thread.currentThread().getContextClassLoader().getResource("welcome/before.html"), Charsets.UTF_8);

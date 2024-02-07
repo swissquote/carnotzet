@@ -31,6 +31,7 @@ import com.github.swissquote.carnotzet.core.maven.MavenDependencyResolver;
 import com.github.swissquote.carnotzet.core.maven.ResourcesManager;
 import com.google.common.base.Strings;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -73,6 +74,7 @@ public class Carnotzet {
 	@Getter
 	private final Boolean supportLegacyDnsNames;
 
+	@SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
 	public Carnotzet(CarnotzetConfig config) {
 		log.debug("Creating new carnotzet with config [{}]", config);
 		this.config = config;

@@ -25,6 +25,7 @@ public class FileSystemCache<T> {
 	private final Class<T> deserializationType;
 	private final ObjectMapper jsonMapper;
 
+	@SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
 	public FileSystemCache(Path cachePath, Class<T> deserializationType) {
 		this.cachePath = cachePath;
 		this.deserializationType = deserializationType;

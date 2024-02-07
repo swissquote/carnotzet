@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
  * Parses the text ouptut of "mvn dependency:tree -Dverbose" into a java object tree.
  * Copied from https://github.com/adutra/maven-dependency-tree-parser/ (apache 2) and modified to keep only text parsing
@@ -101,6 +99,34 @@ public class TreeTextParser {
 		return -1;
 	}
 
+	private boolean isEmpty(CharSequence cs) {
+		return cs == null || cs.length() == 0;
+	}
+
+	private String substringAfter(String str, String separator) {
+		if (isEmpty(str)) {
+			return str;
+		} else if (separator == null) {
+			return "";
+		} else {
+			int pos = str.indexOf(separator);
+			return pos == -1 ? "" : str.substring(pos + separator.length());
+		}
+	}
+
+	private String substringBefore(String str, String separator) {
+		if (!isEmpty(str) && separator != null) {
+			if (separator.isEmpty()) {
+				return "";
+			} else {
+				int pos = str.indexOf(separator);
+				return pos == -1 ? str : str.substring(0, pos);
+			}
+		} else {
+			return str;
+		}
+	}
+
 	/**
 	 * When doing an install at the same time on a multi-module project, one can get this kind of output:
 	 * <pre>
@@ -134,7 +160,7 @@ public class TreeTextParser {
 			boolean projectLine = artifactFound && tempLine.contains("project: ");
 			if (artifactLine || projectLine) {
 				if (tempLine.contains("artifact = ") && !tempLine.contains("active project artifact:")) {
-					artifact = StringUtils.substringBefore(StringUtils.substringAfter(tempLine, "artifact = "), ";");
+					artifact = substringBefore(substringAfter(tempLine, "artifact = "), ";");
 					artifactFound = true;
 				}
 				this.lineIndex++;

@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
 
@@ -66,6 +65,42 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	private final List<ContainerOrchestrationRuntimeExtension> extensions;
 
+	private static final boolean IS_OS_WINDOWS = isWindows();
+
+	private static final boolean IS_OS_MAC = isMac();
+
+	private static final boolean IS_OS_LINUX = isLinux();
+
+	private static boolean isWindows() {
+		try {
+			String osName = System.getProperty("os.name");
+			return osName.startsWith("Windows");
+		}
+		catch (SecurityException e) {
+			return false;
+		}
+	}
+
+	private static boolean isMac() {
+		try {
+			String osName = System.getProperty("os.name");
+			return osName.startsWith("Mac");
+		}
+		catch (SecurityException e) {
+			return false;
+		}
+	}
+
+	private static boolean isLinux() {
+		try {
+			String osName = System.getProperty("os.name");
+			return osName.toLowerCase().startsWith("linux");
+		}
+		catch (SecurityException e) {
+			return false;
+		}
+	}
+
 	public DockerComposeRuntime(Carnotzet carnotzet) {
 		this(carnotzet, carnotzet.getTopLevelModuleName());
 	}
@@ -73,7 +108,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId, CommandRunner commandRunner) {
 		// Due to limitations in docker for mac and windows, mapping local ports to container ports is the preferred technique for those users.
 		// https://docs.docker.com/docker-for-mac/networking/#i-cannot-ping-my-containers
-		this(carnotzet, instanceId, commandRunner, SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_WINDOWS);
+		this(carnotzet, instanceId, commandRunner, IS_OS_MAC || IS_OS_WINDOWS);
 	}
 
 	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId, CommandRunner commandRunner, Boolean shouldExposePorts) {
@@ -312,7 +347,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	private void ensureNetworkCommunicationIsPossible() {
 
-		if (!SystemUtils.IS_OS_LINUX) {
+		if (!IS_OS_LINUX) {
 			return;
 		}
 
@@ -381,7 +416,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "rm", "-f");
 		// The resources folder cannot be deleted while the sandbox is running on windows.
 		// So we do it here instead
-		if (SystemUtils.IS_OS_WINDOWS) {
+		if (IS_OS_WINDOWS) {
 			try {
 				FileUtils.deleteDirectory(carnotzet.getResourcesFolder().toFile());
 			}
@@ -443,13 +478,13 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			return Collections.emptyList();
 		}
 		StringBuilder template = new StringBuilder("{{ index .Id}}:");
-		if (SystemUtils.IS_OS_WINDOWS) {
+		if (IS_OS_WINDOWS) {
 			template.append("{{ index .Config.Labels \\\"com.docker.compose.service\\\" }}:");
 		} else {
 			template.append("{{ index .Config.Labels \"com.docker.compose.service\" }}:");
 		}
 		template.append("{{ index .State.Running}}:");
-		if (SystemUtils.IS_OS_WINDOWS) {
+		if (IS_OS_WINDOWS) {
 			template.append("{{ index .Config.Labels \\\"com.docker.compose.container-number\\\" }}:");
 		} else {
 			template.append("{{ index .Config.Labels \"com.docker.compose.container-number\" }}:");

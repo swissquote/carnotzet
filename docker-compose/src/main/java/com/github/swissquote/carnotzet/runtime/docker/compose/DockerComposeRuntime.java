@@ -3,8 +3,10 @@ package com.github.swissquote.carnotzet.runtime.docker.compose;
 import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
+import java.io.File;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
@@ -28,7 +30,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.apache.commons.io.FileUtils;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
 
@@ -418,7 +419,10 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		// So we do it here instead
 		if (IS_OS_WINDOWS) {
 			try {
-				FileUtils.deleteDirectory(carnotzet.getResourcesFolder().toFile());
+				Files.walk(carnotzet.getResourcesFolder())
+						.sorted(Comparator.reverseOrder())
+						.map(Path::toFile)
+						.forEach(File::delete);
 			}
 			catch (IOException e) {
 				throw new UncheckedIOException(e);

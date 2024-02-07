@@ -1,6 +1,8 @@
 package com.github.swissquote.carnotzet.core.runtime;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -9,7 +11,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.commons.io.FileUtils;
 import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,7 +28,7 @@ public class DefaultCommandRunnerTest {
 			sb.append("This line is repeated a lot\n");
 		}
 		String expected = sb.toString();
-		FileUtils.write(tmp, expected);
+		Files.write(tmp.toPath(), expected.getBytes(StandardCharsets.UTF_8));
 
 		// When
 		String actual = callWithTimeout(

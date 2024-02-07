@@ -5,12 +5,14 @@ import static java.nio.file.Files.find;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.function.BiPredicate;
@@ -67,7 +69,10 @@ public class ResourcesManager {
 
 		try {
 			log.debug("Extracting jars resources to [{}]", resourcesRoot);
-			FileUtils.deleteDirectory(resourcesRoot.toFile());
+			Files.walk(resourcesRoot)
+					.sorted(Comparator.reverseOrder())
+					.map(Path::toFile)
+					.forEach(File::delete);
 			if (!expandedJars.toFile().mkdirs()) {
 				throw new CarnotzetDefinitionException("Could not create directory [" + resourcesRoot + "]");
 			}

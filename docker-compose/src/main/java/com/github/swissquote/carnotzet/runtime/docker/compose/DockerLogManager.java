@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -97,7 +98,7 @@ import lombok.extern.slf4j.Slf4j;
 	}
 
 	private List<String> getLogCommand(Instant since, LogListener listener, Container container) {
-		List<String> command = Arrays.asList("docker", "logs");
+		List<String> command = new ArrayList<>(Arrays.asList("docker", "logs"));
 		Integer tail = listener.getTail();
 		if (since != null) {
 			String sinceTimestamp = Long.toString(since.getEpochSecond());

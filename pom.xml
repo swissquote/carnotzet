@@ -65,6 +65,9 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.version>3.8.6</maven.version>
+		<maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
+		<maven-source-plugin.version>3.3.0</maven-source-plugin.version>
+		<maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
 		<jackson.version>2.13.3</jackson.version>
 	</properties>
 
@@ -73,7 +76,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.10.1</version>
+				<version>${maven-compiler-plugin.version}</version>
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
@@ -82,7 +85,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.2.1</version>
+				<version>${maven-source-plugin.version}</version>
 				<executions>
 					<execution>
 						<goals>
@@ -123,7 +126,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-checkstyle-plugin</artifactId>
-					<version>3.1.2</version>
+					<version>3.3.1</version>
 					<configuration>
 						<linkXRef>false</linkXRef>
 						<logViolationsToConsole>true</logViolationsToConsole>
@@ -149,7 +152,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-javadoc-plugin</artifactId>
-					<version>3.4.1</version>
+					<version>3.6.3</version>
 					<executions>
 						<execution>
 							<id>attach-javadocs</id>
@@ -162,6 +165,11 @@
 						<doclint>none</doclint>
 						<source>8</source>
 					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>${maven-jar-plugin.version}</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -193,7 +201,7 @@
 		<dependency>
 			<groupId>com.github.spotbugs</groupId>
 			<artifactId>spotbugs-annotations</artifactId>
-			<version>4.7.1</version>
+			<version>4.8.3</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

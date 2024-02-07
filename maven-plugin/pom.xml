@@ -41,7 +41,7 @@
 		<dependency>
 			<groupId>org.apache.maven.plugin-tools</groupId>
 			<artifactId>maven-plugin-annotations</artifactId>
-			<version>3.6.4</version>
+			<version>3.11.0</version>
 			<scope>provided</scope>
 		</dependency>
 
@@ -64,9 +64,12 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-plugin-plugin</artifactId>
-				<version>3.6.4</version>
+				<version>3.11.0</version>
 				<configuration>
 					<skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
+					<goalPrefix>zet</goalPrefix>
+					<!-- Keep backwards compatibility with previous maven-plugin-plugin version -->
+					<helpPackageName>com.github.swissquote.carnotzet.maven.plugin</helpPackageName>
 				</configuration>
 				<executions>
 					<execution>

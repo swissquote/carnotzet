@@ -7,6 +7,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,17 +47,12 @@ import com.github.swissquote.carnotzet.core.runtime.api.PullPolicy;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
 import com.github.swissquote.carnotzet.core.runtime.spi.ContainerOrchestrationRuntimeDefaultExtensionsProvider;
 import com.github.swissquote.carnotzet.core.util.Sha256;
-import com.google.common.base.Strings;
-import com.google.common.io.Files;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
-
-	private static final Pattern IP_ADDRESS_PATTERN = Pattern.compile(
-			"^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
 
 	private Carnotzet carnotzet;
 
@@ -136,8 +132,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			}
 
 			Map<String, ContainerNetwork> networks = new HashMap<>();
-			Set<String> networkAliases = new HashSet<>();
-			networkAliases.addAll(lookUpCustomAliases(module));
+			Set<String> networkAliases = new HashSet<>(lookUpCustomAliases(module));
 
 			// Carnotzet semantics name
 			networkAliases.add(module.getServiceId() + ".docker");
@@ -166,7 +161,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 				log.error("Cannot determine hostname", e);
 			}
 
-			labels.put("com.dnsdock.alias", networkAliases.stream().collect(Collectors.joining(",")));
+			labels.put("com.dnsdock.alias", String.join(",", networkAliases));
 			labels.put("carnotzet.instance.id", instanceId);
 			labels.put("carnotzet.module.name", module.getName());
 			labels.put("carnotzet.module.service.id", module.getServiceId());
@@ -185,9 +180,10 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		DockerCompose compose = DockerCompose.builder().version("2").services(services).networks(networks).build();
 		DockerComposeGenerator generator = new DockerComposeGenerator(compose);
 		try {
-			Files.write(generator.generateDockerComposeFile(),
-					carnotzet.getResourcesFolder().resolve("docker-compose.yml").toFile(),
-					StandardCharsets.UTF_8);
+			Files.write(
+					carnotzet.getResourcesFolder().resolve("docker-compose.yml"),
+					generator.generateDockerComposeFile().getBytes(StandardCharsets.UTF_8)
+			);
 		}
 		catch (IOException e) {
 			throw new UncheckedIOException("Failed to write docker-compose.yml", e);
@@ -287,7 +283,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		if (str == null) {
 			return true;
 		}
-		if (str.trim().toLowerCase().equals("false")) {
+		if (str.trim().equalsIgnoreCase("false")) {
 			return false;
 		}
 		return true;
@@ -324,7 +320,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			String buildContainerId =
 					runCommandAndCaptureOutput("/bin/bash", "-c", "docker ps | grep $(hostname) | grep -v k8s_POD | cut -d ' ' -f 1");
 
-			if (Strings.isNullOrEmpty(buildContainerId)) {
+			if (buildContainerId == null || buildContainerId.trim().isEmpty()) {
 				// we are probably not running inside a container, networking should be fine
 				return;
 			}
@@ -530,7 +526,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	private boolean dockerComposeFileExists() {
-		return java.nio.file.Files.exists(carnotzet.getResourcesFolder().resolve("docker-compose.yml"));
+		return Files.exists(carnotzet.getResourcesFolder().resolve("docker-compose.yml"));
 	}
 
 	private void ensureDockerComposeFileIsPresent() {

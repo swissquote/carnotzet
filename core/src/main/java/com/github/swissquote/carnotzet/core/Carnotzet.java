@@ -29,7 +29,6 @@ import com.github.swissquote.carnotzet.core.maven.CarnotzetModuleCoordinates;
 import com.github.swissquote.carnotzet.core.maven.ComparableVersion;
 import com.github.swissquote.carnotzet.core.maven.MavenDependencyResolver;
 import com.github.swissquote.carnotzet.core.maven.ResourcesManager;
-import com.google.common.base.Strings;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
@@ -315,7 +314,7 @@ public class Carnotzet {
 						.map(m -> m.getId().getVersion())
 						.findFirst()
 						.orElse("");
-				if (Strings.isNullOrEmpty(myModuleVersion)) {
+				if (myModuleVersion.trim().isEmpty()) {
 					// complain nicely with a list of modules
 					String modulesList = modules.stream()
 							.map(CarnotzetModule::getName)

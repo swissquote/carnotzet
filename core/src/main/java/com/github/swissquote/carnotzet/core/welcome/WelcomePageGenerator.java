@@ -1,17 +1,20 @@
 package com.github.swissquote.carnotzet.core.welcome;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
-import com.google.common.io.Resources;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.AllArgsConstructor;
@@ -25,13 +28,26 @@ public class WelcomePageGenerator {
 	private final String after;
 	private final List<WelcomePagePostProcessor> postProcessors;
 
+	// Redundant null check is not friends with try-with-resource
+	@SuppressFBWarnings({"RCN_REDUNDANT_NULLCHECK_OF_NULL_VALUE", "NP_LOAD_OF_KNOWN_NULL_VALUE"})
+	private String resourceAsString(String fileName) throws IOException {
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+		try (InputStream is = classLoader.getResourceAsStream(fileName)) {
+			if (is == null) {
+				return null;
+			}
+			try (InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8);
+				 BufferedReader reader = new BufferedReader(isr)) {
+				return reader.lines().collect(Collectors.joining(System.lineSeparator()));
+			}
+		}
+	}
+
 	@SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
 	public WelcomePageGenerator() {
-
 		try {
-			this.before = Resources.toString(Thread.currentThread().getContextClassLoader().getResource("welcome/before.html"), Charsets.UTF_8);
-			this.after = Resources.toString(Thread.currentThread().getContextClassLoader().getResource("welcome/after.html"), Charsets.UTF_8);
-
+			this.before = resourceAsString("welcome/before.html");
+			this.after = resourceAsString("welcome/after.html");
 		}
 		catch (IOException e) {
 			throw new UncheckedIOException(e);
@@ -42,9 +58,8 @@ public class WelcomePageGenerator {
 	@SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
 	public WelcomePageGenerator(List<WelcomePagePostProcessor> postProcessors) {
 		try {
-			this.before = Resources.toString(Thread.currentThread().getContextClassLoader().getResource("welcome/before.html"), Charsets.UTF_8);
-			this.after = Resources.toString(Thread.currentThread().getContextClassLoader().getResource("welcome/after.html"), Charsets.UTF_8);
-
+			this.before = resourceAsString("welcome/before.html");
+			this.after = resourceAsString("welcome/after.html");
 		}
 		catch (IOException e) {
 			throw new UncheckedIOException(e);
@@ -74,13 +89,13 @@ public class WelcomePageGenerator {
 			welcomePageStr = postProcessor.process(welcomePageStr);
 		}
 
-		Files.write(welcomePageStr, outputFile.toFile(), Charsets.UTF_8);
+		Files.write(outputFile, welcomePageStr.getBytes(StandardCharsets.UTF_8));
 	}
 
 	private void appendWelcomeFrom(File child, StringBuilder welcomePage) throws IOException {
 		File welcomeFile = new File(child, "welcome/welcome.html");
 		if (welcomeFile.exists()) {
-			welcomePage.append(Files.toString(welcomeFile, Charsets.UTF_8));
+			welcomePage.append(new String(Files.readAllBytes(welcomeFile.toPath()), StandardCharsets.UTF_8));
 		}
 	}
 

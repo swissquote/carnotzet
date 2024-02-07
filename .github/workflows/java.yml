@@ -23,9 +23,6 @@ jobs:
         java-version: ${{ matrix.java-version }}
         distribution: 'zulu'
         cache: maven
-    - uses: stCarolas/setup-maven@v5
-      with:
-        maven-version: 3.8.1
     - name: Maven Info
       run:  echo "home=$(mvn -v -q | grep "Maven home:" | sed -e 's/Maven home://' -e 's/^[[:space:]]*//')" >> $GITHUB_OUTPUT
       shell: bash

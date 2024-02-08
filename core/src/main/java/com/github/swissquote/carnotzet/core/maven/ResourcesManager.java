@@ -16,8 +16,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.function.BiPredicate;
-
-import org.apache.commons.io.FileUtils;
+import java.util.stream.Stream;
 
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
@@ -58,6 +57,17 @@ public class ResourcesManager {
 		return expandedJars.resolve(module.getName());
 	}
 
+	private static void copyDirectory(String sourceDirectoryLocation, String destinationDirectoryLocation)
+			throws IOException {
+		try (Stream<Path> walk = Files.walk(Paths.get(sourceDirectoryLocation))) {
+			for (Path source : (Iterable<Path>) walk::iterator) {
+				Path destination = Paths.get(destinationDirectoryLocation, source.toString()
+						.substring(sourceDirectoryLocation.length()));
+				Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+			}
+		}
+	}
+
 	/**
 	 * Extract all jar resources to a single directory with the following structure :<br>
 	 * resourcesRoot/expanded-jars/module1/...<br>
@@ -87,8 +97,9 @@ public class ResourcesManager {
 				if (module.getName().equals(topLevelModuleName)
 						&& topLevelModuleResourcesPath != null
 						&& topLevelModuleResourcesPath.toFile().exists()) {
-					FileUtils.copyDirectory(topLevelModuleResourcesPath.toFile(),
-							expandedJars.resolve(topLevelModuleName).toFile());
+
+					copyDirectory(topLevelModuleResourcesPath.toString(),
+							expandedJars.resolve(topLevelModuleName).toString());
 				}
 			}
 		}
@@ -138,7 +149,7 @@ public class ResourcesManager {
 						if (Files.isRegularFile(source)) {
 							Files.copy(source, resolvedModulePath.resolve(source.getFileName()), StandardCopyOption.REPLACE_EXISTING);
 						} else if (Files.isDirectory(source)) {
-							FileUtils.copyDirectory(source.toFile(), resolvedModulePath.resolve(source.getFileName()).toFile());
+							copyDirectory(source.toString(), resolvedModulePath.resolve(source.getFileName()).toString());
 						}
 					}
 					catch (IOException e) {

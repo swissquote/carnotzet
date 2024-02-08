@@ -9,18 +9,18 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Stream;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
 
 public class ResourcesManagerTest {
@@ -28,13 +28,24 @@ public class ResourcesManagerTest {
 	@Rule
 	public TemporaryFolder temp = new TemporaryFolder();
 
+	private static void copyDirectory(String sourceDirectoryLocation, String destinationDirectoryLocation)
+			throws IOException {
+		try (Stream<Path> walk = Files.walk(Paths.get(sourceDirectoryLocation))) {
+			for (Path source : (Iterable<Path>) walk::iterator) {
+				Path destination = Paths.get(destinationDirectoryLocation, source.toString()
+						.substring(sourceDirectoryLocation.length()));
+				Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+			}
+		}
+	}
+
 	@Test
 	public void override_file() throws IOException {
 		// Given
 		URL url = Thread.currentThread().getContextClassLoader().getResource("example_override");
 		File example = new File(url.getPath());
 		Path resources = temp.newFolder().toPath();
-		FileUtils.copyDirectory(example, resources.toFile());
+		copyDirectory(example.toString(), resources.toString());
 		ResourcesManager manager = new ResourcesManager(resources, null);
 		List<CarnotzetModule> modules = Arrays.asList(
 				CarnotzetModule.builder().name("service3").serviceId("service3").build(),
@@ -67,7 +78,7 @@ public class ResourcesManagerTest {
 		URL url = Thread.currentThread().getContextClassLoader().getResource("example_merge");
 		File example = new File(url.getPath());
 		Path resources = temp.newFolder().toPath();
-		FileUtils.copyDirectory(example, resources.toFile());
+		copyDirectory(example.toString(), resources.toString());
 		ResourcesManager manager = new ResourcesManager(resources, null);
 		List<CarnotzetModule> modules = Arrays.asList(
 				CarnotzetModule.builder().name("service3").serviceId("service3").build(),
@@ -105,7 +116,7 @@ public class ResourcesManagerTest {
 		URL url = Thread.currentThread().getContextClassLoader().getResource("example_copy_own_resources");
 		File example = new File(url.getPath());
 		Path resources = temp.newFolder().toPath();
-		FileUtils.copyDirectory(example, resources.toFile());
+		copyDirectory(example.toString(), resources.toString());
 		ResourcesManager manager = new ResourcesManager(resources, null);
 		List<CarnotzetModule> modules = Arrays.asList(
 				CarnotzetModule.builder().name("service2").serviceId("service2").build(),
@@ -129,7 +140,7 @@ public class ResourcesManagerTest {
 		URL url = Thread.currentThread().getContextClassLoader().getResource("example_config_variant");
 		File example = new File(url.getPath());
 		Path resources = temp.newFolder().toPath();
-		FileUtils.copyDirectory(example, resources.toFile());
+		copyDirectory(example.toString(), resources.toString());
 		ResourcesManager manager = new ResourcesManager(resources, null);
 		List<CarnotzetModule> modules = Arrays.asList(
 				CarnotzetModule.builder().name("service2").serviceId("service2").build(),
@@ -153,7 +164,7 @@ public class ResourcesManagerTest {
 		URL url = Thread.currentThread().getContextClassLoader().getResource("example_multiple_variants_for_same_service_id");
 		File example = new File(url.getPath());
 		Path resources = temp.newFolder().toPath();
-		FileUtils.copyDirectory(example, resources.toFile());
+		copyDirectory(example.toString(), resources.toString());
 		ResourcesManager manager = new ResourcesManager(resources, null);
 		List<CarnotzetModule> modules = Arrays.asList(
 				CarnotzetModule.builder().name("service1-variant2").serviceId("service1").build(),

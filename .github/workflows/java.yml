@@ -23,13 +23,7 @@ jobs:
         java-version: ${{ matrix.java-version }}
         distribution: 'zulu'
         cache: maven
-    - name: Maven Info
-      run:  echo "home=$(mvn -v -q | grep "Maven home:" | sed -e 's/Maven home://' -e 's/^[[:space:]]*//')" >> $GITHUB_OUTPUT
-      shell: bash
-      id: maven
     - run: mvn --batch-mode install
-      env:
-        M2_HOME: '${{ steps.maven.outputs.home }}'
     - name: Test Report
       uses: dorny/test-reporter@v1
       if: success() || failure()

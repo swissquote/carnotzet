@@ -5,11 +5,11 @@ import static java.util.stream.Collectors.toList;
 import java.io.IOException;
 import java.io.File;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,8 +66,8 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	private final List<ContainerOrchestrationRuntimeExtension> extensions;
 
-  private final List<String> dockerComposeCommand;
-  
+	private final List<String> dockerComposeCommand;
+
 	private static final boolean IS_OS_WINDOWS = isWindows();
 
 	private static final boolean IS_OS_MAC = isMac();
@@ -127,7 +127,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId, CommandRunner commandRunner, Boolean shouldExposePorts,
-			List<ContainerOrchestrationRuntimeExtension> extensions) {
+								List<ContainerOrchestrationRuntimeExtension> extensions) {
 		this.carnotzet = carnotzet;
 		if (instanceId != null) {
 			this.instanceId = instanceId;
@@ -281,7 +281,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	private void invokeAllExtensions(BiFunction<ContainerOrchestrationRuntimeExtension, CarnotzetModule, CarnotzetModule> consumer,
-			CarnotzetModule module) {
+									 CarnotzetModule module) {
 		CarnotzetModule modified = module;
 		for (ContainerOrchestrationRuntimeExtension extension : extensions) {
 			modified = consumer.apply(extension, modified);
@@ -391,7 +391,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		String buildContainerId =
 				runCommandAndCaptureOutput("/bin/sh", "-c", "docker ps | grep $(hostname) | grep -v k8s_POD | cut -d ' ' -f 1");
 
-		if (Strings.isNullOrEmpty(buildContainerId)) {
+		if (buildContainerId == null || buildContainerId.trim().isEmpty()) {
 			// we are probably not running inside a container, return default external network name
 			return carnotzet.getExternalNetworkName();
 		}
@@ -404,7 +404,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		log.debug("Running inside a container with network name [{}]", networkName);
 
 		// return default external network name if cannot find the current external network name
-		return StringUtils.isBlank(networkName) ? carnotzet.getExternalNetworkName() : networkName;
+		return networkName.trim().isEmpty() ? carnotzet.getExternalNetworkName() : networkName;
 	}
 
 	private String getDockerNetworkName() {

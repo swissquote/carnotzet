@@ -15,7 +15,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -130,16 +129,20 @@ public class DockerRegistry {
 		int retryTimes = Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_DOWNLOAD_RETRIES, "0"));
 		int retryAfter = Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_RETRY_DELAY_SECONDS, "1"));
 
-		while(retryTimes > 0) {
+		while (retryTimes > 0) {
 			try {
 				return downloadWithoutRetry(url, accept, auth);
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				--retryTimes;
 				if (retryTimes > 0) {
 					log.info("Download attempt failed: {} : Retrying... ", e.getMessage());
 					try {
 						Thread.sleep(retryAfter);
-					} catch (InterruptedException e0) {}
+					}
+					catch (InterruptedException e0) {
+						throw new RuntimeException(e0);
+					}
 				} else {
 					log.error("Download failed: {} ", e);
 					throw e;

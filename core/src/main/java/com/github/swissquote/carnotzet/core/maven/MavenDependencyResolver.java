@@ -1,5 +1,6 @@
 package com.github.swissquote.carnotzet.core.maven;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -24,14 +25,16 @@ import org.apache.maven.shared.invoker.MavenInvocationException;
 
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
+import com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@RequiredArgsConstructor
 public class MavenDependencyResolver {
+
+	private static final String MAVEN_HOME_PROPERTY = "maven.home";
+	private static final String M2_HOME = "M2_HOME";
 
 	private final Function<CarnotzetModuleCoordinates, String> moduleNameProvider;
 
@@ -41,6 +44,16 @@ public class MavenDependencyResolver {
 	private final TopologicalSorter topologicalSorter = new TopologicalSorter();
 	private final ConcurrentHashMap<CarnotzetModuleCoordinates, Node> dependencyTreeCache = new ConcurrentHashMap<>();
 	private Path localRepoPath;
+
+	public MavenDependencyResolver(Function<CarnotzetModuleCoordinates, String> moduleNameProvider, Path resourcesPath) {
+		this.moduleNameProvider = moduleNameProvider;
+		this.resourcesPath = resourcesPath;
+
+		File mavenHome = getMavenHome();
+		if (mavenHome != null) {
+			maven.setMavenHome(mavenHome);
+		}
+	}
 
 	public List<CarnotzetModule> resolve(CarnotzetModuleCoordinates topLevelModuleId, Boolean failOnCycle) {
 		log.debug("Resolving module dependencies");
@@ -175,6 +188,42 @@ public class MavenDependencyResolver {
 		catch (MavenInvocationException e) {
 			throw new CarnotzetDefinitionException("Error invoking mvn " + goals, e);
 		}
+	}
+
+	private static boolean isBlank(String str) {
+		return str == null || str.trim().isEmpty();
+	}
+
+	private static File getMavenHome() {
+		if (!isBlank(System.getProperty(MAVEN_HOME_PROPERTY))) {
+			File mavenHome = new File(System.getProperty(MAVEN_HOME_PROPERTY));
+			if (mavenHome.exists()) {
+				return mavenHome;
+			}
+		}
+		if (!isBlank(System.getenv(M2_HOME))) {
+			File mavenHome = new File(System.getenv(M2_HOME));
+			if (mavenHome.exists()) {
+				return mavenHome;
+			}
+		}
+
+		// Get it directly from maven
+		String out = DefaultCommandRunner.INSTANCE.runCommandAndCaptureOutput("mvn", "help:evaluate", "-Dexpression=maven.home");
+		String[] lines = out.split("\\R");
+		for (String line : lines) {
+			if (line.contains("INFO")) {
+				continue;
+			}
+
+			File mavenHome = new File(line.trim());
+			if (mavenHome.exists()) {
+				return mavenHome;
+			}
+		}
+
+		log.warn("Could not find a maven home in {} or {} or by calling mvn", MAVEN_HOME_PROPERTY, M2_HOME);
+		return null;
 	}
 
 	/**

@@ -15,7 +15,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -33,8 +32,6 @@ import com.github.swissquote.carnotzet.core.util.FileSystemCache;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.RetryPolicy;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -128,17 +125,32 @@ public class DockerRegistry {
 		}
 	}
 
-	private String downloadWithRetry(URL url, String accept, String auth) throws IOException {
-		RetryPolicy<Object> retryPolicy = new RetryPolicy<>()
-				.handle(Exception.class)
-				.withDelay(Duration.ofSeconds(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_RETRY_DELAY_SECONDS, "1"))))
-				.withMaxRetries(Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_DOWNLOAD_RETRIES, "0")))
-				.onRetry((o) -> log.info("Download attempt failed: {} : Retrying... ", o.getLastFailure().toString()))
-				.onFailure((o) -> {
-					log.error("Download failed: {} ", o.getFailure().toString());
-					throw new IllegalStateException(o.getFailure());
-				});
-		return Failsafe.with(retryPolicy).get(() -> downloadWithoutRetry(url, accept, auth));
+	private String downloadWithRetry(URL url, String accept, String auth) {
+		int retryTimes = Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_DOWNLOAD_RETRIES, "0"));
+		int retryAfter = Integer.parseInt(System.getProperty(CARNOTZET_MANIFEST_RETRY_DELAY_SECONDS, "1"));
+
+		while (retryTimes > 0) {
+			try {
+				return downloadWithoutRetry(url, accept, auth);
+			}
+			catch (Exception e) {
+				--retryTimes;
+				if (retryTimes > 0) {
+					log.info("Download attempt failed: {} : Retrying... ", e.getMessage());
+					try {
+						Thread.sleep(retryAfter);
+					}
+					catch (InterruptedException e0) {
+						throw new RuntimeException(e0);
+					}
+				} else {
+					log.error("Download failed: {} ", e);
+					throw e;
+				}
+			}
+		}
+
+		throw new RuntimeException("Download failed after " + retryTimes + " tries");
 	}
 
 	private String downloadWithoutRetry(URL url, String accept, String auth) {

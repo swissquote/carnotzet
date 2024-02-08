@@ -2,19 +2,18 @@ package com.github.swissquote.carnotzet.file.merger.json;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
+import java.util.stream.Stream;
 
-import org.apache.commons.io.FileUtils;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -29,13 +28,28 @@ public class ResourcesManagerTest {
 	@Rule
 	public TemporaryFolder temp = new TemporaryFolder();
 
+	private static void copyDirectory(String sourceDirectoryLocation, String destinationDirectoryLocation)
+			throws IOException {
+		try (Stream<Path> walk = Files.walk(Paths.get(sourceDirectoryLocation))) {
+			for (Path source : (Iterable<Path>) walk::iterator) {
+				Path destination = Paths.get(destinationDirectoryLocation, source.toString()
+						.substring(sourceDirectoryLocation.length()));
+
+				// Don't try to overwrite directories that already exist
+				if (!(Files.isDirectory(source) && Files.exists(destination))) {
+					Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+				}
+			}
+		}
+	}
+
 	@Test
 	public void merge_files() throws IOException {
 		// Given
 		URL url = Thread.currentThread().getContextClassLoader().getResource("example_merge");
 		File example = new File(url.getPath());
 		Path resources = temp.newFolder().toPath();
-		FileUtils.copyDirectory(example, resources.toFile());
+		copyDirectory(example.toString(), resources.toString());
 		ResourcesManager manager = new ResourcesManager(resources, null);
 		List<CarnotzetModule> modules = Arrays.asList(
 				CarnotzetModule.builder().name("service3").serviceId("service3").build(),

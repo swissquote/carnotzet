@@ -14,7 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationOutputHandler;
@@ -221,7 +220,7 @@ public class MavenDependencyResolver {
 		}
 		Path localRepoPathCache = userConfigFolder.resolve("m2LocalRepoPath");
 		try {
-			FileUtils.writeStringToFile(localRepoPathCache.toFile(), this.localRepoPath.toString(), "UTF-8");
+			Files.write(localRepoPathCache, this.localRepoPath.toString().getBytes(StandardCharsets.UTF_8));
 		}
 		catch (IOException e) {
 			log.warn("Could not write file [{}]", localRepoPathCache);
@@ -238,7 +237,7 @@ public class MavenDependencyResolver {
 		Path localRepoPathCache = getUserConfigFolder().resolve("m2LocalRepoPath");
 		if (localRepoPathCache.toFile().exists()) {
 			try {
-				this.localRepoPath = Paths.get(FileUtils.readFileToString(localRepoPathCache.toFile()));
+				this.localRepoPath = Paths.get(new String(Files.readAllBytes(localRepoPathCache), StandardCharsets.UTF_8));
 			}
 			catch (IOException e) {
 				log.warn("unable to read file [{}]", localRepoPathCache);

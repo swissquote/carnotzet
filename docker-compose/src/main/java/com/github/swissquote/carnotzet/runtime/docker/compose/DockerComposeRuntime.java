@@ -3,10 +3,13 @@ package com.github.swissquote.carnotzet.runtime.docker.compose;
 import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
+import java.io.File;
 import java.io.UncheckedIOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,9 +30,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
 
@@ -48,8 +48,6 @@ import com.github.swissquote.carnotzet.core.runtime.api.PullPolicy;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
 import com.github.swissquote.carnotzet.core.runtime.spi.ContainerOrchestrationRuntimeDefaultExtensionsProvider;
 import com.github.swissquote.carnotzet.core.util.Sha256;
-import com.google.common.base.Strings;
-import com.google.common.io.Files;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -70,6 +68,42 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	private final List<String> dockerComposeCommand;
 
+	private static final boolean IS_OS_WINDOWS = isWindows();
+
+	private static final boolean IS_OS_MAC = isMac();
+
+	private static final boolean IS_OS_LINUX = isLinux();
+
+	private static boolean isWindows() {
+		try {
+			String osName = System.getProperty("os.name");
+			return osName.startsWith("Windows");
+		}
+		catch (SecurityException e) {
+			return false;
+		}
+	}
+
+	private static boolean isMac() {
+		try {
+			String osName = System.getProperty("os.name");
+			return osName.startsWith("Mac");
+		}
+		catch (SecurityException e) {
+			return false;
+		}
+	}
+
+	private static boolean isLinux() {
+		try {
+			String osName = System.getProperty("os.name");
+			return osName.toLowerCase().startsWith("linux");
+		}
+		catch (SecurityException e) {
+			return false;
+		}
+	}
+
 	public DockerComposeRuntime(Carnotzet carnotzet) {
 		this(carnotzet, carnotzet.getTopLevelModuleName());
 	}
@@ -77,7 +111,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId, CommandRunner commandRunner) {
 		// Due to limitations in docker for mac and windows, mapping local ports to container ports is the preferred technique for those users.
 		// https://docs.docker.com/docker-for-mac/networking/#i-cannot-ping-my-containers
-		this(carnotzet, instanceId, commandRunner, SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_WINDOWS);
+		this(carnotzet, instanceId, commandRunner, IS_OS_MAC || IS_OS_WINDOWS);
 	}
 
 	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId, CommandRunner commandRunner, Boolean shouldExposePorts) {
@@ -93,7 +127,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId, CommandRunner commandRunner, Boolean shouldExposePorts,
-			List<ContainerOrchestrationRuntimeExtension> extensions) {
+								List<ContainerOrchestrationRuntimeExtension> extensions) {
 		this.carnotzet = carnotzet;
 		if (instanceId != null) {
 			this.instanceId = instanceId;
@@ -137,8 +171,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			}
 
 			Map<String, ContainerNetwork> networks = new HashMap<>();
-			Set<String> networkAliases = new HashSet<>();
-			networkAliases.addAll(lookUpCustomAliases(module));
+			Set<String> networkAliases = new HashSet<>(lookUpCustomAliases(module));
 
 			// Carnotzet semantics name
 			networkAliases.add(module.getServiceId() + ".docker");
@@ -167,7 +200,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 				log.error("Cannot determine hostname", e);
 			}
 
-			labels.put("com.dnsdock.alias", networkAliases.stream().collect(Collectors.joining(",")));
+			labels.put("com.dnsdock.alias", String.join(",", networkAliases));
 			labels.put("carnotzet.instance.id", instanceId);
 			labels.put("carnotzet.module.name", module.getName());
 			labels.put("carnotzet.module.service.id", module.getServiceId());
@@ -187,9 +220,10 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		DockerCompose compose = DockerCompose.builder().version("2").services(services).networks(networks).build();
 		DockerComposeGenerator generator = new DockerComposeGenerator(compose);
 		try {
-			Files.write(generator.generateDockerComposeFile(),
-					carnotzet.getResourcesFolder().resolve("docker-compose.yml").toFile(),
-					StandardCharsets.UTF_8);
+			Files.write(
+					carnotzet.getResourcesFolder().resolve("docker-compose.yml"),
+					generator.generateDockerComposeFile().getBytes(StandardCharsets.UTF_8)
+			);
 		}
 		catch (IOException e) {
 			throw new UncheckedIOException("Failed to write docker-compose.yml", e);
@@ -247,7 +281,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	private void invokeAllExtensions(BiFunction<ContainerOrchestrationRuntimeExtension, CarnotzetModule, CarnotzetModule> consumer,
-			CarnotzetModule module) {
+									 CarnotzetModule module) {
 		CarnotzetModule modified = module;
 		for (ContainerOrchestrationRuntimeExtension extension : extensions) {
 			modified = consumer.apply(extension, modified);
@@ -290,7 +324,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		if (str == null) {
 			return true;
 		}
-		if (str.trim().toLowerCase().equals("false")) {
+		if (str.trim().equalsIgnoreCase("false")) {
 			return false;
 		}
 		return true;
@@ -319,7 +353,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	private void ensureNetworkCommunicationIsPossible() {
 
-		if (!SystemUtils.IS_OS_LINUX) {
+		if (!IS_OS_LINUX) {
 			return;
 		}
 
@@ -332,7 +366,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			String buildContainerId =
 					runCommandAndCaptureOutput("/bin/bash", "-c", "docker ps | grep $(hostname) | grep -v k8s_POD | cut -d ' ' -f 1");
 
-			if (Strings.isNullOrEmpty(buildContainerId)) {
+			if (buildContainerId == null || buildContainerId.trim().isEmpty()) {
 				// we are probably not running inside a container, networking should be fine
 				return;
 			}
@@ -357,7 +391,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		String buildContainerId =
 				runCommandAndCaptureOutput("/bin/sh", "-c", "docker ps | grep $(hostname) | grep -v k8s_POD | cut -d ' ' -f 1");
 
-		if (Strings.isNullOrEmpty(buildContainerId)) {
+		if (buildContainerId == null || buildContainerId.trim().isEmpty()) {
 			// we are probably not running inside a container, return default external network name
 			return carnotzet.getExternalNetworkName();
 		}
@@ -370,7 +404,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		log.debug("Running inside a container with network name [{}]", networkName);
 
 		// return default external network name if cannot find the current external network name
-		return StringUtils.isBlank(networkName) ? carnotzet.getExternalNetworkName() : networkName;
+		return networkName.trim().isEmpty() ? carnotzet.getExternalNetworkName() : networkName;
 	}
 
 	private String getDockerNetworkName() {
@@ -420,9 +454,12 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		runCommand(buildDockerComposeCommand("-p", getDockerComposeProjectName(), "rm", "-f"));
 		// The resources folder cannot be deleted while the sandbox is running on windows.
 		// So we do it here instead
-		if (SystemUtils.IS_OS_WINDOWS) {
+		if (IS_OS_WINDOWS) {
 			try {
-				FileUtils.deleteDirectory(carnotzet.getResourcesFolder().toFile());
+				Files.walk(carnotzet.getResourcesFolder())
+						.sorted(Comparator.reverseOrder())
+						.map(Path::toFile)
+						.forEach(File::delete);
 			}
 			catch (IOException e) {
 				throw new UncheckedIOException(e);
@@ -482,13 +519,13 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			return Collections.emptyList();
 		}
 		StringBuilder template = new StringBuilder("{{ index .Id}}:");
-		if (SystemUtils.IS_OS_WINDOWS) {
+		if (IS_OS_WINDOWS) {
 			template.append("{{ index .Config.Labels \\\"com.docker.compose.service\\\" }}:");
 		} else {
 			template.append("{{ index .Config.Labels \"com.docker.compose.service\" }}:");
 		}
 		template.append("{{ index .State.Running}}:");
-		if (SystemUtils.IS_OS_WINDOWS) {
+		if (IS_OS_WINDOWS) {
 			template.append("{{ index .Config.Labels \\\"com.docker.compose.container-number\\\" }}:");
 		} else {
 			template.append("{{ index .Config.Labels \"com.docker.compose.container-number\" }}:");
@@ -565,7 +602,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	}
 
 	private boolean dockerComposeFileExists() {
-		return java.nio.file.Files.exists(carnotzet.getResourcesFolder().resolve("docker-compose.yml"));
+		return Files.exists(carnotzet.getResourcesFolder().resolve("docker-compose.yml"));
 	}
 
 	private void ensureDockerComposeFileIsPresent() {

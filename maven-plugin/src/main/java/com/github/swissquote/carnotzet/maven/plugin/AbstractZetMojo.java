@@ -10,7 +10,6 @@ import java.util.ServiceLoader;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -117,6 +116,29 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	@Component
 	private ProjectBuilder projectBuilder;
 
+	private static final boolean IS_OS_WINDOWS = isWindows();
+	private static final boolean IS_OS_LINUX = isLinux();
+
+	private static boolean isWindows() {
+		try {
+			String osName = System.getProperty("os.name");
+			return osName.startsWith("Windows");
+		}
+		catch (SecurityException e) {
+			return false;
+		}
+	}
+
+	private static boolean isLinux() {
+		try {
+			String osName = System.getProperty("os.name");
+			return osName.toLowerCase().startsWith("linux");
+		}
+		catch (SecurityException e) {
+			return false;
+		}
+	}
+
 	@Override
 	public void execute() throws MojoFailureException, MojoExecutionException {
 		SLF4JBridgeHandler.install();
@@ -130,7 +152,7 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 		}
 
 		Path resourcesPath = Paths.get(project.getBuild().getDirectory(), "carnotzet");
-		if (SystemUtils.IS_OS_WINDOWS) {
+		if (IS_OS_WINDOWS) {
 			// we avoid using ${project.build.directory} because "mvn clean" when the sandbox is running would try to delete mounted files,
 			// which is not supported on Windows.
 			resourcesPath = Paths.get("/var/tmp/carnotzet_" + instanceId);
@@ -155,7 +177,7 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 
 		carnotzet = new Carnotzet(config);
 		if (bindLocalPorts == null) {
-			bindLocalPorts = !SystemUtils.IS_OS_LINUX;
+			bindLocalPorts = !IS_OS_LINUX;
 		}
 
 		runtime = new DockerComposeRuntime(carnotzet, instanceId, DefaultCommandRunner.INSTANCE, bindLocalPorts, runtimeExtensions);

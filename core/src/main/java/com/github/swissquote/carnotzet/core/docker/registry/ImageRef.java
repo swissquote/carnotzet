@@ -23,20 +23,23 @@ package com.github.swissquote.carnotzet.core.docker.registry;
 import java.util.Arrays;
 import java.util.StringJoiner;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.MoreObjects;
-
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 
 @EqualsAndHashCode
+@ToString
 public class ImageRef {
 
 	private static final String DEFAULT_REGISTRY = "docker.io";
 	private static final String DEFAULT_REGISTRY_URL = "https://index.docker.io";
 	private static final String DEFAULT_TAG = "latest";
 
+	@Getter
+	@ToString.Exclude
 	private final String registryUrl;
 	private final String registry;
+	@Getter
 	private final String image;
 	private final String tag;
 
@@ -73,10 +76,6 @@ public class ImageRef {
 		return part.contains(".");
 	}
 
-	public String getImage() {
-		return image;
-	}
-
 	// The image tag, or null if not set.
 	public String getTag() {
 		if (tag == null) {
@@ -85,26 +84,17 @@ public class ImageRef {
 		return tag;
 	}
 
-	// Hostname/ip address and port of the registry.
+	/**
+	 * Hostname/ip address and port of the registry.
+	 */
+
 	public String getRegistryName() {
 		return registry;
 	}
 
-	public String getRegistryUrl() {
-		return registryUrl;
-	}
-
-	@Override
-	public String toString() {
-		return MoreObjects.toStringHelper(this)
-				.add("registry", registry)
-				.add("image", image)
-				.add("tag", tag)
-				.toString();
-	}
-
-	// registry server address given first part of image.
-	@VisibleForTesting
+	/**
+	 * registry server address given first part of image.
+	 */
 	static String parseRegistryUrl(final String url) {
 		if ("docker.io".equals(url) || "index.docker.io".equals(url)) {
 			return DEFAULT_REGISTRY_URL;
@@ -127,8 +117,8 @@ public class ImageRef {
 
 		StringJoiner joiner = new StringJoiner("/");
 		Arrays.stream(splitted)
-				.filter(token -> token.indexOf(".") < 0)
-				.forEach(token -> joiner.add(token));
+				.filter(token -> !token.contains("."))
+				.forEach(joiner::add);
 
 		return joiner.toString();
 	}

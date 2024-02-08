@@ -1,15 +1,19 @@
 package com.github.swissquote.carnotzet.core.runtime;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import org.apache.commons.io.FileUtils;
 import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.google.common.util.concurrent.SimpleTimeLimiter;
 
 public class DefaultCommandRunnerTest {
 
@@ -24,16 +28,27 @@ public class DefaultCommandRunnerTest {
 			sb.append("This line is repeated a lot\n");
 		}
 		String expected = sb.toString();
-		FileUtils.write(tmp, expected);
+		Files.write(tmp.toPath(), expected.getBytes(StandardCharsets.UTF_8));
 
 		// When
-		SimpleTimeLimiter limiter = SimpleTimeLimiter.create(Executors.newSingleThreadExecutor());
-		String actual = limiter.callWithTimeout(
+		String actual = callWithTimeout(
 				() -> DefaultCommandRunner.INSTANCE.runCommandAndCaptureOutput("cat", tmp.getAbsolutePath()),
 				2, TimeUnit.SECONDS);
 
 		// Then
 		Assert.assertThat(actual, Is.is(expected.trim()));
+	}
+
+	private String callWithTimeout(Callable<String> command, Integer amount, TimeUnit unit)
+			throws ExecutionException, InterruptedException, TimeoutException {
+		ExecutorService executor = Executors.newSingleThreadExecutor();
+		Future<String> future = executor.submit(command);
+		try {
+			return future.get(amount, unit);
+		} finally {
+			future.cancel(true);
+			executor.shutdownNow();
+		}
 	}
 
 }

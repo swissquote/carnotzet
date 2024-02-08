@@ -1,7 +1,6 @@
 package com.github.swissquote.carnotzet.core.util;
 
 import static com.github.swissquote.carnotzet.core.runtime.DefaultCommandRunner.INSTANCE;
-import static org.apache.commons.io.FileUtils.writeStringToFile;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
@@ -9,10 +8,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -37,7 +38,7 @@ public class ContainerStartupWrapperUtilsTest {
 			sb.append(cmd);
 			sb.append("\n");
 		}
-		writeStringToFile(temp.newFile("Dockerfile"), sb.toString());
+		Files.write(temp.newFile("Dockerfile").toPath(), sb.toString().getBytes(StandardCharsets.UTF_8));
 		INSTANCE.runCommand(temp.getRoot(), "docker", "build", "-t", tag, ".");
 	}
 
@@ -69,7 +70,8 @@ public class ContainerStartupWrapperUtilsTest {
 
 		CarnotzetModule wrapped = getWrappedModule(imageName);
 
-		String wrapperContent = FileUtils.readFileToString(new File("/tmp/startup-wrappers/test-wrapper_my-service.sh"));
+		Path wrapperPath = new File("/tmp/startup-wrappers/test-wrapper_my-service.sh").toPath();
+		String wrapperContent =new String(Files.readAllBytes(wrapperPath), StandardCharsets.UTF_8);
 		assertThat(wrapperContent, is("#!/bin/sh\necho hi!\nexec \"$@\"\n"));
 		assertTrue(wrapped.getDockerVolumes().contains("/tmp/startup-wrappers/test-wrapper_my-service.sh:/test-wrapper_my-service.sh"));
 		assertThat(wrapped.getDockerEntrypoint(), is("[\"/test-wrapper_my-service.sh\",\"/container_entrypoint\"]"));

@@ -23,12 +23,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.SystemUtils;
-
 import com.github.swissquote.carnotzet.core.maven.CarnotzetModuleCoordinates;
 import com.github.swissquote.carnotzet.core.maven.MavenDependencyResolver;
 import com.github.swissquote.carnotzet.core.maven.ResourcesManager;
-import com.google.common.base.Strings;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
@@ -78,6 +75,18 @@ public class Carnotzet {
 
 	@Getter
 	private final Boolean supportLegacyDnsNames;
+
+	private static final boolean IS_OS_WINDOWS = isWindows();
+
+	private static boolean isWindows() {
+		try {
+			String osName = System.getProperty("os.name");
+			return osName.startsWith("Windows");
+		}
+		catch (SecurityException e) {
+			return false;
+		}
+	}
 
 	@SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
 	public Carnotzet(CarnotzetConfig config) {
@@ -156,13 +165,13 @@ public class Carnotzet {
 	public List<CarnotzetModule> getModules() {
 		if (modules == null) {
 			modules = resolver.resolve(config.getTopLevelModuleId(), failOnDependencyCycle);
-			if (!SystemUtils.IS_OS_WINDOWS || !getResourcesFolder().resolve("expanded-jars").toFile().exists()) {
+			if (!IS_OS_WINDOWS || !getResourcesFolder().resolve("expanded-jars").toFile().exists()) {
 				log.debug("extracting resources");
 				resourceManager.extractResources(modules);
 			}
 			log.debug("computing service ids");
 			modules = computeServiceIds(modules);
-			if (!SystemUtils.IS_OS_WINDOWS || !getResourcesFolder().resolve("resolved").toFile().exists()) {
+			if (!IS_OS_WINDOWS || !getResourcesFolder().resolve("resolved").toFile().exists()) {
 				resourceManager.resolveResources(modules);
 			}
 			log.debug("configuring modules");
@@ -299,7 +308,7 @@ public class Carnotzet {
 						.map(m -> m.getId().getVersion())
 						.findFirst()
 						.orElse("");
-				if (Strings.isNullOrEmpty(myModuleVersion)) {
+				if (myModuleVersion.trim().isEmpty()) {
 					// complain nicely with a list of modules
 					String modulesList = modules.stream()
 							.map(CarnotzetModule::getName)

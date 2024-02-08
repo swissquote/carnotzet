@@ -10,7 +10,6 @@ import org.zeroturnaround.exec.ProcessResult;
 import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
 
 import com.github.swissquote.carnotzet.core.CarnotzetDefinitionException;
-import com.google.common.base.Joiner;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +36,7 @@ public final class DefaultCommandRunner implements CommandRunner {
 	}
 
 	public int runCommand(Boolean inheritIo, File directoryForRunning, String... command) {
-		log.debug("Running command [{}]", Joiner.on(" ").join(command));
+		log.debug("Running command [{}]", String.join(" ", command));
 		ProcessExecutor pe = new ProcessExecutor()
 				.command(command)
 				.directory(directoryForRunning);
@@ -53,7 +52,7 @@ public final class DefaultCommandRunner implements CommandRunner {
 
 		try {
 			ProcessResult processResult = pe.execute();
-			log.debug("Command completed : [{}]", Joiner.on(" ").join(command));
+			log.debug("Command completed : [{}]", String.join(" ", command));
 			return processResult.getExitValue();
 		}
 		catch (InterruptedException e) {
@@ -73,7 +72,7 @@ public final class DefaultCommandRunner implements CommandRunner {
 	}
 
 	public String runCommandAndCaptureOutput(File directoryForRunning, String... command) {
-		log.debug("Running command [{}]", Joiner.on(" ").join(command));
+		log.debug("Running command [{}]", String.join(" ", command));
 
 		ProcessExecutor pe = new ProcessExecutor()
 				.command(command)
@@ -84,7 +83,7 @@ public final class DefaultCommandRunner implements CommandRunner {
 			ProcessResult processResult = pe.execute();
 			String output = processResult.outputUTF8().trim();
 			if (processResult.getExitValue() != 0) {
-				throw new RuntimeException("External command [" + Joiner.on(" ").join(command) + "] exited with [" + processResult.getExitValue()
+				throw new RuntimeException("External command [" + String.join(" ", command) + "] exited with [" + processResult.getExitValue()
 						+ "], output: " + output);
 			}
 			return output;

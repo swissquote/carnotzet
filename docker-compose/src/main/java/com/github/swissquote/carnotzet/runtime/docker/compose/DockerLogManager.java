@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +17,6 @@ import com.github.swissquote.carnotzet.core.runtime.api.Container;
 import com.github.swissquote.carnotzet.core.runtime.log.LogEvent;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListener;
 import com.github.swissquote.carnotzet.core.runtime.log.LogListenerBase;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.reactivex.BackpressureStrategy;
@@ -33,9 +33,9 @@ import lombok.extern.slf4j.Slf4j;
 		/* package */ class DockerLogManager {
 
 	@Value
-	private static final class ContainerListener {
-		private final Container container;
-		private final LogListener listener;
+	private static class ContainerListener {
+		Container container;
+		LogListener listener;
 	}
 
 	private final Collection<LogListener> logListeners;
@@ -69,7 +69,7 @@ import lombok.extern.slf4j.Slf4j;
 
 		List<String> command = getLogCommand(since, listener, container);
 		log.debug("Scheduling new log capture flowable for container [{}] and listener [{}], command is [{}]",
-				container, listener, Joiner.on(' ').join(command));
+				container, listener, String.join(" ", command));
 
 		try {
 			Process dockerCliProcess = new ProcessBuilder(command.toArray(new String[command.size()])).start();
@@ -98,7 +98,7 @@ import lombok.extern.slf4j.Slf4j;
 	}
 
 	private List<String> getLogCommand(Instant since, LogListener listener, Container container) {
-		List<String> command = Lists.newArrayList("docker", "logs");
+		List<String> command = new ArrayList<>(Arrays.asList("docker", "logs"));
 		Integer tail = listener.getTail();
 		if (since != null) {
 			String sinceTimestamp = Long.toString(since.getEpochSecond());

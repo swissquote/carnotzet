@@ -36,13 +36,13 @@ public class TopologicalSorter {
 		private final Map<GA, Node> resolvedNodes = new HashMap<>();
 
 		// Only used to provide nice error messages in case of cycles
-		private Stack<Node> stack = new Stack<>();
+		private final Stack<Node> stack = new Stack<>();
 
 		// for cycles detection
 		private final Set<GA> temporaryMarkers = new HashSet<>();
 		private final Set<GA> permanentMarkers = new HashSet<>();
 
-		private List<Node> result = new ArrayList<>();
+		private final List<Node> result = new ArrayList<>();
 
 		private List<Node> compute() {
 			// sorting the resolved tree is not enough because of omitted nodes, see unit tests for counter examples.

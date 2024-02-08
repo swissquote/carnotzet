@@ -19,8 +19,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
 
 public class ResourcesManagerTest {

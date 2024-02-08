@@ -146,7 +146,7 @@ public final class ContainerStartupWrapperUtils {
 		private String wrapperName = "wrapper";
 
 		// Local images may not be available for target runtime environment (ie : cloud)
-		private Boolean ignoreLocalImages = false;
+		private final Boolean ignoreLocalImages = false;
 
 		@SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
 		public StartupWrapper(@NonNull CarnotzetModule moduleToWrap) {
@@ -183,7 +183,7 @@ public final class ContainerStartupWrapperUtils {
 				if (!wrapperScript.toFile().setExecutable(true, false)) {
 					throw new IOException("Could not make file executable : " + wrapperScript.toAbsolutePath());
 				}
-				allVolumes.add(wrapperScript.toString() + ":/" + scriptName);
+				allVolumes.add(wrapperScript + ":/" + scriptName);
 			}
 			catch (IOException e) {
 				throw new UncheckedIOException(e);
@@ -210,7 +210,7 @@ public final class ContainerStartupWrapperUtils {
 		ENTRYPOINT("Entrypoint"), CMD("Cmd");
 
 		@Getter
-		private String jsonField;
+		private final String jsonField;
 
 		DockerExecutionItem(String fieldName) {
 			this.jsonField = fieldName;

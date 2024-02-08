@@ -5,7 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -52,7 +52,7 @@ public class FileSystemCache<T> {
 		if (value == null) {
 			value = mappingFunction.apply(key);
 			this.cache.put(key, value);
-			try (Writer out = new OutputStreamWriter(new FileOutputStream(this.cachePath.toFile()), Charset.forName("UTF-8"))) {
+			try (Writer out = new OutputStreamWriter(new FileOutputStream(this.cachePath.toFile()), StandardCharsets.UTF_8)) {
 				this.cache.store(out, "Added value for key " + key);
 			}
 		}

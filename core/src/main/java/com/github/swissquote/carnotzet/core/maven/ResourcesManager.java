@@ -63,7 +63,11 @@ public class ResourcesManager {
 			for (Path source : (Iterable<Path>) walk::iterator) {
 				Path destination = Paths.get(destinationDirectoryLocation, source.toString()
 						.substring(sourceDirectoryLocation.length()));
-				Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+
+				// Don't try to overwrite directories that already exist
+				if (!(Files.isDirectory(source) && Files.exists(destination))) {
+					Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+				}
 			}
 		}
 	}

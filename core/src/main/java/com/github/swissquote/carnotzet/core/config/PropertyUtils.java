@@ -3,6 +3,7 @@ package com.github.swissquote.carnotzet.core.config;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -18,7 +19,7 @@ public final class PropertyUtils {
 
 	// Inspired by java.utils.Properties#store0, but sorts lines in lexicographical order and doesn't output comments in the file
 	public static void outputCleanPropFile(Properties props, Path path) throws IOException {
-		try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(path), "8859_1"))) {
+		try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(path), StandardCharsets.ISO_8859_1))) {
 			synchronized (props) {
 				List<String> keys = Collections.list(props.keys()).stream().map(Object::toString).collect(Collectors.toList());
 				Collections.sort(keys);

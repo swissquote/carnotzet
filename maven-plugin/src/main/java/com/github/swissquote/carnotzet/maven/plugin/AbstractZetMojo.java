@@ -75,6 +75,14 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 	@Getter
 	private Boolean attachToCarnotzetNetwork;
 
+	@Parameter(property = "useExternalNetwork")
+	@Getter
+	private Boolean useExternalNetwork;
+
+	@Parameter(property = "externalNetworkName")
+	@Getter
+	private String externalNetworkName;
+
 	@Parameter(property = "supportLegacyDnsNames")
 	@Getter
 	private Boolean supportLegacyDnsNames;
@@ -161,6 +169,8 @@ public abstract class AbstractZetMojo extends AbstractMojo {
 				.topLevelModuleResourcesPath(project.getBasedir().toPath().resolve("src/main/resources"))
 				.failOnDependencyCycle(failOnDependencyCycle)
 				.attachToCarnotzetNetwork(attachToCarnotzetNetwork)
+				.useExternalNetwork(useExternalNetwork)
+				.externalNetworkName(externalNetworkName)
 				.supportLegacyDnsNames(supportLegacyDnsNames)
 				.extensions(extensions)
 				.build();

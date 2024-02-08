@@ -17,6 +17,7 @@ public class CarnotzetConfig {
 	public final static String DEFAULT_MODULE_FILTER_PATTERN = "(.*)-carnotzet";
 	public final static String DEFAULT_CLASSIFIER_INCLUDE_PATTERN = ".*carnotzet";
 	public final static String DEFAULT_DOCKER_REGISTRY = "docker.io";
+	public final static String DEFAULT_EXTERNAL_NETWORK_NAME = "docker-compose_jenkins-build-bridge";
 	public final static List<String> DEFAULT_PROP_FILE_NAMES = Collections.singletonList("carnotzet.properties");
 
 	@NonNull
@@ -80,6 +81,16 @@ public class CarnotzetConfig {
 	 * defaults to true.
 	 */
 	private final Boolean attachToCarnotzetNetwork;
+
+	/**
+	 * When running carnotzet inside a container, use existing external bridge network.
+	 */
+	private final Boolean useExternalNetwork;
+
+	/**
+	 * When running carnotzet inside a container, use existing external bridge network.
+	 */
+	private final String externalNetworkName;
 
 	/**
 	 * Enable or disable support for legacy DNS names (container_name.)image_name.docker<br>

@@ -34,6 +34,7 @@ import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
 
 import com.github.swissquote.carnotzet.core.Carnotzet;
+import com.github.swissquote.carnotzet.core.CarnotzetConfig;
 import com.github.swissquote.carnotzet.core.CarnotzetModule;
 import com.github.swissquote.carnotzet.core.docker.DockerUtils;
 import com.github.swissquote.carnotzet.core.docker.registry.DockerRegistry;
@@ -53,7 +54,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
-
 	private Carnotzet carnotzet;
 
 	private final String instanceId;
@@ -66,6 +66,8 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	private final List<ContainerOrchestrationRuntimeExtension> extensions;
 
+  private final List<String> dockerComposeCommand;
+  
 	private static final boolean IS_OS_WINDOWS = isWindows();
 
 	private static final boolean IS_OS_MAC = isMac();
@@ -136,7 +138,8 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		this.commandRunner = commandRunner;
 		this.shouldExposePorts = shouldExposePorts;
 		this.extensions = extensions;
-
+		boolean hasNewDockerCompose = commandRunner.runCommand("/bin/bash", "-c", "docker compose version") == 0;
+		this.dockerComposeCommand = hasNewDockerCompose ? Arrays.asList("docker", "compose") : Arrays.asList("docker-compose");
 	}
 
 	public DockerComposeRuntime(Carnotzet carnotzet, String instanceId) {
@@ -209,7 +212,8 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			services.put(serviceId, serviceBuilder.build());
 		}
 
-		Network network = Network.builder().driver("bridge").build();
+		Network network =
+				carnotzet.getUseExternalNetwork() ? Network.builder().external(true).build() : Network.builder().driver("bridge").build();
 		Map<String, Network> networks = new HashMap<>();
 		networks.put(genNetworkName(), network);
 
@@ -299,10 +303,11 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		invokeAllExtensions((e, m) -> e.beforeStart(m, this, this.carnotzet));
 		log.debug("Forcing update of docker-compose.yml before start");
 		computeDockerComposeFile();
-		carnotzet.getModules().stream().filter(this::shouldStartByDefault).forEach(m ->
-				runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d",
-						"--scale", m.getServiceId() + "=" + m.getReplicas(), m.getServiceId())
-		);
+
+		carnotzet.getModules().stream().filter(this::shouldStartByDefault).forEach(m -> {
+			runCommand(buildDockerComposeCommand("-p", getDockerComposeProjectName(), "up", "-d",
+					"--scale", m.getServiceId() + "=" + m.getReplicas(), m.getServiceId()));
+		});
 		ensureNetworkCommunicationIsPossible();
 		logManager.ensureCapturingLogs(start, getContainers());
 		invokeAllExtensions((e, m) -> e.afterStart(m, this, this.carnotzet));
@@ -339,7 +344,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		for (CarnotzetModule carnotzetModule : resolvedModules) {
 			String service = carnotzetModule.getServiceId();
 			Instant start = Instant.now();
-			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "up", "-d", service);
+			runCommand(buildDockerComposeCommand("-p", getDockerComposeProjectName(), "up", "-d", service));
 			ensureNetworkCommunicationIsPossible();
 			logManager.ensureCapturingLogs(start, Collections.singletonList(getContainer(service)));
 			invokeAllExtensions((e, m) -> e.afterStart(m, this, this.carnotzet), carnotzetModule);
@@ -349,6 +354,11 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	private void ensureNetworkCommunicationIsPossible() {
 
 		if (!IS_OS_LINUX) {
+			return;
+		}
+
+		if (carnotzet.getUseExternalNetwork()) {
+			// No need to connect when already using the same default bridge network
 			return;
 		}
 
@@ -371,13 +381,40 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		return normalizeDockerComposeProjectName(instanceId);
 	}
 
+	private String findExternalNetworkName() {
+		// Carnotzet network name is defined, return it directly
+		if (!CarnotzetConfig.DEFAULT_EXTERNAL_NETWORK_NAME.equals(carnotzet.getExternalNetworkName())) {
+			return carnotzet.getExternalNetworkName();
+		}
+
+		// Try to find network name based on the current docker network setting of container
+		String buildContainerId =
+				runCommandAndCaptureOutput("/bin/sh", "-c", "docker ps | grep $(hostname) | grep -v k8s_POD | cut -d ' ' -f 1");
+
+		if (Strings.isNullOrEmpty(buildContainerId)) {
+			// we are probably not running inside a container, return default external network name
+			return carnotzet.getExternalNetworkName();
+		}
+
+		// print all networks links to this container line by line, take the first non-empty network name that is not default network bridge
+		String networkName = runCommandAndCaptureOutput("/bin/sh", "-c",
+				"docker container inspect -f '{{range $net,$v := .NetworkSettings.Networks}}{{printf \"%s\\n\" $net}}{{end}}' "
+						+ buildContainerId + " | grep -v \"\\bbridge\\b\" | grep -m 1 .");
+
+		log.debug("Running inside a container with network name [{}]", networkName);
+
+		// return default external network name if cannot find the current external network name
+		return StringUtils.isBlank(networkName) ? carnotzet.getExternalNetworkName() : networkName;
+	}
+
 	private String getDockerNetworkName() {
-		return getDockerComposeProjectName() + "_" + genNetworkName();
+		return carnotzet.getUseExternalNetwork() ? findExternalNetworkName() : getDockerComposeProjectName() + "_" + genNetworkName();
 	}
 
 	private String genNetworkName() {
 		// We use only first 12 characters of sha256 (48-bit) which has collision chance 1 of out of 10M
-		return "carnotzet_" + Sha256.getSHA(carnotzet.getResourcesFolder().toString()).substring(0, 12);
+		return carnotzet.getUseExternalNetwork() ? findExternalNetworkName()
+				: "carnotzet_" + Sha256.getSHA(carnotzet.getResourcesFolder().toString()).substring(0, 12);
 	}
 
 	// normalize docker compose project name the same way docker-compose does (see https://github.com/docker/compose/tree/master/compose)
@@ -389,7 +426,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	public void stop() {
 		invokeAllExtensions((e, m) -> e.beforeStop(m, this, this.carnotzet));
 		ensureDockerComposeFileIsPresent();
-		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "stop");
+		runCommand(buildDockerComposeCommand("-p", getDockerComposeProjectName(), "stop"));
 		invokeAllExtensions((e, m) -> e.afterStop(m, this, this.carnotzet));
 	}
 
@@ -399,7 +436,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			String service = carnotzetModule.getServiceId();
 			invokeAllExtensions((e, m) -> e.beforeStop(m, this, this.carnotzet), carnotzetModule);
 			ensureDockerComposeFileIsPresent();
-			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "stop", service);
+			runCommand(buildDockerComposeCommand("-p", getDockerComposeProjectName(), "stop", service));
 			invokeAllExtensions((e, m) -> e.afterStop(m, this, this.carnotzet), carnotzetModule);
 		}
 	}
@@ -407,14 +444,14 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 	@Override
 	public void status() {
 		ensureDockerComposeFileIsPresent();
-		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "ps");
+		runCommand(buildDockerComposeCommand("-p", getDockerComposeProjectName(), "ps"));
 	}
 
 	@Override
 	public void clean() {
 		invokeAllExtensions((e, m) -> e.beforeClean(m, this, this.carnotzet));
 		ensureDockerComposeFileIsPresent();
-		runCommand("docker-compose", "-p", getDockerComposeProjectName(), "rm", "-f");
+		runCommand(buildDockerComposeCommand("-p", getDockerComposeProjectName(), "rm", "-f"));
 		// The resources folder cannot be deleted while the sandbox is running on windows.
 		// So we do it here instead
 		if (IS_OS_WINDOWS) {
@@ -475,8 +512,8 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 
 	@Override
 	public List<Container> getContainers() {
-		String commandOutput = runCommandAndCaptureOutput("docker-compose", "-p", getDockerComposeProjectName(),
-				"ps", "-q").replaceAll(System.lineSeparator(), " ");
+		String commandOutput = runCommandAndCaptureOutput(buildDockerComposeCommand("-p", getDockerComposeProjectName(),
+				"ps", "-q")).replaceAll(System.lineSeparator(), " ");
 		log.debug("docker-compose ps output : " + commandOutput);
 		if (commandOutput.trim().isEmpty()) {
 			return Collections.emptyList();
@@ -581,7 +618,7 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 		for (CarnotzetModule carnotzetModule : resolveModules(services)) {
 			invokeAllExtensions((e, m) -> e.beforeClean(m, this, this.carnotzet), carnotzetModule);
 			String service = carnotzetModule.getServiceId();
-			runCommand("docker-compose", "-p", getDockerComposeProjectName(), "rm", "-f", service);
+			runCommand(buildDockerComposeCommand("-p", getDockerComposeProjectName(), "rm", "-f", service));
 			invokeAllExtensions((e, m) -> e.afterClean(m, this, this.carnotzet), carnotzetModule);
 		}
 	}
@@ -645,6 +682,12 @@ public class DockerComposeRuntime implements ContainerOrchestrationRuntime {
 			throw new RuntimeException("service [" + services + "] not found");
 		}
 		return myModules;
+	}
+
+	private String[] buildDockerComposeCommand(String... args) {
+		List<String> command = new ArrayList<>(dockerComposeCommand);
+		command.addAll(Arrays.asList(args));
+		return command.toArray(new String[0]);
 	}
 
 	@Override

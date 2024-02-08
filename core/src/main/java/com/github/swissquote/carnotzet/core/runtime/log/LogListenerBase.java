@@ -13,12 +13,12 @@ public abstract class LogListenerBase implements LogListener {
 	/**
 	 * Indicates how many lines of logs to get at max
 	 */
-	private Integer tail;
+	private final Integer tail;
 
 	/**
 	 * Indicates if this listener should
 	 */
-	private boolean follow;
+	private final boolean follow;
 
 	@Setter
 	private Predicate<LogEvent> eventFilter;

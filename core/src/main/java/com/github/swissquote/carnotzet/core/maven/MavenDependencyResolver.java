@@ -188,7 +188,7 @@ public class MavenDependencyResolver {
 				+ " -DoutputType=text "
 				+ " -DoutputFile=" + treePath.toAbsolutePath().toString();
 		executeMavenBuild(Arrays.asList(command), null);
-		try (Reader r = new InputStreamReader(Files.newInputStream(treePath), "UTF-8")) {
+		try (Reader r = new InputStreamReader(Files.newInputStream(treePath), StandardCharsets.UTF_8)) {
 			return new TreeTextParser().parse(r);
 		}
 		catch (ParseException | IOException e) {

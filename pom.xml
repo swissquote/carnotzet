@@ -65,10 +65,10 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.version>3.9.6</maven.version>
-		<maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>
+		<maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
 		<maven-source-plugin.version>3.3.0</maven-source-plugin.version>
 		<maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
-		<jackson.version>2.16.1</jackson.version>
+		<jackson.version>2.17.0</jackson.version>
 	</properties>
 
 	<build>
@@ -100,7 +100,7 @@
 				<plugin>
 					<groupId>com.github.spotbugs</groupId>
 					<artifactId>spotbugs-maven-plugin</artifactId>
-					<version>4.8.3.0</version>
+					<version>4.8.3.1</version>
 					<configuration>
 						<effort>Max</effort>
 						<threshold>Low</threshold>
@@ -207,7 +207,7 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.30</version>
+			<version>1.18.32</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
